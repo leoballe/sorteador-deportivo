@@ -42,7 +42,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v1.5</span>
+      <span class="badge">v1.6</span>
     </header>
     <div class="panel">
       <div class="tabs">
@@ -257,7 +257,96 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btnExportPDF').addEventListener('click',exportPDF);
 
   // CSV Import robusto
-  document.getElementById('csvFile').addEventById
+<!-- reemplaza la línea "addEventById" por TODO este bloque -->
+document.getElementById('csvFile').addEventListener('change', function(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      let text = reader.result || '';
+      // Quita BOM si existe
+      if(text.charCodeAt(0)===0xFEFF){ text = text.slice(1); }
+      // Líneas no vacías
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length>0);
+      if(!lines.length){ toast('CSV vacío'); return }
+
+      // Detecta delimitador: coma, ; o TAB
+      const sample = lines[0];
+      const counts = { ',': (sample.match(/,/g)||[]).length,
+                       ';': (sample.match(/;/g)||[]).length,
+                       '\t': (sample.match(/\t/g)||[]).length };
+      let delim = Object.entries(counts).sort((a,b)=> b[1]-a[1])[0][0];
+      if(counts[delim]===0) delim = ','; // default coma
+      const delimChar = delim;
+
+      // Split que respeta comillas
+      function splitQuoted(line){
+        const out=[]; let cur=''; let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch === '"'){
+            if(inQ && line[i+1] === '"'){ cur+='"'; i++; }
+            else { inQ = !inQ; }
+          } else if(ch === delimChar && !inQ){
+            out.push(cur); cur='';
+          } else {
+            cur+=ch;
+          }
+        }
+        out.push(cur);
+        return out.map(s => s.trim());
+      }
+
+      // Header opcional
+      const headRow = splitQuoted(lines[0]);
+      const hasHeader = headRow.some(v => /^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
+
+      let idx = { name:0, province:1, head:2 };
+      if(hasHeader){
+        headRow.forEach((v,i)=>{
+          const s=v.toLowerCase();
+          if(/equipo|team|nombre/.test(s)) idx.name=i;
+          if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
+          if(/cabeza|cabeza de serie|head|seed|semilla/.test(s)) idx.head=i;
+        });
+      }
+
+      const body = hasHeader ? lines.slice(1) : lines;
+      const out=[];
+      body.forEach(line=>{
+        const parts = splitQuoted(line);
+        let rawName = (parts[idx.name]||'');
+        if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName = rawName.slice(1); }
+        rawName = rawName.trim();
+        if(!rawName) return;
+        const name = rawName.replace(/\*+$/,'').trim();
+        const province = (parts[idx.province]||'').trim();
+        const headRaw = (parts[idx.head]||'').trim();
+        const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(headRaw) || /\*$/.test(rawName);
+        out.push({name, province, head});
+      });
+
+      if(!out.length){ toast('No se detectaron equipos'); return }
+
+      // Volcar al textarea
+      document.getElementById('teamsInput').value =
+        out.map(t => `${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('\n');
+
+      if(typeof updateCapInfo==='function') updateCapInfo();
+
+      // Info previa
+      const info = document.getElementById('csvInfo');
+      if(info){
+        const prev = out.slice(0,3).map(t=> `${t.name}${t.province?` — ${t.province}`:''}${t.head?' — *':''}`).join(' · ');
+        info.innerHTML = `CSV cargado: <b>${out.length}</b> equipos · Delimitador: <b>${delimChar==='\\t'?'TAB':delimChar}</b>${hasHeader?' · Con cabecera':''}${prev?` · Ej: ${prev}`:''}`;
+      }
+      toast('CSV cargado');
+    }catch(err){
+      console.error(err);
+      alert('No se pudo leer el CSV. Usá \",\" \";\" o TAB; columnas Equipo/Provincia/Cabeza (cabecera opcional).');
+    }
+  };
+  reader.readAsText(file,'utf-8');
 });
 </script>
 </body>
