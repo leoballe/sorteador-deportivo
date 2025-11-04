@@ -5,62 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sorteador Deportivo</title>
   <style>
-    :root{
-      --bg:#0f172a; /* slate-900 */
-      --panel:#111827; /* gray-900 */
-      --card:#1f2937; /* gray-800 */
-      --muted:#94a3b8; /* slate-400 */
-      --text:#e5e7eb; /* gray-200 */
-      --accent:#22c55e; /* green-500 */
-      --accent2:#38bdf8; /* sky-400 */
-      --danger:#ef4444;
-      --warn:#f59e0b;
-    }
+    :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-    a{color:var(--accent2)}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
+    a{color:var(--accent2)} .container{max-width:1100px;margin:0 auto;padding:24px}
     header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
-    h1{font-size:clamp(22px,3vw,30px);margin:0}
-    .badge{font-size:12px;background:#0b2;opacity:.9;padding:4px 8px;border-radius:999px}
+    h1{font-size:clamp(22px,3vw,30px);margin:0}.badge{font-size:12px;background:#0b2;opacity:.9;padding:4px 8px;border-radius:999px}
     .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:900px){.row{grid-template-columns:1fr}}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:900px){.row{grid-template-columns:1fr}}
     .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
     .card h3{margin:0 0 8px 0;font-size:16px}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type="text"], input[type="number"], textarea, select{
-      width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px
-    }
+    input[type=text],input[type=number],textarea{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
     textarea{min-height:220px;resize:vertical}
     .controls{display:flex;flex-wrap:wrap;gap:10px}
-    .btn{
-      background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600
-    }
-    .btn:hover{border-color:#3b82f6}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
-    .btn.ghost{background:transparent;border-color:#2b3b55}
-    .btn.warn{background:linear-gradient(135deg,var(--warn),#d97706);border:0;color:#3b1d00}
-    .btn.danger{background:linear-gradient(135deg,var(--danger),#991b1b);border:0}
-    .tiny{font-size:12px;color:var(--muted)}
-    .tabs{display:flex;gap:8px;margin-bottom:12px}
-    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer}
+    .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    .btn:hover{border-color:#3b82f6}.btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
+    .btn.ghost{background:transparent;border-color:#2b3b55}.tiny{font-size:12px;color:var(--muted)}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}.tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer}
     .tab.active{background:#0a3622;border-color:#1b5e3b}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
     .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
-    .zone h4{margin:4px 0 8px 0}
-    .zone ol{margin:0;padding-left:18px}
-    .muted{color:var(--muted)}
-    .ok{color:var(--accent)}
-    .warnText{color:var(--warn)}
-    .errorText{color:var(--danger)}
-    .footer{margin-top:14px;font-size:12px;color:var(--muted)}
+    .zone h4{margin:4px 0 8px 0}.zone ol{margin:0;padding-left:18px}
+    .muted{color:var(--muted)} .warnText{color:var(--warn)} .errorText{color:var(--danger)}
     .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
-    .split{display:flex;gap:10px;flex-wrap:wrap}
-    .hidden{display:none}
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0b1220;border:1px solid #223046;border-radius:6px;padding:0 6px}
-    .history{display:grid;gap:8px}
-    .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
+    .hidden{display:none}.history{display:grid;gap:8px}.history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
   </style>
 </head>
 <body>
@@ -68,9 +37,9 @@
     <header>
       <div>
         <h1>🎲 Sorteador Deportivo</h1>
-        <div class="tiny">MVP sin backend — funciona 100% en tu navegador.</div>
+        <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v1.0</span>
+      <span class="badge">v1.2</span>
     </header>
 
     <div class="panel">
@@ -84,45 +53,48 @@
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
-            <label>Pegá la lista (una línea por equipo). Opcional: <span class="kbd">; Provincia</span> y <span class="kbd">; *</span> para cabeza de serie.</label>
-            <textarea id="teamsInput" placeholder="Ejemplos:\nRiver Plate; CABA; *\nBoca Juniors; CABA\nNewell's; Santa Fe\nGodoy Cruz; Mendoza\nTalleres; Córdoba\n...\n"></textarea>
-            <div class="split" style="margin-top:8px">
+            <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
+            <textarea id="teamsInput" placeholder="Ejemplos:
+River Plate; CABA; *
+Boca Juniors; CABA
+Newell's; Santa Fe
+..."></textarea>
+            <div class="controls" style="margin-top:8px">
               <label for="csvFile" class="btn ghost">📄 Importar CSV</label>
               <input id="csvFile" type="file" accept=".csv" class="hidden" />
               <button class="btn ghost" id="btnExample">Cargar ejemplo</button>
               <button class="btn ghost" id="btnClear">Limpiar</button>
             </div>
-            <div class="tiny" style="margin-top:8px">CSV esperado: columnas <b>Equipo, Provincia, Cabeza<\/b> \("sí" para cabeza, separador <b>, o ;<\/b>\).</div>
+            <div class="tiny">CSV esperado: columnas <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta separadores <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
+            <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
           </div>
 
           <div class="card">
             <h3>Parámetros</h3>
-            <div class="split" id="formatRow">
-              <div class="pill"><label><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label></div>
-              <div class="pill"><label><input type="radio" name="format" value="4x6"> 4 zonas de 6</label></div>
+            <div class="controls" id="formatRow">
+              <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
+              <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
+              <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
             </div>
-            <div class="split">
-              <div style="min-width:180px;flex:1">
+            <div class="controls">
+              <div style="min-width:160px;flex:1">
                 <label>Nº de zonas / grupos</label>
                 <input type="number" id="zones" min="1" value="4" />
               </div>
-              <div style="min-width:220px;flex:1">
-                <label>Semilla (opcional, para repetir el sorteo)</label>
+              <div style="min-width:200px;flex:1">
+                <label>Semilla (opcional)</label>
                 <input type="text" id="seed" placeholder="p.ej. evita-2025" />
               </div>
             </div>
-            <div style="margin-top:8px">
-              <label><input type="checkbox" id="avoidProvince" checked /> Evitar que haya dos equipos de la misma provincia en una misma zona</label>
-            </div>
-            <div style="margin-top:8px">
-              <label><input type="checkbox" id="headsAsFirst" checked /> Poner cabezas de serie como primeros de cada zona</label>
-            </div>
+            <label><input type="checkbox" id="avoidProvince" checked> Evitar que coincidan provincias en la misma zona</label>
+            <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
             <div id="capInfo" class="tiny" style="margin-top:6px"></div>
+
             <div class="controls" style="margin-top:10px">
               <button class="btn primary" id="btnDrawGroups">🎯 SORTEAR ZONAS</button>
               <button class="btn" id="btnExportCSV">⬇️ Exportar CSV</button>
-              <button class="btn" id="btnCopy">📋 Copiar resultados</button>
-              <button class="btn" id="btnShare">🔗 Compartir enlace</button>
+              <button class="btn" id="btnCopy">📋 Copiar</button>
+              <button class="btn" id="btnShare">🔗 Compartir</button>
             </div>
             <div id="status" class="tiny" style="margin-top:8px"></div>
           </div>
@@ -134,7 +106,7 @@
         </div>
 
         <div class="card" style="margin-top:12px">
-          <h3>Historial de sorteos (local)</h3>
+          <h3>Historial (local)</h3>
           <div class="history" id="history"></div>
         </div>
       </div>
@@ -143,17 +115,17 @@
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
-            <label>Usa la misma lista del tab de Grupos (o pegá otra aquí):</label>
+            <label>Usa la lista del tab Grupos (o pegá otra):</label>
             <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
-            <div class="split" style="margin-top:8px">
+            <div class="controls" style="margin-top:8px">
               <button class="btn ghost" id="btnUseFromGroups">Usar lista del tab Grupos</button>
               <button class="btn ghost" id="btnClearSimple">Limpiar</button>
             </div>
           </div>
           <div class="card">
             <h3>Parámetros</h3>
-            <div class="split">
-              <div style="min-width:220px;flex:1">
+            <div class="controls">
+              <div style="min-width:200px;flex:1">
                 <label>Semilla (opcional)</label>
                 <input type="text" id="seedSimple" placeholder="p.ej. sorteo-final" />
               </div>
@@ -176,17 +148,17 @@
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
-            <label>Usa la misma lista del tab de Grupos (o pegá otra aquí):</label>
+            <label>Usa la lista del tab Grupos (o pegá otra):</label>
             <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
-            <div class="split" style="margin-top:8px">
+            <div class="controls" style="margin-top:8px">
               <button class="btn ghost" id="btnUseFromGroups2">Usar lista del tab Grupos</button>
               <button class="btn ghost" id="btnClearBracket">Limpiar</button>
             </div>
           </div>
           <div class="card">
             <h3>Parámetros</h3>
-            <div class="split">
-              <div style="min-width:220px;flex:1">
+            <div class="controls">
+              <div style="min-width:200px;flex:1">
                 <label>Semilla (opcional)</label>
                 <input type="text" id="seedBracket" placeholder="p.ej. playoff-8" />
               </div>
@@ -194,7 +166,7 @@
             <div class="controls" style="margin-top:10px">
               <button class="btn primary" id="btnDrawBracket">🥊 Generar llaves</button>
               <button class="btn" id="btnExportBracket">⬇️ Exportar CSV</button>
-              <div class="tiny">Beta: si el nº de equipos no es potencia de 2, se completará con BYE.</div>
+              <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
             </div>
             <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
           </div>
@@ -205,538 +177,416 @@
         </div>
       </div>
     </div>
-
-    <div class="footer">Hecho con ❤️. Todo ocurre del lado del cliente (no se sube nada). Podés guardar y compartir con “🔗 Compartir enlace”.</div>
   </div>
 
 <script>
-// -------- Utilidades RNG con semilla (reproducible) --------
+// ===== RNG con semilla =====
 function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
 function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
-function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()* (i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));const tmp=a[i];a[i]=a[j];a[j]=tmp}return a}
 
-// -------- Parseo de entradas --------
+// ===== Parseo =====
 function parseLine(line){
-  // Admite ";" o "," como separador. Tercera marca "*" o "si" = cabeza.
   const raw=line.replace(/\t/g,',').trim();
   if(!raw) return null;
-  let parts = raw.split(';');
-  if(parts.length===1) parts = raw.split(',');
-  parts = parts.map(s=>s.trim()).filter(Boolean);
-  const name = parts[0]||'';
-  const province = (parts[1]||'').replace(/^\*+$/,'').trim();
-  let head=false;
-  if(parts.length>=3){head = /\*|si|sí|head/i.test(parts[2])}
-  // Si el nombre termina con * también vale
-  if(/\*$/.test(name)){head=true}
-  return {name:name.replace(/\*+$/,'').trim(), province, head};
+  let parts=raw.split(';'); if(parts.length===1) parts=raw.split(',');
+  parts=parts.map(s=>s.trim()).filter(Boolean);
+  const name=parts[0]||'';
+  const province=(parts[1]||'').replace(/\*+$/,'').trim();
+  let head=false; if(parts.length>=3){ head=/\*|si|sí|head/i.test(parts[2]) }
+  if(/\*$/.test(name)){ head=true }
+  return {name:name.replace(/\*+$/,'').trim(), province, head}
 }
 function parseTeamsFromTextarea(el){
-  const lines = el.value.split(/\r?\n/);
-  const teams = [];
-  for(const line of lines){const t=parseLine(line); if(t&&t.name) teams.push(t)}
+  const lines=el.value.split(/\r?\n/); const teams=[];
+  for(const line of lines){ const t=parseLine(line); if(t&&t.name) teams.push(t) }
   return teams;
 }
 
-// -------- Lógica de sorteo por grupos --------
-function capacities(n, z){const base=Math.floor(n/z), rest=n%z;return Array.from({length:z},(_,i)=> base + (i<rest?1:0))}
+// ===== Capacidades =====
+function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
 function capacitiesFourBySix(n){
-  // Distribución objetivo 4×6=24 con patrón de vaciado: 4,2,3,1 y repetir
-  const caps = [6,6,6,6];
-  const total = 24;
-  if(n >= total) return caps; // si hay 24 o más, dejamos 6-6-6-6 y el algoritmo general se encarga si supera
-  let deficits = Math.max(0, total - n);
-  const order = [3,1,2,0]; // Z4, Z2, Z3, Z1
-  let i = 0;
-  while(deficits > 0){
-    const idx = order[i % order.length];
-    if(caps[idx] > 0){ caps[idx]--; deficits--; }
-    i++;
-  }
+  // Patrón de vaciado 4→2→3→1 repetido (Z4,Z2,Z3,Z1).
+  const caps=[6,6,6,6]; const total=24;
+  if(n>=total) return caps;
+  let deficits=total-n; const order=[3,1,2,0]; let i=0;
+  while(deficits>0){ const idx=order[i%order.length]; if(caps[idx]>0){ caps[idx]--; deficits--; } i++; }
   return caps;
 }
-function canPlace(team, group, avoid){
+
+function canPlace(team,group,avoid){
   if(!avoid) return true;
   if(!team.province) return true;
-  return !group.some(t=>t.province && t.province.toLowerCase()===team.province.toLowerCase());
+  return !group.some(t=>t.province&&t.province.toLowerCase()===team.province.toLowerCase());
 }
-function placeHeads(groups, heads){
-  // Coloca cabezas en las primeras posiciones de cada grupo
-  for(let i=0;i<groups.length && i<heads.length;i++){
-    groups[i].push(heads[i]);
-  }
-}
-function drawGroups(teams, z, avoid, seed, headsAsFirst, format){
+function placeHeads(groups,heads){ for(let i=0;i<groups.length&&i<heads.length;i++){ groups[i].push(heads[i]); } }
+
+function drawGroups(teams,z,avoid,seed,headsAsFirst,format){
   const rand=rngFromSeed(seed);
   const n=teams.length;
   if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
-  if(n<z) return {error:'Hay menos equipos que zonas. Reducí zonas o agregá equipos.'};
-  const capsBase = (format==='4x6' && z===4 && n<=24) ? capacitiesFourBySix(n) : capacities(n,z);
+  if(n<z) return {error:'Hay menos equipos que zonas.'};
+
+  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):capacities(n,z);
   const groups=Array.from({length:z},()=>[]);
+  const heads=shuffle(teams.filter(t=>t.head),rand);
+  const others=shuffle(teams.filter(t=>!t.head),rand);
+  if(headsAsFirst&&heads.length){ placeHeads(groups,heads) }
 
-  // separar cabezas
-  const heads = teams.filter(t=>t.head);
-  const others = teams.filter(t=>!t.head);
-  const headsShuffled=shuffle(heads,rand);
-  const othersShuffled=shuffle(others,rand);
+  const targetCaps=capsBase.slice();
+  for(let i=0;i<groups.length;i++){ targetCaps[i]=Math.max(0,targetCaps[i]-groups[i].length) }
 
-  if(headsAsFirst && headsShuffled.length>0){
-    placeHeads(groups, headsShuffled);
-  }
+  const pool=headsAsFirst?others:shuffle(teams,rand);
+  const maxAttempts=400; let best=null;
 
-  const targetCaps = capsBase.slice();
-  // ya hay algunos ocupados si pusimos cabezas
-  for(let i=0;i<groups.length;i++){
-    targetCaps[i] = Math.max(0, targetCaps[i] - groups[i].length);
-  }
-
-  const pool = headsAsFirst? othersShuffled : shuffle(teams,rand);
-  const maxAttempts=500;
-  let best=null;
-
-  for(let attempt=0; attempt<maxAttempts; attempt++){
-    // clonar estado base
-    const g=groups.map(arr=>arr.slice());
-    const remainingCaps = targetCaps.slice();
-    let ok=true;
-
-    const order = shuffle(pool, rand);
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const g=groups.map(a=>a.slice()); const remaining=targetCaps.slice(); let ok=true;
+    const order=shuffle(pool,rand);
     for(const team of order){
-      // elegir candidatos por menor tamaño y capacidad disponible
-      const candidates = g
-        .map((arr,idx)=>({idx, size:arr.length, cap:remainingCaps[idx]}))
-        .filter(x=>x.cap>0)
-        .sort((a,b)=> a.size-b.size || a.idx-b.idx)
-        .map(x=>x.idx);
-
+      const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]}))
+        .filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
       let placed=false;
-      // primero intentar con restricción
       for(const idx of candidates){
-        if(canPlace(team, g[idx], avoid)){
-          g[idx].push(team);
-          remainingCaps[idx]--;
-          placed=true;break;
-        }
+        if(canPlace(team,g[idx],avoid)){ g[idx].push(team); remaining[idx]--; placed=true; break; }
       }
-      if(!placed){
-        // relajar: meter donde haya lugar
-        if(candidates.length){
-          const pick = candidates[Math.floor(rand()*candidates.length)];
-          g[pick].push(team); remainingCaps[pick]--; placed=true;
-        }
-      }
+      if(!placed&&candidates.length){ const pick=candidates[Math.floor(rand()*candidates.length)];
+        g[pick].push(team); remaining[pick]--; placed=true; }
       if(!placed){ ok=false; break; }
     }
-    if(ok){
-      best={groups:g, caps:capsBase, relaxed:false, attempt};
-      break;
-    } else {
-      // guardar mejor (menos conflictos) — pequeño scoring
-      const score = g.reduce((acc,arr)=> acc + penalty(arr), 0);
-      if(!best || score<best.score){ best={groups:g, caps:capsBase, relaxed:true, score} }
+    if(ok){ best={groups:g,caps:capsBase,relaxed:false,attempt}; break; }
+    else {
+      const score=g.reduce((acc,arr)=>acc+penalty(arr),0);
+      if(!best||score<best.score){ best={groups:g,caps:capsBase,relaxed:true,score} }
     }
   }
-  return best||{error:'No se pudo asignar (caso muy adverso). Probá sin restricciones.'};
+  return best||{error:'No se pudo asignar. Probá sin restricciones.'};
 }
 function penalty(arr){
-  // penaliza provincias repetidas
   const seen={}; let p=0;
   for(const t of arr){ if(!t.province) continue; const k=t.province.toLowerCase(); seen[k]=(seen[k]||0)+1 }
-  for(const k in seen){ if(seen[k]>1) p+= (seen[k]-1) }
+  for(const k in seen){ if(seen[k]>1) p+=seen[k]-1 }
   return p;
 }
 
-// -------- UI helpers --------
-function renderGroups(target, result){
-  if(result.error){ target.innerHTML = `<div class="errorText">${result.error}</div>`; return }
-  const {groups,caps,relaxed,attempt} = result;
-  const grid = document.createElement('div'); grid.className='grid';
-  groups.forEach((arr,gi)=>{
+// ===== UI helpers =====
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+function renderGroups(target,result){
+  if(result.error){ target.innerHTML='<div class="errorText">'+result.error+'</div>'; return }
+  const groups=result.groups; const caps=result.caps;
+  const grid=document.createElement('div'); grid.className='grid';
+  groups.forEach(function(arr,gi){
     const card=document.createElement('div'); card.className='zone';
-    const cap=caps[gi];
-    const warn = penalty(arr)>0 ? ' <span class="warnText" title="Puede haber provincias repetidas en esta zona">⚠</span>' : '';
-    card.innerHTML = `<h4>Zona ${gi+1} <span class="muted">(${arr.length}/${cap})</span>${warn}</h4>`;
+    const warn=penalty(arr)>0?' <span class="warnText" title="Puede haber provincias repetidas">⚠</span>':'';
+    card.innerHTML='<h4>Zona '+(gi+1)+' <span class="muted">('+arr.length+'/'+caps[gi]+')</span>'+warn+'</h4>';
     const ol=document.createElement('ol');
-    arr.forEach(t=>{
-      const headMark = t.head? ' <span class="pill">Cabeza</span>' : '';
-      const prov = t.province? `<span class="muted">— ${t.province}</span>`:'';
-      const li=document.createElement('li'); li.innerHTML = `<b>${escapeHtml(t.name)}</b> ${prov} ${headMark}`; ol.appendChild(li);
+    arr.forEach(function(t){
+      const li=document.createElement('li');
+      li.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'');
+      ol.appendChild(li);
     });
     card.appendChild(ol); grid.appendChild(card);
   });
   target.innerHTML=''; target.appendChild(grid);
-  const status = document.getElementById('status');
-  const msg = relaxed ? `Sorteo realizado con relajación parcial de la restricción de provincia.` : `Sorteo realizado.`;
-  status.innerHTML = `${msg} ${attempt!=null?`<span class="muted">(intentos: ${attempt+1})</span>`:''}`;
+  document.getElementById('status').innerHTML='Sorteo realizado'+(result.relaxed?' (con relajación)':'');
 }
-function escapeHtml(s){return s.replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
 
 function exportGroupsCSV(groups){
-  let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
-  groups.forEach((arr,gi)=>{
-    arr.forEach((t,i)=>{
-      csv += `${gi+1},${i+1},"${t.name.replace(/\"/g,'\"')}"${t.province?`,"${t.province}"`:','}${t.head? ',si':',no'}\n`;
+  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
+  groups.forEach(function(arr,gi){
+    arr.forEach(function(t,i){
+      csv+=(gi+1)+','+(i+1)+',"'+t.name.replace(/"/g,'""')+'"'+(t.province?',"'+t.province.replace(/"/g,'""')+'"':',')+(t.head?',si':',no')+'\n';
     });
   });
-  downloadText(csv, 'sorteo_zonas.csv');
+  downloadText(csv,'sorteo_zonas.csv');
 }
 function exportSimpleCSV(list){
   let csv='Posicion,Equipo\n';
-  list.forEach((name,i)=>{ csv += `${i+1},"${name.replace(/\"/g,'\"')}"\n` });
+  list.forEach(function(n,i){ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'"\n' });
   downloadText(csv,'sorteo_simple.csv');
 }
 function exportBracketCSV(matches){
   let csv='Llave,Partido,Equipo A,Equipo B\n';
-  matches.forEach((m,idx)=>{ csv += `Ronda 1,${idx+1},"${m[0]}","${m[1]}"\n` });
+  matches.forEach(function(m,i){ csv+='Ronda 1,'+(i+1)+',"'+m[0]+'","'+m[1]+'"\n' });
   downloadText(csv,'llaves.csv');
 }
-function downloadText(text, filename){
+function downloadText(text,filename){
   const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
 }
 function copyText(text){
-  navigator.clipboard.writeText(text).then(()=>{
-    toast('Copiado al portapapeles');
-  }).catch(()=>alert('No se pudo copiar.'))
+  navigator.clipboard.writeText(text).then(function(){ toast('Copiado') }).catch(function(){ alert('No se pudo copiar') })
 }
 function toast(msg){
   const el=document.createElement('div');
-  el.textContent=msg; el.style.position='fixed'; el.style.bottom='16px'; el.style.right='16px'; el.style.background='#111827'; el.style.border='1px solid #334155'; el.style.padding='10px 12px'; el.style.borderRadius='10px'; el.style.zIndex=9999; el.style.boxShadow='0 10px 30px rgba(0,0,0,.4)';
-  document.body.appendChild(el); setTimeout(()=>el.remove(),1600);
+  el.textContent=msg; el.style.position='fixed'; el.style.bottom='16px'; el.style.right='16px';
+  el.style.background='#111827'; el.style.border='1px solid #334155'; el.style.padding='10px 12px';
+  el.style.borderRadius='10px'; el.style.zIndex=9999; document.body.appendChild(el);
+  setTimeout(function(){ el.remove() },1500);
 }
 
-// -------- Compartir estado por URL --------
+// ===== Compartir estado =====
+function getFormat(){ const r=document.querySelector('input[name="format"]:checked'); return r?r.value:'custom' }
 function gatherState(){
   return {
-    teams: parseTeamsFromTextarea(document.getElementById('teamsInput')),
-    z: parseInt(document.getElementById('zones').value,10)||1,
-    avoid: document.getElementById('avoidProvince').checked,
-    headsAsFirst: document.getElementById('headsAsFirst').checked,
-    seed: document.getElementById('seed').value.trim(),
-    format: getFormat()
+    teams:parseTeamsFromTextarea(document.getElementById('teamsInput')),
+    z:parseInt(document.getElementById('zones').value,10)||1,
+    avoid:document.getElementById('avoidProvince').checked,
+    headsAsFirst:document.getElementById('headsAsFirst').checked,
+    seed:document.getElementById('seed').value.trim(),
+    format:getFormat()
   };
 }
 function loadStateToUI(st){
-  if(st.teams){
-    document.getElementById('teamsInput').value = st.teams.map(t=> `${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('\n');
-  }
+  if(st.teams){ document.getElementById('teamsInput').value=st.teams.map(function(t){ return t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'') }).join('\n') }
   if(st.z) document.getElementById('zones').value=st.z;
   if(typeof st.avoid==='boolean') document.getElementById('avoidProvince').checked=st.avoid;
   if(typeof st.headsAsFirst==='boolean') document.getElementById('headsAsFirst').checked=st.headsAsFirst;
   if(st.seed) document.getElementById('seed').value=st.seed;
   if(st.format) setFormat(st.format);
 }
-function encodeState(st){
-  const json=JSON.stringify(st);
-  const b64=btoa(unescape(encodeURIComponent(json)));
-  return b64;
-}
-function decodeState(b64){
-  try{const json=decodeURIComponent(escape(atob(b64))); return JSON.parse(json)}catch(e){return null}
-}
-function setShareLink(){
-  const st=gatherState();
-  const hash=encodeState(st);
-  const url=location.origin+location.pathname+`#${hash}`;
-  copyText(url);
-}
-function tryLoadFromHash(){
-  if(location.hash && location.hash.length>1){
-    const b64=location.hash.slice(1);
-    const st=decodeState(b64);
-    if(st){ loadStateToUI(st); toast('Estado restaurado desde el enlace'); }
-  }
-}
+function encodeState(st){ const json=JSON.stringify(st); return btoa(unescape(encodeURIComponent(json))) }
+function decodeState(b64){ try{ const json=decodeURIComponent(escape(atob(b64))); return JSON.parse(json) }catch(e){ return null } }
+function setShareLink(){ const st=gatherState(); const hash=encodeState(st); const url=location.origin+location.pathname+'#'+hash; copyText(url) }
+function tryLoadFromHash(){ if(location.hash&&location.hash.length>1){ const st=decodeState(location.hash.slice(1)); if(st){ loadStateToUI(st); toast('Estado restaurado') } } }
 
-// -------- Tabs --------
+// ===== Tabs =====
 function setActiveTab(name){
-  document.querySelectorAll('.tab').forEach(b=>{
-    b.classList.toggle('active', b.dataset.tab===name);
-  });
-  document.querySelectorAll('.tabcontent').forEach(c=> c.classList.add('hidden'));
-  document.getElementById(`tab-${name}`).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active',b.dataset.tab===name) });
+  document.querySelectorAll('.tabcontent').forEach(function(c){ c.classList.add('hidden') });
+  document.getElementById('tab-'+name).classList.remove('hidden');
 }
 
-// -------- Bracket (beta) --------
-function nextPow2(x){let p=1; while(p<x) p<<=1; return p}
-function buildBracket(names, seed){
-  const rand=rngFromSeed(seed);
-  const list=shuffle(names, rand);
-  const target=nextPow2(list.length);
-  while(list.length<target) list.push('BYE');
-  const matches=[]; // ronda 1 emparejar de a pares
-  for(let i=0;i<list.length;i+=2){ matches.push([list[i], list[i+1]]) }
+// ===== Bracket =====
+function nextPow2(x){ let p=1; while(p<x) p<<=1; return p }
+function buildBracket(names,seed){
+  const rand=rngFromSeed(seed); const list=shuffle(names,rand);
+  const target=nextPow2(list.length); while(list.length<target) list.push('BYE');
+  const matches=[]; for(let i=0;i<list.length;i+=2){ matches.push([list[i],list[i+1]]) }
   return matches;
 }
-function renderBracket(target, matches){
-  target.innerHTML='';
-  const grid=document.createElement('div'); grid.className='grid';
-  matches.forEach((m,i)=>{
+function renderBracket(target,matches){
+  target.innerHTML=''; const grid=document.createElement('div'); grid.className='grid';
+  matches.forEach(function(m,i){
     const card=document.createElement('div'); card.className='zone';
-    card.innerHTML=`<h4>Partido ${i+1}</h4><ol><li><b>${escapeHtml(m[0])}</b></li><li><b>${escapeHtml(m[1])}</b></li></ol>`;
+    card.innerHTML='<h4>Partido '+(i+1)+'</h4><ol><li><b>'+escapeHtml(m[0])+'</b></li><li><b>'+escapeHtml(m[1])+'</b></li></ol>';
     grid.appendChild(card);
   });
   target.appendChild(grid);
 }
 
-// -------- App init & eventos --------
-const elTeams = document.getElementById('teamsInput');
-const elZones = document.getElementById('zones');
-const elAvoid = document.getElementById('avoidProvince');
-const elHeadsFirst = document.getElementById('headsAsFirst');
-const elSeed = document.getElementById('seed');
-const elStatus = document.getElementById('status');
-const elResult = document.getElementById('resultGroups');
-const elHistory = document.getElementById('history');
-const formatRadios = document.querySelectorAll('input[name="format"]');
-const elCapInfo = document.getElementById('capInfo');
-function getFormat(){ const r=document.querySelector('input[name="format"]:checked'); return r? r.value : '8x3'; }
-function setFormat(fmt){
-  if(!['8x3','4x6'].includes(fmt)) fmt='8x3';
-  formatRadios.forEach(r=> r.checked = (r.value===fmt));
-  if(fmt==='8x3'){ elZones.value=8; elZones.disabled=true; }
-  else if(fmt==='4x6'){ elZones.value=4; elZones.disabled=true; }
-  updateCapInfo();
-}
-function updateCapInfo(){
-  const teams=parseTeamsFromTextarea(elTeams).length;
-  const z=parseInt(elZones.value,10)||1;
-  const fmt=getFormat();
-  let msg=`Equipos: ${teams} · Zonas: ${z}`;
-  if(fmt==='4x6'){
-    if(teams<=24){
-      const capsPrev=capacitiesFourBySix(teams);
-      msg += ` — Capacidad objetivo 6 · Distribución: ${capsPrev.join('-')}`;
+// ===== App Init =====
+(function(){
+  console.log('Sorteador v1.2 cargado');
+
+  const elTeams=document.getElementById('teamsInput');
+  const elZones=document.getElementById('zones');
+  const elAvoid=document.getElementById('avoidProvince');
+  const elHeads=document.getElementById('headsAsFirst');
+  const elSeed=document.getElementById('seed');
+  const elStatus=document.getElementById('status');
+  const elResult=document.getElementById('resultGroups');
+  const elHistory=document.getElementById('history');
+  const elCapInfo=document.getElementById('capInfo');
+
+  function setFormat(fmt){
+    document.querySelectorAll('input[name="format"]').forEach(function(r){ r.checked=(r.value===fmt) });
+    if(fmt==='8x3'){ elZones.value=8; elZones.disabled=true }
+    else if(fmt==='4x6'){ elZones.value=4; elZones.disabled=true }
+    else { elZones.disabled=false }
+    updateCapInfo();
+  }
+  function updateCapInfo(){
+    const teams=parseTeamsFromTextarea(elTeams).length;
+    const z=parseInt(elZones.value,10)||1;
+    const fmt=getFormat();
+    let msg='Equipos: '+teams+' · Zonas: '+z;
+    if(fmt==='4x6'){
+      if(teams<=24){ const capsPrev=capacitiesFourBySix(teams); msg+=' — Capacidad 6 · Dist.: '+capsPrev.join('-') }
+      else { msg+=' — >24 equipos: distribución pareja' }
+    } else if(fmt==='8x3'){
+      msg+= (teams!==24? ' — Este formato asume 24 equipos (8×3)':' — Capacidad: 3 por zona');
     } else {
-      msg += ' — Hay más de 24 equipos; se distribuirán parejo.';
+      const per=(teams/z).toFixed(2); msg+=' — Promedio: '+per+' por zona';
     }
-  } else if(fmt==='8x3'){
-    msg += teams!==24? ' — Este formato asume 24 equipos (8×3).' : ' — Capacidad objetivo: 3 por zona.';
-  } else {
-    const per=(teams/z).toFixed(2); msg += ` — Promedio: ${per} por zona.`;
+    elCapInfo.innerHTML=msg;
   }
-  elCapInfo.innerHTML=msg;
-}
-formatRadios.forEach(r=> r.addEventListener('change',()=> setFormat(r.value)));
-elZones.addEventListener('input', updateCapInfo);
-elTeams.addEventListener('input', updateCapInfo);
 
-// Sorteo Zonas
-document.getElementById('btnDrawGroups').addEventListener('click', ()=>{
-  const teams=parseTeamsFromTextarea(elTeams);
-  const z=parseInt(elZones.value,10)||1;
-  const avoid=elAvoid.checked; const headsAsFirst=elHeadsFirst.checked; const seed=elSeed.value.trim();
-  if(teams.length===0){ elStatus.innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
-  const res=drawGroups(teams,z,avoid,seed,headsAsFirst, getFormat());
-  renderGroups(elResult, res);
-  if(!res.error){
-    const iso=new Date().toISOString().replace('T',' ').slice(0,19);
-    const item=document.createElement('div'); item.className='item';
-    const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-    item.innerHTML=`<div><b>${iso}</b> — ${teams.length} equipos · ${z} zonas · <span class="pill">cabezas: ${heads}</span> · <span class="pill">provincias: ${provs}</span> ${seed?`· <span class='pill'>semilla: ${escapeHtml(seed)}</span>`:''}</div>`;
-    elHistory.prepend(item);
-  }
-});
+  document.querySelectorAll('input[name="format"]').forEach(function(r){ r.addEventListener('change',function(){ setFormat(r.value) }) });
+  elZones.addEventListener('input',updateCapInfo); elTeams.addEventListener('input',updateCapInfo);
 
-// Exportar CSV grupos
-document.getElementById('btnExportCSV').addEventListener('click',()=>{
-  const boxes = elResult.querySelectorAll('.zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
-  // reconstruir estructura
-  const teams=parseTeamsFromTextarea(elTeams);
-  const z=parseInt(elZones.value,10)||1; const avoid=elAvoid.checked; const seed=elSeed.value.trim(); const headsAsFirst=elHeadsFirst.checked;
-  const res=drawGroups(teams,z,avoid,seed,headsAsFirst, getFormat()); if(res.error){toast('Generá el sorteo primero'); return}
-  exportGroupsCSV(res.groups);
-});
-
-// Copiar resultado grupos
-document.getElementById('btnCopy').addEventListener('click',()=>{
-  const boxes = elResult.querySelectorAll('.zone'); if(!boxes.length){toast('No hay resultado para copiar'); return}
-  let txt='';
-  boxes.forEach((zone,zi)=>{
-    txt += `Zona ${zi+1}\n`;
-    const lis=zone.querySelectorAll('li');
-    lis.forEach((li,i)=>{ txt += `${i+1}. ${li.innerText}\n`});
-    txt += '\n';
+  // Sortear Zonas
+  document.getElementById('btnDrawGroups').addEventListener('click',function(){
+    const teams=parseTeamsFromTextarea(elTeams); const z=parseInt(elZones.value,10)||1;
+    if(!teams.length){ elStatus.innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
+    const res=drawGroups(teams,z,elAvoid.checked,elSeed.value.trim(),elHeads.checked,getFormat());
+    renderGroups(elResult,res);
+    if(!res.error){
+      const iso=new Date().toISOString().replace('T',' ').slice(0,19);
+      const item=document.createElement('div'); item.className='item';
+      const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
+      item.textContent=iso+' — '+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+      elHistory.prepend(item);
+    }
   });
-  copyText(txt);
-});
 
-// Compartir enlace
-document.getElementById('btnShare').addEventListener('click', setShareLink);
+  // Exportar / Copiar / Compartir
+  document.getElementById('btnExportCSV').addEventListener('click',function(){
+    const zones=elResult.querySelectorAll('.zone'); if(!zones.length){ toast('No hay resultado para exportar'); return }
+    const res=drawGroups(parseTeamsFromTextarea(elTeams),parseInt(elZones.value,10)||1,elAvoid.checked,elSeed.value.trim(),elHeads.checked,getFormat());
+    if(res.error){ toast('Generá el sorteo primero'); return }
+    exportGroupsCSV(res.groups);
+  });
+  document.getElementById('btnCopy').addEventListener('click',function(){
+    const zones=elResult.querySelectorAll('.zone'); if(!zones.length){ toast('No hay resultado'); return }
+    let txt=''; zones.forEach(function(zone,zi){
+      txt+='Zona '+(zi+1)+'\n'; zone.querySelectorAll('li').forEach(function(li,i){ txt+=(i+1)+'. '+li.innerText+'\n' }); txt+='\n';
+    });
+    copyText(txt);
+  });
+  document.getElementById('btnShare').addEventListener('click',setShareLink);
 
-// CSV import
-const csvFile=document.getElementById('csvFile');
-csvFile.addEventListener('change', (e)=>{
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(){
-    try{
-      let text = reader.result || '';
-      if(text.charCodeAt(0)===0xFEFF){ text = text.slice(1); } // quita BOM
-      const lines = text.split(/?
-/).filter(l=>l.trim().length>0);
-      if(!lines.length){ toast('CSV vacío'); return }
+  // CSV robusto
+  document.getElementById('csvFile').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        let text=reader.result||''; if(text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
+        const lines=text.split(/\r?\n/).filter(function(l){ return l.trim().length>0 });
+        if(!lines.length){ toast('CSV vacío'); return }
 
-      const sample = lines[0];
-      const counts = { ',': (sample.match(/,/g)||[]).length, ';': (sample.match(/;/g)||[]).length, 'TAB': (sample.match(/	/g)||[]).length };
-      let delim = Object.entries(counts).sort((a,b)=> b[1]-a[1])[0][0];
-      const delimChar = delim==='TAB' ? '	' : delim;
+        const sample=lines[0];
+        const counts={',':(sample.match(/,/g)||[]).length,';':(sample.match(/;/g)||[]).length,'\\t':(sample.match(/\t/g)||[]).length};
+        let delim=Object.entries(counts).sort(function(a,b){ return b[1]-a[1] })[0][0];
+        if(counts[delim]===0) delim=',';
+        const delimChar=(delim==='\\t' ? '\t' : delim);
 
-      function splitQuoted(line){
-        const out=[]; let cur=''; let inQ=false;
-        for(let i=0;i<line.length;i++){
-          const ch=line[i];
-          if(ch==='"'){
-            if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; }
-          } else if(ch===delimChar && !inQ){ out.push(cur); cur=''; }
-          else { cur+=ch; }
+        function splitQuoted(line){
+          const out=[]; let cur=''; let inQ=false;
+          for(let i=0;i<line.length;i++){
+            const ch=line[i];
+            if(ch==='"'){ if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; } }
+            else if(ch===delimChar && !inQ){ out.push(cur); cur=''; }
+            else { cur+=ch; }
+          }
+          out.push(cur);
+          return out.map(function(s){ return s.trim() });
         }
-        out.push(cur);
-        return out.map(s=> s.trim());
-      }
 
-      const headRow = splitQuoted(lines[0]);
-      const hasHeader = headRow.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
+        const headRow=splitQuoted(lines[0]);
+        const hasHeader=headRow.some(function(v){ return /^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v) });
+        let idx={name:0,province:1,head:2};
+        if(hasHeader){
+          headRow.forEach(function(v,i){
+            const s=v.toLowerCase();
+            if(/equipo|team|nombre/.test(s)) idx.name=i;
+            if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
+            if(/cabeza|cabeza de serie|head|seed|semilla/.test(s)) idx.head=i;
+          });
+        }
 
-      let idx = { name:0, province:1, head:2 };
-      if(hasHeader){
-        headRow.forEach((v,i)=>{
-          const s=v.toLowerCase();
-          if(/equipo|team|nombre/.test(s)) idx.name=i;
-          if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
-          if(/cabeza|cabeza de serie|head|seed|semilla/.test(s)) idx.head=i;
+        const body=hasHeader?lines.slice(1):lines; const out=[];
+        body.forEach(function(line){
+          const parts=splitQuoted(line);
+          let rawName=(parts[idx.name]||''); if(rawName&&rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
+          rawName=rawName.trim(); if(!rawName) return;
+          const name=rawName.replace(/\*+$/,'').trim();
+          const province=(parts[idx.province]||'').trim();
+          const headRaw=(parts[idx.head]||'').trim();
+          const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(headRaw)||/\*$/.test(rawName);
+          out.push({name:name,province:province,head:head});
         });
+
+        if(!out.length){ toast('No se detectaron equipos'); return }
+        document.getElementById('teamsInput').value=out.map(function(t){
+          return t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'');
+        }).join('\n');
+
+        const info=document.getElementById('csvInfo');
+        if(info){
+          const prev=out.slice(0,3).map(function(t){ return t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'') }).join(' · ');
+          info.innerHTML='CSV cargado: <b>'+out.length+'</b> equipos · Delimitador: <b>'+(delimChar==='\t'?'TAB':delimChar)+'</b>'+(hasHeader?' · Con cabecera':'')+(prev?' · Ej: '+prev:'');
+        }
+        updateCapInfo(); toast('CSV cargado');
+      }catch(err){
+        console.error(err);
+        alert('No se pudo leer el CSV. Usá ",", ";" o TAB; columnas Equipo/Provincia/Cabeza (cabecera opcional).');
       }
-
-      const body = hasHeader ? lines.slice(1) : lines;
-      const out=[];
-      for(const line of body){
-        const parts = splitQuoted(line);
-        let rawName = (parts[idx.name]||'');
-        if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName = rawName.slice(1); }
-        rawName = rawName.trim();
-        if(!rawName) continue;
-        let name = rawName.replace(/\*+$/,'').trim();
-        const province = (parts[idx.province]||'').trim();
-        const headRaw = (parts[idx.head]||'').trim();
-        const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(headRaw) || /\*$/.test(rawName);
-        out.push({name, province, head});
-      }
-
-      if(!out.length){ toast('No se detectaron equipos en el CSV'); return }
-
-      document.getElementById('teamsInput').value = out.map(t=> `${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('
-');
-      if(typeof updateCapInfo==='function') updateCapInfo();
-
-      const info = document.getElementById('csvInfo');
-      if(info){
-        const prev = out.slice(0,3).map(t=> `${t.name}${t.province?` — ${t.province}`:''}${t.head?' — *':''}`).join(' · ');
-        info.innerHTML = `CSV cargado: <b>${out.length}</b> equipos · Delimitador: <b>${delimChar==='	'?'tab':(delimChar||',')}</b>${hasHeader?' · Con cabecera':''}${prev?` · Ej: ${prev}`:''}`;
-      }
-      toast('CSV cargado');
-    }catch(err){
-      console.error(err);
-      alert('No se pudo leer el CSV. Usá "," ";" o TAB, con columnas Equipo/Provincia/Cabeza (cabecera opcional).');
-    }
-  };
-  reader.readAsText(file, 'utf-8');
-});
-
-// Botones utilidad
-document.getElementById('btnExample').addEventListener('click',()=>{
-  const sample=[
-    ['River Plate','CABA','*'],
-    ['Boca Juniors','CABA','*'],
-    ['Newell\'s','Santa Fe',''],
-    ['Rosario Central','Santa Fe',''],
-    ['San Lorenzo','CABA',''],
-    ['Racing','Buenos Aires',''],
-    ['Independiente','Buenos Aires',''],
-    ['Estudiantes','Buenos Aires',''],
-    ['Talleres','Córdoba',''],
-    ['Belgrano','Córdoba',''],
-    ['Godoy Cruz','Mendoza',''],
-    ['Atl. Tucumán','Tucumán','']
-  ];
-  document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\n');
-});
-
-document.getElementById('btnClear').addEventListener('click',()=>{
-  document.getElementById('teamsInput').value='';
-  document.getElementById('resultGroups').innerHTML='';
-  document.getElementById('status').innerHTML='';
-});
-
-// -------- Simple draw --------
-document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
-  document.getElementById('simpleInput').value=document.getElementById('teamsInput').value.split(/\r?\n/).map(l=>l.split(';')[0].split(',')[0].trim()).filter(Boolean).join('\n');
-});
-document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML='';})
-
-document.getElementById('btnDrawSimple').addEventListener('click',()=>{
-  const seed=document.getElementById('seedSimple').value.trim();
-  const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  if(names.length===0){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
-  const rand=rngFromSeed(seed); const list=shuffle(names, rand);
-  const out=list.map((n,i)=> `${i+1}. ${n}`).join('\n');
-  document.getElementById('resultSimple').innerHTML = `<pre>${escapeHtml(out)}</pre>`;
-  document.getElementById('statusSimple').textContent = 'Sorteo realizado.';
-});
-
-document.getElementById('btnExportSimple').addEventListener('click',()=>{
-  const names=document.getElementById('resultSimple').innerText.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean);
-  if(!names.length){ toast('Generá el sorteo primero'); return }
-  exportSimpleCSV(names);
-});
-
-document.getElementById('btnCopySimple').addEventListener('click',()=>{
-  const txt=document.getElementById('resultSimple').innerText; if(!txt){ toast('No hay resultado'); return } copyText(txt);
-});
-
-// -------- Bracket --------
-document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{
-  document.getElementById('bracketInput').value=document.getElementById('teamsInput').value.split(/\r?\n/).map(l=>l.split(';')[0].split(',')[0].trim()).filter(Boolean).join('\n');
-});
-
-document.getElementById('btnClearBracket').addEventListener('click',()=>{document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML='';})
-
-document.getElementById('btnDrawBracket').addEventListener('click',()=>{
-  const seed=document.getElementById('seedBracket').value.trim();
-  const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
-  const matches=buildBracket(names, seed);
-  renderBracket(document.getElementById('resultBracket'), matches);
-  document.getElementById('statusBracket').textContent = 'Llaves generadas (ronda 1).';
-});
-
-document.getElementById('btnExportBracket').addEventListener('click',()=>{
-  const boxes=document.querySelectorAll('#resultBracket .zone'); if(!boxes.length){ toast('Generá las llaves primero'); return }
-  // reconstruir de la UI
-  const matches=[]; boxes.forEach(b=>{
-    const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText, lis[1].innerText]);
+    };
+    reader.readAsText(file,'utf-8');
   });
-  exportBracketCSV(matches);
-});
 
-// -------- Tabs handler --------
-document.querySelectorAll('.tab').forEach(btn=>{
-  btn.addEventListener('click',()=> setActiveTab(btn.dataset.tab));
-});
+  // Utilidad ejemplo/limpiar
+  document.getElementById('btnExample').addEventListener('click',function(){
+    const sample=[['River Plate','CABA','*'],['Boca Juniors','CABA','*'],['Newell\'s','Santa Fe',''],['Rosario Central','Santa Fe',''],['San Lorenzo','CABA',''],['Racing','Buenos Aires',''],['Independiente','Buenos Aires',''],['Estudiantes','Buenos Aires',''],['Talleres','Córdoba',''],['Belgrano','Córdoba',''],['Godoy Cruz','Mendoza',''],['Atl. Tucumán','Tucumán','']];
+    document.getElementById('teamsInput').value=sample.map(function(r){return r.filter(Boolean).join('; ')}).join('\n');
+    updateCapInfo();
+  });
+  document.getElementById('btnClear').addEventListener('click',function(){
+    document.getElementById('teamsInput').value='';
+    document.getElementById('resultGroups').innerHTML='';
+    document.getElementById('status').innerHTML='';
+    updateCapInfo();
+  });
 
-// Carga desde enlace compartido
-tryLoadFromHash();
-// Set formato por defecto si no vino por enlace
-if(!document.querySelector('input[name="format"]:checked')){
-  const el=document.querySelector('input[name="format"][value="8x3"]'); if(el){ el.checked=true; }
-}
-if(typeof setFormat==='function'){
-  setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
-  if(typeof updateCapInfo==='function') updateCapInfo();
-}
+  // -------- Simple draw --------
+  document.getElementById('btnUseFromGroups').addEventListener('click',function(){
+    document.getElementById('simpleInput').value=document.getElementById('teamsInput').value
+      .split(/\r?\n/).map(function(l){return l.split(';')[0].split(',')[0].trim()}).filter(Boolean).join('\n');
+  });
+  document.getElementById('btnClearSimple').addEventListener('click',function(){
+    document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML='';
+  });
+  document.getElementById('btnDrawSimple').addEventListener('click',function(){
+    const seed=document.getElementById('seedSimple').value.trim();
+    const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean);
+    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
+    const rand=rngFromSeed(seed); const list=shuffle(names,rand);
+    const out=list.map(function(n,i){ return (i+1)+'. '+n }).join('\n');
+    document.getElementById('resultSimple').innerHTML='<pre>'+escapeHtml(out)+'</pre>';
+    document.getElementById('statusSimple').textContent='Sorteo realizado.';
+  });
+  document.getElementById('btnExportSimple').addEventListener('click',function(){
+    const names=document.getElementById('resultSimple').innerText.split('\n').map(function(s){return s.replace(/^\d+\.\s*/,'').trim()}).filter(Boolean);
+    if(!names.length){ toast('Generá el sorteo primero'); return }
+    exportSimpleCSV(names);
+  });
+  document.getElementById('btnCopySimple').addEventListener('click',function(){
+    const txt=document.getElementById('resultSimple').innerText; if(!txt){ toast('No hay resultado'); return } copyText(txt);
+  });
 
+  // -------- Bracket --------
+  document.getElementById('btnUseFromGroups2').addEventListener('click',function(){
+    document.getElementById('bracketInput').value=document.getElementById('teamsInput').value
+      .split(/\r?\n/).map(function(l){return l.split(';')[0].split(',')[0].trim()}).filter(Boolean).join('\n');
+  });
+  document.getElementById('btnClearBracket').addEventListener('click',function(){
+    document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML='';
+  });
+  document.getElementById('btnDrawBracket').addEventListener('click',function(){
+    const seed=document.getElementById('seedBracket').value.trim();
+    const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(function(s){return s.trim()}).filter(Boolean);
+    if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
+    const matches=buildBracket(names,seed);
+    renderBracket(document.getElementById('resultBracket'),matches);
+    document.getElementById('statusBracket').textContent='Llaves generadas (ronda 1).';
+  });
+  document.getElementById('btnExportBracket').addEventListener('click',function(){
+    const boxes=document.querySelectorAll('#resultBracket .zone'); if(!boxes.length){ toast('Generá las llaves primero'); return }
+    const matches=[]; boxes.forEach(function(b){ const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText,lis[1].innerText]); });
+    exportBracketCSV(matches);
+  });
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(function(btn){ btn.addEventListener('click',function(){ setActiveTab(btn.dataset.tab) }) });
+
+  // Cargar hash y set inicial
+  tryLoadFromHash();
+  setFormat(document.querySelector('input[name="format"]:checked')?document.querySelector('input[name="format"]:checked').value:'custom');
+  updateCapInfo();
+})();
 </script>
 </body>
 </html>
