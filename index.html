@@ -59,7 +59,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v1.7.1</span>
+      <span class="badge">v1.7.2</span>
     </header>
 
     <div class="panel">
@@ -472,8 +472,14 @@ function getActiveTeamsLive(){
 
 /* ====================== Compartir estado ====================== */
 function getFormat(){const r=document.querySelector('input[name="format"]:checked');return r?r.value:'custom'}
+function currentZones(){
+  const fmt=getFormat();
+  if(fmt==='8x3') return 8;
+  if(fmt==='4x6') return 4;
+  return parseInt(document.getElementById('zones').value,10)||1;
+}
 function gatherState(){
-  return {teams:activeTeams, inactive:inactiveTeams, z:parseInt(document.getElementById('zones').value,10)||1, avoid:document.getElementById('avoidProvince').checked, headsAsFirst:document.getElementById('headsAsFirst').checked, seed:document.getElementById('seed').value.trim(), format:getFormat()}
+  return {teams:activeTeams, inactive:inactiveTeams, z:currentZones(), avoid:document.getElementById('avoidProvince').checked, headsAsFirst:document.getElementById('headsAsFirst').checked, seed:document.getElementById('seed').value.trim(), format:getFormat()}
 }
 function loadStateToUI(st){
   if(st.teams){ activeTeams = st.teams }
@@ -497,7 +503,7 @@ async function exportPDF(){
   try{
     if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
     const teams = getActiveTeamsLive(); if(!teams.length){ toast('No hay equipos activos'); return }
-    const z=parseInt(document.getElementById('zones').value,10)||1;
+    const z=currentZones();
     const avoid=document.getElementById('avoidProvince').checked;
     const headsAsFirst=document.getElementById('headsAsFirst').checked;
     const seed=document.getElementById('seed').value.trim();
@@ -549,7 +555,7 @@ function setFormat(fmt){
 function summaryCaps(caps){const c3=caps.filter(x=>x===3).length;const c2=caps.filter(x=>x===2).length;const c0=caps.filter(x=>x===0).length;return {c3,c2,c0,txt:`${c3}×3, ${c2}×2, ${c0}×0`}}
 function updateCapInfo(){
   const teams=getActiveTeamsLive().length;
-  const z=parseInt(document.getElementById('zones').value,10)||1; const fmt=getFormat();
+  const z=currentZones(); const fmt=getFormat();
   let msg='Activos: '+teams+' · Zonas: '+z;
   if(fmt==='4x6'){
     if(teams<=24){const capsPrev=capacitiesFourBySix(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 6 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'}
@@ -564,6 +570,11 @@ function updateCapInfo(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
+  // Radios de formato: ahora SIEMPRE ajustan zonas y UI al cambiar
+  document.querySelectorAll('input[name="format"]').forEach(r=>{
+    r.addEventListener('change',()=> setFormat(r.value));
+  });
+
   // Tabs
   document.querySelectorAll('.tab').forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -622,7 +633,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btnDrawGroups').addEventListener('click',()=>{
     const teams = getActiveTeamsLive();
     if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
-    const z=parseInt(document.getElementById('zones').value,10)||1;
+    const z=currentZones();
     const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,document.getElementById('seed').value.trim(),document.getElementById('headsAsFirst').checked,getFormat());
     renderGroups(document.getElementById('resultGroups'),res);
     if(!res.error){
@@ -639,7 +650,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btnExportCSV').addEventListener('click',()=>{
     const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
     const teams = getActiveTeamsLive();
-    const z=parseInt(document.getElementById('zones').value,10)||1;
+    const z=currentZones();
     const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,document.getElementById('seed').value.trim(),document.getElementById('headsAsFirst').checked,getFormat());
     if(res.error){toast('Generá el sorteo primero'); return}
     exportGroupsCSV(res.groups);
@@ -650,7 +661,6 @@ document.addEventListener('DOMContentLoaded',function(){
     copyText(txt);
   });
   document.getElementById('btnShare').addEventListener('click', ()=>{
-    // Siempre compartir estado basado en panel de checks (si está oculto, persistimos lo tipeado como activos y vaciamos inactivos)
     if(document.getElementById('checkLists').classList.contains('hidden')){
       activeTeams = parseText(document.getElementById('teamsInput').value);
       inactiveTeams = [];
