@@ -1,225 +1,161 @@
-<!DOCTYPE html><html lang="es"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sorteador Deportivo</title>
 <style>
-:root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
-*{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-.container{max-width:1100px;margin:0 auto;padding:24px}
-.panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media(max-width:900px){.row{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
-h1{margin:0 0 8px 0;font-size:clamp(22px,3vw,30px)} .badge{background:#0b2;color:#042; padding:4px 8px;border-radius:999px;font-size:12px}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-input[type=text],input[type=number],textarea{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
-textarea{min-height:200px;resize:vertical}
-.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:9px 13px;border-radius:12px;cursor:pointer;font-weight:600}
-.btn:hover{border-color:#3b82f6}.btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
-.pill{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
-.zone h4{margin:4px 0 8px 0}.zone ol{margin:0;padding-left:18px}
-ul.checklist{list-style:none;padding-left:0;margin:8px 0 0}
-ul.checklist li{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #223046;border-radius:10px;background:#0b1220;margin-bottom:6px}
-ul.checklist input[type=checkbox]{transform:scale(1.15)}
-.hidden{display:none}.muted{color:var(--muted)} .warn{color:var(--warn)} .error{color:var(--danger)}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:20px}
+.container{max-width:900px;margin:auto;background:#111827;padding:20px;border-radius:12px}
+textarea{width:100%;min-height:220px;border-radius:8px;background:#0b1220;color:#e5e7eb;border:1px solid #223046;padding:10px;font-size:14px}
+.btn{background:#1f2937;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px}
+.btn:hover{background:#374151}
+ul{list-style:none;padding-left:0}
+li{margin:4px 0;display:flex;align-items:center;gap:8px}
+input[type=checkbox]{transform:scale(1.2)}
+.muted{font-size:12px;color:#94a3b8}
 </style>
-</head><body>
+</head>
+<body>
 <div class="container">
-  <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h1>🎲 Sorteador Deportivo</h1><span class="badge">v1.6.5</span>
-  </header>
-  <div class="panel">
-    <div class="row">
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Equipos</h3>
-        <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
-        <textarea id="teamsInput" placeholder="Ejemplos:
-River Plate; CABA; *
-Boca Juniors; CABA
-Newell's; Santa Fe"></textarea>
-        <div class="controls" style="margin-top:8px">
-          <label for="csvFile" class="btn">📄 Importar CSV</label>
-          <input id="csvFile" type="file" accept=".csv" class="hidden"/>
-          <button class="btn" id="btnExample">Cargar ejemplo</button>
-          <button class="btn" id="btnClear">Limpiar</button>
-        </div>
-        <div id="csvInfo" class="muted" style="font-size:12px;margin-top:6px"></div>
-        <div class="controls" style="margin-top:10px">
-          <button class="btn" id="btnRenderChecks">👁️ Mostrar lista con checks</button>
-          <button class="btn" id="btnMoveToInactive">➖ Pasar a descartados</button>
-          <label class="pill"><input type="checkbox" id="toggleInactive"> Mostrar descartados</label>
-          <button class="btn" id="btnRestore">↩️ Restaurar seleccionados</button>
-        </div>
-        <ul id="teamsList" class="checklist"></ul>
-        <div id="inactiveBox" class="hidden">
-          <h4 class="muted" style="margin:6px 0 6px 0">Descartados</h4>
-          <ul id="inactiveList" class="checklist"></ul>
-        </div>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Parámetros</h3>
-        <div class="controls">
-          <label class="pill"><input type="radio" name="format" value="8x3" checked> 8×3</label>
-          <label class="pill"><input type="radio" name="format" value="4x6"> 4×6</label>
-          <label class="pill"><input type="radio" name="format" value="custom"> Pers.</label>
-        </div>
-        <div class="controls">
-          <div style="min-width:150px;flex:1"><label>Nº de zonas</label><input type="number" id="zones" min="1" value="8"></div>
-          <div style="min-width:180px;flex:1"><label>Disciplina (opcional)</label><input type="text" id="seed" placeholder="evita-2025"></div>
-        </div>
-        <label><input type="checkbox" id="avoidProvince" checked> Evitar provincias repetidas por zona</label>
-        <label><input type="checkbox" id="headsAsFirst" checked> Cabezas primero</label>
-        <div id="capInfo" class="muted" style="font-size:12px;margin-top:6px"></div>
-        <div class="controls" style="margin-top:8px">
-          <button class="btn primary" id="btnDrawGroups">🎯 SORTEAR ZONAS</button>
-          <button class="btn" id="btnCopy">📋 Copiar</button>
-        </div>
-        <div id="status" class="muted" style="font-size:12px;margin-top:6px"></div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:12px">
-      <h3 style="margin:0 0 8px 0">Resultado</h3>
-      <div id="resultGroups" class="grid"></div>
-    </div>
+  <h1>🎲 Sorteador Deportivo v1.1.2</h1>
+  <label>Equipos (uno por línea o importar CSV)</label>
+  <textarea id="teamsInput" placeholder="Ejemplo: River Plate; CABA; *&#10;Boca Juniors; CABA"></textarea>
+  <div>
+    <label for="csvFile" class="btn">📄 Importar CSV</label>
+    <input id="csvFile" type="file" accept=".csv,text/csv" style="display:none">
+    <button class="btn" id="btnRender">Mostrar lista con checks</button>
+    <button class="btn" id="btnRemove">❌ Eliminar seleccionados</button>
   </div>
+  <div id="csvInfo" class="muted"></div>
+  <ul id="teamsList"></ul>
 </div>
 <script>
-'use strict';
-// --- RNG y utilidades ---
-function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
-function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
-function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
-// FIX: bucle correcto (i--) para evitar freeze.
-function shuffle(array,rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));const t=a[i];a[i]=a[j];a[j]=t}return a}
-function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+// ---- Parser de líneas manuales ----
+function parseLine(line){
+  const raw=line.replace(/\\t/g,',').trim();
+  if(!raw) return null;
+  let parts=raw.split(';');
+  if(parts.length===1) parts=raw.split(',');
+  parts=parts.map(s=>s.trim()).filter(Boolean);
+  const name=parts[0]||'';
+  const province=(parts[1]||'').replace(/\\*+$/,'').trim();
+  let head=false;
+  if(parts.length>=3){ head=/\\*|si|sí|head/i.test(parts[2]) }
+  if(/\\*$/.test(name)){ head=true }
+  return {name:name.replace(/\\*+$/,'').trim(), province, head};
+}
+function parseTeams(txt){
+  return txt.split(/\\r?\\n/).map(parseLine).filter(t=>t&&t.name);
+}
 
-// --- Parseo equipos ---
-function parseLine(line){const raw=line.replace(/\\t/g,',').trim();if(!raw)return null;let parts=raw.split(';');if(parts.length===1)parts=raw.split(',');parts=parts.map(s=>s.trim()).filter(Boolean);const name=parts[0]||'';const province=(parts[1]||'').replace(/\\*+$/,'').trim();let head=false;if(parts.length>=3){head=/\\*|si|sí|head/i.test(parts[2])}if(/\\*$/.test(name)){head=true}return {name:name.replace(/\\*+$/,'').trim(),province,head}}
-function parseTeamsFromTextarea(){const lines=document.getElementById('teamsInput').value.split(/\\r?\\n/);const teams=[];for(const line of lines){const t=parseLine(line);if(t&&t.name)teams.push(t)}return teams}
-
-// --- Capacidades y reglas ---
-function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
-function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24;if(n>=total)return caps;let d=total-n;const order=[3,1,2,0];let k=0;while(d>0){const idx=order[k%order.length];if(caps[idx]>0){caps[idx]--;d--}k++}return caps}
-// 8×3 con patrón especial ≤24
-function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24;if(n>=total)return caps;const d=total-n;const zeros=Math.floor(d/3);const twos=d%3;const order=[7,6,5,4,3,2,1,0];for(let i=0;i<zeros;i++)caps[order[i]]=0;let k=zeros;for(let j=0;j<twos&&k<order.length;j++,k++){if(caps[order[k]]===3)caps[order[k]]=2}return caps}
-function canPlace(team,group,avoid){if(!avoid||!team.province)return true;return !group.some(t=>t.province&&t.province.toLowerCase()===team.province.toLowerCase())}
-function placeHeads(groups,heads){for(let i=0;i<groups.length&&i<heads.length;i++)groups[i].push(heads[i])}
-function penalty(arr){const seen={};let p=0;for(const t of arr){if(!t.province)continue;const k=t.province.toLowerCase();seen[k]=(seen[k]||0)+1}for(const k in seen){if(seen[k]>1)p+=seen[k]-1}return p}
-
-// --- Sorteo ---
-function drawGroups(teams,z,avoid,seed,headsFirst,fmt){
-  const rand=rngFromSeed(seed);const n=teams.length;
-  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
-  if(n<z) return {error:'Hay menos equipos que zonas.'};
-  const capsBase=(fmt==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(fmt==='8x3'&&z===8&&n<=24?capacitiesEightByThree(n):capacities(n,z));
-  const groups=Array.from({length:z},()=>[]);
-  const heads=shuffle(teams.filter(t=>t.head),rand);
-  const others=shuffle(teams.filter(t=>!t.head),rand);
-  if(headsFirst&&heads.length) placeHeads(groups,heads);
-  const targetCaps=capsBase.map((c,i)=>Math.max(0,c-groups[i].length));
-  const pool=headsFirst?others:shuffle(teams,rand);
-  const maxAttempts=400;
-  let best=null;
-  for(let att=0;att<maxAttempts;att++){
-    const g=groups.map(a=>a.slice());const rem=targetCaps.slice();let ok=true;
-    const order=shuffle(pool,rand);
-    for(const team of order){
-      const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:rem[idx]}))
-        .filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
-      let placed=false;
-      for(const idx of candidates){ if(canPlace(team,g[idx],avoid)){g[idx].push(team);rem[idx]--;placed=true;break} }
-      if(!placed&&candidates.length){const pick=candidates[Math.floor(rand()*candidates.length)];g[pick].push(team);rem[pick]--;placed=true}
-      if(!placed){ok=false;break}
-    }
-    if(ok){best={groups:g,caps:capsBase,relaxed:false,att};break}
-    else{const score=g.reduce((acc,arr)=>acc+penalty(arr),0); if(!best||score<best.score){best={groups:g,caps:capsBase,relaxed:true,score}}}
+// ---- CSV robusto (delimitador auto , ; TAB + comillas + cabecera opcional) ----
+function removeBOM(text){ if(text && text.charCodeAt(0)===0xFEFF) return text.slice(1); return text; }
+function detectDelimiter(lines){
+  const cand=[',',';','\\t'];
+  const score={',':0,';':0,'\\t':0};
+  const L=Math.min(lines.length,5);
+  for(let i=0;i<L;i++){
+    const s=lines[i];
+    cand.forEach(d=>{ score[d]+= (s.match(new RegExp(d==='\\t'?'\\t':d,'g'))||[]).length; });
   }
-  return best||{error:'No se pudo asignar. Probá sin restricciones.'};
+  let best=','; let max=-1;
+  for(const d of cand){ if(score[d]>max){max=score[d]; best=d;} }
+  return max>0 ? best : ',';
 }
-
-// --- Render resultado ---
-function renderGroups(target,result){
-  if(result.error){target.innerHTML='<div class="error">'+result.error+'</div>';return}
-  const {groups,caps}=result; const grid=document.createElement('div'); grid.className='grid';
-  groups.forEach((arr,gi)=>{const card=document.createElement('div');card.className='zone';
-    const warn=penalty(arr)>0?' <span class="warn" title="Puede haber provincias repetidas">⚠</span>':'';
-    card.innerHTML='<h4>Zona '+(gi+1)+' <span class="muted">('+arr.length+'/'+caps[gi]+')</span>'+warn+'</h4>';
-    const ol=document.createElement('ol'); ol.style.margin='0'; ol.style.paddingLeft='18px';
-    arr.forEach(t=>{const li=document.createElement('li'); li.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':''); ol.appendChild(li)});
-    card.appendChild(ol); grid.appendChild(card);
+function splitQuoted(line,delim){
+  const out=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='\"'){
+      if(inQ && line[i+1]==='\"'){ cur+='\"'; i++; }
+      else { inQ=!inQ; }
+    }else if(ch===delim && !inQ){
+      out.push(cur); cur='';
+    }else{
+      cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+function parseCSVText(text){
+  text=removeBOM(text||'');
+  const lines=text.split(/\\r?\\n/).filter(l=>l.trim().length>0);
+  if(!lines.length) return [];
+  const delim = detectDelimiter(lines);
+  const dc = (delim==='\\t' ? '\\t' : delim);
+  const header = splitQuoted(lines[0], dc);
+  const hasHeader = header.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
+  let idx={name:0, province:1, head:2};
+  if(hasHeader){
+    // mapear columnas
+    header.forEach((v,i)=>{
+      const s=v.toLowerCase();
+      if(/equipo|team|nombre/.test(s)) idx.name=i;
+      if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
+      if(/cabeza|cabeza de serie|head|seed/.test(s)) idx.head=i;
+    });
+  }
+  const body = hasHeader ? lines.slice(1) : lines;
+  const out=[];
+  body.forEach(line=>{
+    const p = splitQuoted(line, dc);
+    let rawName = (p[idx.name]||'').trim();
+    if(!rawName) return;
+    const name = rawName.replace(/\\*+$/,'').trim();
+    const province = (p[idx.province]||'').trim();
+    const headRaw = (p[idx.head]||'').trim();
+    const head = /^(si|sí|true|1|\\*|x|head|seed|cs)$/i.test(headRaw) || /\\*$/.test(rawName);
+    out.push({name, province, head});
   });
-  target.innerHTML=''; target.appendChild(grid);
-  document.getElementById('status').textContent='Sorteo realizado'+(result.relaxed?' (con relajación)':'');
+  return {teams:out, delimiter: (dc==='\\t'?'TAB':dc), hasHeader};
 }
 
-// --- Estado activo / descartado ---
-let activeTeams=[], inactiveTeams=[];
-function teamsToTextarea(arr){document.getElementById('teamsInput').value=arr.map(t=>t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n')}
-function syncActiveFromTextarea(){activeTeams=parseTeamsFromTextarea()}
+// ---- UI ----
+function renderList(){
+  const ul=document.getElementById('teamsList');
+  ul.innerHTML='';
+  const teams=parseTeams(document.getElementById('teamsInput').value);
+  teams.forEach((t,i)=>{
+    const li=document.createElement('li');
+    const chk=document.createElement('input'); chk.type='checkbox'; chk.dataset.index=i;
+    const lbl=document.createElement('label'); lbl.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');
+    li.appendChild(chk); li.appendChild(lbl); ul.appendChild(li);
+  });
+  document.getElementById('csvInfo').textContent = teams.length ? (teams.length+' equipos cargados') : '';
+}
 
-// --- UI helpers ---
-function summaryCaps(c){const c3=c.filter(x=>x===3).length,c2=c.filter(x=>x===2).length,c0=c.filter(x=>x===0).length;return `${c3}×3, ${c2}×2, ${c0}×0`}
-function getFormat(){const r=document.querySelector('input[name="format"]:checked');return r?r.value:'custom'}
-function updateCapInfo(){const t=(activeTeams.length||parseTeamsFromTextarea().length);const z=parseInt(document.getElementById('zones').value,10)||1;const fmt=getFormat();let msg=`Equipos: ${t} · Zonas: ${z}`; if(fmt==='4x6'){if(t<=24){const caps=capacitiesFourBySix(t);msg+=` — 6 por zona · Dist.: ${caps.join('-')} (${summaryCaps(caps)})`}else msg+=' — >24: distribución pareja'} else if(fmt==='8x3'){if(t<=24){const caps=capacitiesEightByThree(t);msg+=` — 3 por zona · Dist.: ${caps.join('-')} (${summaryCaps(caps)})`; if(t<16) msg+=' · <span class="warn"><b>Considere cambiar de sistema</b></span>'}else msg+=' — >24: distribución pareja'} else {msg+=` — Promedio: ${(t/z).toFixed(2)} por zona`} document.getElementById('capInfo').innerHTML=msg}
-
-// --- Checklist render ---
-function renderChecks(){const ul=document.getElementById('teamsList'); if(!activeTeams.length) syncActiveFromTextarea(); ul.innerHTML=''; if(!activeTeams.length){ul.innerHTML='<li class="muted">Pegá equipos o importá un CSV y tocá “Mostrar lista con checks”.</li>';return} activeTeams.forEach((t,i)=>{const li=document.createElement('li');const chk=document.createElement('input');chk.type='checkbox';chk.dataset.index=i;const lbl=document.createElement('label');lbl.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'');li.appendChild(chk);li.appendChild(lbl);ul.appendChild(li)})}
-function renderInactive(){const ul=document.getElementById('inactiveList'); ul.innerHTML=''; if(!inactiveTeams.length){ul.innerHTML='<li class="muted">No hay descartados.</li>';return} inactiveTeams.forEach((t,i)=>{const li=document.createElement('li');const chk=document.createElement('input');chk.type='checkbox';chk.dataset.index=i;const lbl=document.createElement('label');lbl.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'');li.appendChild(chk);li.appendChild(lbl);ul.appendChild(li)})}
-
-// --- Eventos ---
-document.getElementById('btnRenderChecks').addEventListener('click',()=>{syncActiveFromTextarea();renderChecks();renderInactive()});
-document.getElementById('btnMoveToInactive').addEventListener('click',()=>{const checks=[...document.querySelectorAll('#teamsList input[type=checkbox]:checked')];if(!checks.length){alert('No hay equipos seleccionados');return}const idxs=new Set(checks.map(c=>parseInt(c.dataset.index)));const kept=[];const moved=[];activeTeams.forEach((t,i)=> (idxs.has(i)?moved:kept).push(t));activeTeams=kept;inactiveTeams=inactiveTeams.concat(moved);teamsToTextarea(activeTeams);renderChecks();renderInactive();updateCapInfo()});
-document.getElementById('toggleInactive').addEventListener('change',e=>{document.getElementById('inactiveBox').classList.toggle('hidden',!e.target.checked)});
-document.getElementById('btnRestore').addEventListener('click',()=>{if(document.getElementById('inactiveBox').classList.contains('hidden')){alert('Mostrá los descartados para restaurar');return}const checks=[...document.querySelectorAll('#inactiveList input[type=checkbox]:checked')];if(!checks.length){alert('No hay descartados seleccionados');return}const idxs=new Set(checks.map(c=>parseInt(c.dataset.index)));const keep=[],restore=[];inactiveTeams.forEach((t,i)=>(idxs.has(i)?restore:keep).push(t));inactiveTeams=keep;activeTeams=activeTeams.concat(restore);teamsToTextarea(activeTeams);renderChecks();renderInactive();updateCapInfo()});
-
-// parámetros
-document.querySelectorAll('input[name="format"]').forEach(r=>r.addEventListener('change',()=>{const v=getFormat();const z=document.getElementById('zones');if(v==='8x3'){z.value=8;z.disabled=true}else if(v==='4x6'){z.value=4;z.disabled=true}else{z.disabled=false}updateCapInfo()}));
-document.getElementById('zones').addEventListener('input',updateCapInfo);
-document.getElementById('teamsInput').addEventListener('input',()=>{syncActiveFromTextarea();updateCapInfo()});
-
-// sortear
-document.getElementById('btnDrawGroups').addEventListener('click',()=>{
-  syncActiveFromTextarea();
-  const teams=activeTeams, z=parseInt(document.getElementById('zones').value,10)||1;
-  const avoid=document.getElementById('avoidProvince').checked;
-  const headsFirst=document.getElementById('headsAsFirst').checked;
-  const seed=document.getElementById('seed').value.trim();
-  const fmt=getFormat();
-  if(!teams.length){document.getElementById('status').innerHTML='<span class="error">Pegá al menos un equipo.</span>';return}
-  const res=drawGroups(teams,z,avoid,seed,headsFirst,fmt);
-  renderGroups(document.getElementById('resultGroups'),res);
+document.getElementById('btnRender').addEventListener('click',renderList);
+document.getElementById('btnRemove').addEventListener('click',()=>{
+  const checks=[...document.querySelectorAll('#teamsList input[type=checkbox]:checked')];
+  if(!checks.length){alert('No hay equipos seleccionados');return}
+  let teams=parseTeams(document.getElementById('teamsInput').value);
+  const idxs=new Set(checks.map(c=>parseInt(c.dataset.index)));
+  teams = teams.filter((_,i)=>!idxs.has(i));
+  document.getElementById('teamsInput').value = teams.map(t=>t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
+  renderList();
 });
 
-// CSV simple (auto-delimitador , ; o TAB)
+// Importar CSV (robusto)
 document.getElementById('csvFile').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=()=>{
-    let text=r.result||''; if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
-    const lines=text.split(/\\r?\\n/).filter(l=>l.trim().length>0); if(!lines.length){alert('CSV vacío');return}
-    const sample=lines[0], counts={',':(sample.match(/,/g)||[]).length,';':(sample.match(/;/g)||[]).length,'\\t':(sample.match(/\\t/g)||[]).length};
-    let delim=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0]; if(counts[delim]===0) delim=','; const dc=(delim==='\\t'?'\\t':delim);
-    function splitQuoted(line){const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch=='\"'){if(q&&line[i+1]=='\"'){cur+='\"';i++}else q=!q}else if(ch===dc&&!q){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out.map(s=>s.trim())}
-    const head=splitQuoted(lines[0]); const hasHeader=head.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|head|seed)$/i.test(v));
-    let idx={name:0,province:1,head:2}; if(hasHeader){head.forEach((v,i)=>{const s=v.toLowerCase(); if(/equipo|team|nombre/.test(s))idx.name=i; if(/provincia|province|regi[óo]n/.test(s))idx.province=i; if(/cabeza|head|seed/.test(s))idx.head=i;})}
-    const body=hasHeader?lines.slice(1):lines; const out=[];
-    body.forEach(line=>{const p=splitQuoted(line);let raw=(p[idx.name]||'').trim(); if(!raw)return; const name=raw.replace(/\\*+$/,'').trim(); const province=(p[idx.province]||'').trim(); const head=/^(si|sí|true|1|\\*|x|head|seed|cs)$/i.test((p[idx.head]||'').trim())||/\\*$/.test(raw); out.push({name,province,head})});
-    activeTeams=out; inactiveTeams=[]; teamsToTextarea(activeTeams); document.getElementById('csvInfo').innerHTML='CSV cargado: <b>'+out.length+'</b> equipos'; renderChecks(); renderInactive(); updateCapInfo();
+    try{
+      const parsed = parseCSVText(r.result);
+      const arr = parsed.teams;
+      if(!arr.length){ alert('No se detectaron equipos en el CSV'); return; }
+      document.getElementById('teamsInput').value = arr.map(t=>t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n');
+      document.getElementById('csvInfo').textContent = `CSV: ${arr.length} equipos · Delimitador: ${parsed.delimiter}${parsed.hasHeader?' · Con cabecera':''}`;
+      renderList();
+    }catch(err){
+      console.error(err);
+      alert('No se pudo leer el CSV. Usá ",", ";" o TAB; columnas Equipo/Provincia/Cabeza (cabecera opcional).');
+    }
   };
   r.readAsText(f,'utf-8');
 });
-
-// ejemplo y limpiar
-document.getElementById('btnExample').addEventListener('click',()=>{
-  const sample=[["River Plate","CABA","*"],["Boca Juniors","CABA","*"],["Newell's","Santa Fe",""],["Rosario Central","Santa Fe",""],["San Lorenzo","CABA",""],["Racing","Buenos Aires",""],["Independiente","Buenos Aires",""],["Estudiantes","Buenos Aires",""],["Talleres","Córdoba",""],["Belgrano","Córdoba",""],["Godoy Cruz","Mendoza",""],["Atl. Tucumán","Tucumán",""]];
-  activeTeams=sample.map(r=>({name:r[0],province:r[1]||'',head:!!r[2]})); inactiveTeams=[]; teamsToTextarea(activeTeams); renderChecks(); renderInactive(); updateCapInfo();
-});
-document.getElementById('btnClear').addEventListener('click',()=>{
-  activeTeams=[]; inactiveTeams=[]; document.getElementById('teamsInput').value=''; document.getElementById('teamsList').innerHTML=''; document.getElementById('inactiveList').innerHTML=''; document.getElementById('inactiveBox').classList.add('hidden'); document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
-});
-
-// init
-(function(){const r=document.querySelector('input[name="format"]:checked');const z=document.getElementById('zones'); if(r&&r.value==='8x3'){z.value=8;z.disabled=true} updateCapInfo();})();
 </script>
-</body></html>
+</body>
+</html>
