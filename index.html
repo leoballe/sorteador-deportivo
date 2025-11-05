@@ -19,13 +19,14 @@
     .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
     .card h3{margin:0 0 8px 0;font-size:16px}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type=text],input[type=number],textarea{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
+    input[type=text],input[type=number],textarea,select{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
     textarea{min-height:200px;resize:vertical}
     .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
     .btn:hover{border-color:#3b82f6}
     .btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
     .btn.ghost{background:transparent;border-color:#2b3b55}
+    .btn.warn{background:linear-gradient(135deg,var(--warn),#d97706);border:0;color:#3b1d00}
     .tiny{font-size:12px;color:var(--muted)}
     .tabs{display:flex;gap:8px;margin-bottom:12px}
     .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer}
@@ -59,7 +60,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v1.7.2</span>
+      <span class="badge">v1.8.0</span>
     </header>
 
     <div class="panel">
@@ -80,13 +81,13 @@ Boca Juniors; CABA
 Newell's; Santa Fe
 ..."></textarea>
             <div class="controls" style="margin-top:8px">
-              <label for="csvFile" class="btn ghost">📄 Importar CSV</label>
+              <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
               <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
               <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
               <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
               <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
             </div>
-            <div class="tiny">CSV esperado: columnas <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
+            <div class="tiny">CSV de equipos: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
             <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
 
             <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
@@ -122,11 +123,20 @@ Newell's; Santa Fe
                 <label>Nº de zonas / grupos</label>
                 <input type="number" id="zones" min="1" value="8" />
               </div>
-              <div style="min-width:200px;flex:1">
-                <label>Disciplina (opcional)</label>
-                <input type="text" id="seed" placeholder="p.ej. evita-2025" />
+              <div style="min-width:220px;flex:1">
+                <label>Disciplina</label>
+                <select id="disciplineSelect" disabled>
+                  <option value="">— Cargá CSV de disciplinas —</option>
+                </select>
               </div>
             </div>
+            <div class="controls">
+              <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+              <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+              <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
+            </div>
+            <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
+
             <label><input type="checkbox" id="avoidProvince" checked> Evitar que coincidan provincias en la misma zona</label>
             <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
             <div id="capInfo" class="tiny" style="margin-top:6px"></div>
@@ -167,9 +177,11 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:200px;flex:1">
-                <label>Disciplina (opcional)</label>
-                <input type="text" id="seedSimple" placeholder="p.ej. sorteo-final" />
+              <div style="min-width:220px;flex:1">
+                <label>Disciplina</label>
+                <select id="disciplineSelectSimple" disabled>
+                  <option value="">— Cargá CSV de disciplinas —</option>
+                </select>
               </div>
             </div>
             <div class="controls" style="margin-top:10px">
@@ -200,9 +212,11 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:200px;flex:1">
-                <label>Disciplina (opcional)</label>
-                <input type="text" id="seedBracket" placeholder="p.ej. playoff-8" />
+              <div style="min-width:220px;flex:1">
+                <label>Disciplina</label>
+                <select id="disciplineSelectBracket" disabled>
+                  <option value="">— Cargá CSV de disciplinas —</option>
+                </select>
               </div>
             </div>
             <div class="controls" style="margin-top:10px">
@@ -233,7 +247,7 @@ function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{c
 function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;"}[c]))}
 
-/* ====================== Parseo base ====================== */
+/* ====================== Parseo equipos ====================== */
 function parseLine(line){
   const raw=line.replace(/\t/g,',').trim();
   if(!raw) return null;
@@ -253,13 +267,12 @@ function parseText(value){
   return teams;
 }
 
-/* ====================== CSV robusto ====================== */
-function importCSVText(text){
+/* ====================== CSV equipos ====================== */
+function importCSVTeams(text){
   if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
   const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
 
-  // Detectar delimitador por conteo en primera línea
   const sample = lines[0];
   const cntComma = (sample.match(/,/g)||[]).length;
   const cntSemi  = (sample.match(/;/g)||[]).length;
@@ -311,6 +324,111 @@ function importCSVText(text){
     out.push({name, province, head});
   }
   return {list:out, delim};
+}
+
+/* ====================== CSV disciplinas ====================== */
+let disciplines = []; // {name, seed?}
+function importCSVDisciplines(text){
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
+  if(!lines.length) return {list:[], delim:','};
+
+  const sample = lines[0];
+  const cntComma = (sample.match(/,/g)||[]).length;
+  const cntSemi  = (sample.match(/;/g)||[]).length;
+  const cntTab   = (sample.match(/\t/g)||[]).length;
+  let delim = ',';
+  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
+  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
+  else if(cntComma>0) delim = ',';
+
+  function splitQuoted(line){
+    const out=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+      } else if(ch===delim && !inQ){
+        out.push(cur); cur='';
+      } else {
+        cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=> s.trim());
+  }
+
+  const headRow = splitQuoted(lines[0]);
+  const hasHeader = headRow.some(v=>/^(disciplina|deporte|sport|nombre|semilla|seed|codigo|code)$/i.test(v));
+
+  let idx = { name:0, seed:1 };
+  if(hasHeader){
+    headRow.forEach((v,i)=>{
+      const s=v.toLowerCase();
+      if(/^(disciplina|deporte|sport|nombre)$/.test(s)) idx.name=i;
+      if(/^(semilla|seed|codigo|code)$/.test(s)) idx.seed=i;
+    });
+  }
+
+  const body = hasHeader? lines.slice(1) : lines;
+  const out=[];
+  for(const line of body){
+    const parts=splitQuoted(line);
+    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
+    rawName=rawName.trim(); if(!rawName) continue;
+    const name=rawName;
+    const seed=(parts[idx.seed]||'').trim();
+    out.push({name, seed: seed||name});
+  }
+  return {list:out, delim};
+}
+
+function refreshDisciplineSelects(){
+  const sels=[document.getElementById('disciplineSelect'),
+              document.getElementById('disciplineSelectSimple'),
+              document.getElementById('disciplineSelectBracket')];
+  sels.forEach(sel=>{
+    sel.innerHTML='';
+    if(disciplines.length===0){
+      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de disciplinas —'; sel.appendChild(opt); sel.disabled=true;
+    }else{
+      const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar disciplina —'; sel.appendChild(opt0);
+      disciplines.forEach(d=>{
+        const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; o.dataset.seed=d.seed||d.name;
+        sel.appendChild(o);
+      });
+      sel.disabled=false;
+    }
+  });
+}
+
+function getSelectedDisciplineName(){
+  const sel=document.getElementById('disciplineSelect');
+  if(!sel) return '';
+  const val=sel.value || '';
+  return val;
+}
+function getSelectedDisciplineSeed(){
+  const sel=document.getElementById('disciplineSelect');
+  if(!sel) return '';
+  const opt=sel.selectedOptions[0];
+  if(opt && opt.dataset && opt.dataset.seed){ return opt.dataset.seed }
+  const name=sel.value||'';
+  return name;
+}
+function setSelectedDisciplineByName(name){
+  [document.getElementById('disciplineSelect'),
+   document.getElementById('disciplineSelectSimple'),
+   document.getElementById('disciplineSelectBracket')].forEach(sel=>{
+     if(!sel) return;
+     const options=Array.from(sel.options);
+     const found=options.find(o=>o.value===name);
+     if(found){ sel.value=name; }
+     else if(name){ // si no existe, agregar opción temporal
+       const o=document.createElement('option'); o.value=name; o.textContent=name; o.dataset.seed=name;
+       sel.appendChild(o); sel.value=name; sel.disabled=false;
+     }
+   });
 }
 
 /* ====================== Capacidades ====================== */
@@ -479,7 +597,7 @@ function currentZones(){
   return parseInt(document.getElementById('zones').value,10)||1;
 }
 function gatherState(){
-  return {teams:activeTeams, inactive:inactiveTeams, z:currentZones(), avoid:document.getElementById('avoidProvince').checked, headsAsFirst:document.getElementById('headsAsFirst').checked, seed:document.getElementById('seed').value.trim(), format:getFormat()}
+  return {teams:activeTeams, inactive:inactiveTeams, z:currentZones(), avoid:document.getElementById('avoidProvince').checked, headsAsFirst:document.getElementById('headsAsFirst').checked, discipline:getSelectedDisciplineName(), disciplineSeed:getSelectedDisciplineSeed(), format:getFormat()}
 }
 function loadStateToUI(st){
   if(st.teams){ activeTeams = st.teams }
@@ -488,8 +606,8 @@ function loadStateToUI(st){
   if(st.z) document.getElementById('zones').value=st.z;
   if(typeof st.avoid==='boolean') document.getElementById('avoidProvince').checked=st.avoid;
   if(typeof st.headsAsFirst==='boolean') document.getElementById('headsAsFirst').checked=st.headsAsFirst;
-  if(st.seed) document.getElementById('seed').value=st.seed;
   if(st.format) setFormat(st.format);
+  if(st.discipline){ setSelectedDisciplineByName(st.discipline) }
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists(); updateCapInfo();
 }
@@ -506,7 +624,7 @@ async function exportPDF(){
     const z=currentZones();
     const avoid=document.getElementById('avoidProvince').checked;
     const headsAsFirst=document.getElementById('headsAsFirst').checked;
-    const seed=document.getElementById('seed').value.trim();
+    const seed=getSelectedDisciplineSeed();
     const fmt=getFormat();
     const res=drawGroups(teams,z,avoid,seed,headsAsFirst,fmt);
     if(res.error){toast('Generá el sorteo primero');return}
@@ -521,7 +639,9 @@ async function exportPDF(){
     header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
     const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
     function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='999px';s.style.background='#f8fafc';return s}
-    const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt)); const seedVal=document.getElementById('seed').value.trim(); if(seedVal) chips.appendChild(chip('Disciplina: '+seedVal)); sheet.appendChild(chips);
+    const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt));
+    const discName=getSelectedDisciplineName(); if(discName) chips.appendChild(chip('Disciplina: '+discName));
+    sheet.appendChild(chips);
     const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='1';
     res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
       const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
@@ -570,7 +690,7 @@ function updateCapInfo(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  // Radios de formato: ahora SIEMPRE ajustan zonas y UI al cambiar
+  // Radios de formato
   document.querySelectorAll('input[name="format"]').forEach(r=>{
     r.addEventListener('change',()=> setFormat(r.value));
   });
@@ -584,13 +704,6 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 
-  // Sincronizar info al tipear (si no se abrió el panel de checks)
-  document.getElementById('teamsInput').addEventListener('input', ()=>{
-    if(document.getElementById('checkLists').classList.contains('hidden')){
-      updateCapInfo();
-    }
-  });
-
   // Panel de checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
@@ -599,23 +712,60 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btnSelectAllActive').addEventListener('click', ()=> selectAll('.chkActive'));
   document.getElementById('btnSelectAllInactive').addEventListener('click', ()=> selectAll('.chkInactive'));
 
-  // CSV
+  // Equipos CSV
   document.getElementById('csvFile').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        const parsed=importCSVText(reader.result||'');
+        const parsed=importCSVTeams(reader.result||'');
         const teams=parsed.list;
         if(!teams.length){ toast('CSV vacío o no se detectaron equipos'); return }
         document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
         buildListsFromTextarea();
         const prev=teams.slice(0,3).map(t=> t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'' )).join(' · ');
-        document.getElementById('csvInfo').innerHTML = 'CSV cargado: <b>'+teams.length+'</b> equipos · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        toast('CSV cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV. Usá "," ";" o TAB; columnas Equipo/Provincia/Cabeza (cabecera opcional).'); }
+        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
+        toast('CSV de equipos cargado');
+      }catch(err){ console.error(err); alert('No se pudo leer el CSV de equipos.'); }
     };
     reader.readAsText(file,'utf-8');
+  });
+
+  // Disciplinas CSV
+  document.getElementById('csvDisciplines').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const parsed=importCSVDisciplines(reader.result||'');
+        disciplines = parsed.list;
+        refreshDisciplineSelects();
+        const prev=disciplines.slice(0,5).map(d=> d.name).join(' · ');
+        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
+        toast('CSV de disciplinas cargado');
+      }catch(err){ console.error(err); alert('No se pudo leer el CSV de disciplinas.'); }
+    };
+    reader.readAsText(file,'utf-8');
+  });
+
+  // Demo disciplinas
+  document.getElementById('btnDiscDemo').addEventListener('click',()=>{
+    disciplines = [
+      {name:'Fútbol', seed:'futbol-24'},
+      {name:'Básquet', seed:'basquet-24'},
+      {name:'Vóley', seed:'voley-24'},
+      {name:'Handball', seed:'hand-24'},
+      {name:'Hockey', seed:'hockey-24'}
+    ];
+    refreshDisciplineSelects();
+    toast('Disciplinas demo cargadas');
+  });
+
+  // Sincronizar info al tipear (si no se abrió el panel de checks)
+  document.getElementById('teamsInput').addEventListener('input', ()=>{
+    if(document.getElementById('checkLists').classList.contains('hidden')){
+      updateCapInfo();
+    }
   });
 
   // Utilidad
@@ -634,13 +784,15 @@ document.addEventListener('DOMContentLoaded',function(){
     const teams = getActiveTeamsLive();
     if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
     const z=currentZones();
-    const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,document.getElementById('seed').value.trim(),document.getElementById('headsAsFirst').checked,getFormat());
+    const seed=getSelectedDisciplineSeed();
+    const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,seed,document.getElementById('headsAsFirst').checked,getFormat());
     renderGroups(document.getElementById('resultGroups'),res);
     if(!res.error){
       const iso=new Date().toISOString().replace('T',' ').slice(0,19);
       const item=document.createElement('div'); item.className='item';
       const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-      item.textContent=iso+' — '+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+      const disc=getSelectedDisciplineName();
+      item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
       document.getElementById('history').prepend(item);
       if(getFormat()==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>'}
     }
@@ -651,7 +803,8 @@ document.addEventListener('DOMContentLoaded',function(){
     const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
     const teams = getActiveTeamsLive();
     const z=currentZones();
-    const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,document.getElementById('seed').value.trim(),document.getElementById('headsAsFirst').checked,getFormat());
+    const seed=getSelectedDisciplineSeed();
+    const res=drawGroups(teams,z,document.getElementById('avoidProvince').checked,seed,document.getElementById('headsAsFirst').checked,getFormat());
     if(res.error){toast('Generá el sorteo primero'); return}
     exportGroupsCSV(res.groups);
   });
@@ -676,7 +829,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
   document.getElementById('btnDrawSimple').addEventListener('click',()=>{
-    const seed=document.getElementById('seedSimple').value.trim();
+    const seed=getSelectedDisciplineSeed();
     const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
     const rand=rngFromSeed(seed); const list=shuffle(names,rand);
@@ -702,7 +855,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   document.getElementById('btnClearBracket').addEventListener('click',()=>{document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML=''});
   document.getElementById('btnDrawBracket').addEventListener('click',()=>{
-    const seed=document.getElementById('seedBracket').value.trim();
+    const seed=getSelectedDisciplineSeed();
     const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
     const matches=buildBracket(names, seed);
@@ -718,6 +871,7 @@ document.addEventListener('DOMContentLoaded',function(){
   tryLoadFromHash();
   setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
   updateCapInfo();
+  refreshDisciplineSelects(); // inicializa selects vacíos
 });
 </script>
 </body>
