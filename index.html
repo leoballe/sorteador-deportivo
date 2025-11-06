@@ -646,9 +646,9 @@ async function exportPDF(){
     res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
       const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
       const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='12px';hleft.textContent='Zona '+(gi+1);
-      const hright=document.createElement('div');hright.style.fontSize='31px';hright.style.color='#334155';hright.textContent='('+arr.length+'/'+res.caps[gi]+')';
+      const hright=document.createElement('div');hright.style.fontSize='11px';hright.style.color='#334155';hright.textContent='('+arr.length+'/'+res.caps[gi]+')';
       head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='18px';ol.style.fontSize='12px';ol.style.lineHeight='1.35';
+      const body=document.createElement('div');body.style.padding='8px 12px 10px';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='18px';ol.style.fontSize='32px';ol.style.lineHeight='1.35';
       arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
     });
     sheet.appendChild(grid);
