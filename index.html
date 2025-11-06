@@ -648,7 +648,7 @@ async function exportPDF(){
       const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
       const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='('+arr.length+'/'+res.caps[gi]+')';
       head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='18px';ol.style.fontSize='22px';ol.style.lineHeight='1.35';
+      const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='0px';ol.style.fontSize='18px';ol.style.lineHeight='1.35';
       arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
     });
     sheet.appendChild(grid);
