@@ -36,6 +36,7 @@
     .zone h4{margin:4px 0 8px 0}
     .zone ol{margin:0;padding-left:18px}
     .muted{color:var(--muted)}
+    .warnText{color:var(--warn)}
     .errorText{color:var(--danger)}
     .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
     .hidden{display:none}
@@ -59,7 +60,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v2.0.1</span>
+      <span class="badge">v2.0</span>
     </header>
 
     <div class="panel">
@@ -81,7 +82,7 @@ Newell's; Santa Fe
 ..."></textarea>
             <div class="controls" style="margin-top:8px">
               <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
-              <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
+              <input id="csvFile" type="file" accept=".csv,text/csv,.txt" class="hidden" />
               <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
               <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
               <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
@@ -122,7 +123,7 @@ Newell's; Santa Fe
                 <label>Nº de zonas / grupos</label>
                 <input type="number" id="zones" min="1" value="8" />
               </div>
-              <div style="min-width:200px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
                 <select id="disciplineSelect" disabled>
                   <option value="">— Cargá CSV de disciplinas —</option>
@@ -131,38 +132,39 @@ Newell's; Santa Fe
             </div>
             <div class="controls">
               <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
-              <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+              <input id="csvDisciplines" type="file" accept=".csv,text/csv,.txt" class="hidden" />
               <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
             </div>
             <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
 
             <div class="controls">
-              <div style="min-width:200px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Categoría</label>
                 <select id="categorySelect" disabled>
                   <option value="">— Cargá CSV de categorías —</option>
                 </select>
               </div>
-              <div>
-                <label for="csvCategories" class="btn ghost" style="margin-top:20px">📄 Importar CSV de categorías</label>
-                <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
-              </div>
+            </div>
+            <div class="controls">
+              <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+              <input id="csvCategories" type="file" accept=".csv,text/csv,.txt" class="hidden" />
               <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
             </div>
             <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
 
             <div class="controls">
-              <div style="min-width:200px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Género</label>
                 <select id="genderSelect">
                   <option value="Masculino">Masculino</option>
                   <option value="Femenino">Femenino</option>
                   <option value="Mixto">Mixto</option>
-                  <option value="No Aplica">No Aplica</option>
+                  <option value="No Aplica" selected>No Aplica</option>
                 </select>
               </div>
             </div>
 
+            <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
             <div id="capInfo" class="tiny" style="margin-top:6px"></div>
 
             <div class="controls" style="margin-top:10px">
@@ -201,7 +203,7 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:200px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
                 <select id="disciplineSelectSimple" disabled>
                   <option value="">— Cargá CSV de disciplinas —</option>
@@ -236,7 +238,7 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:200px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
                 <select id="disciplineSelectBracket" disabled>
                   <option value="">— Cargá CSV de disciplinas —</option>
@@ -263,208 +265,259 @@ Newell's; Santa Fe
 
 <script>
 'use strict';
+
+/* ====================== Helpers ====================== */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+
+/* RNG */
 function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
 function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
 function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function escapeHtml(s){return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+
+/* ====================== CSV core ====================== */
+function detectDelimiter(lines){
+  // look at first up to 10 non-empty lines
+  const sample = lines.slice(0,10).filter(l=>l.trim().length>0);
+  let best = {ch:',', score:0};
+  const cand = [',',';','\t'];
+  for(const ch of cand){
+    let score=0;
+    for(const ln of sample){
+      // count ch outside quotes
+      let inQ=false, cnt=0;
+      for(let i=0;i<ln.length;i++){
+        const c=ln[i];
+        if(c==='\"'){ if(inQ && ln[i+1]==='\"'){ i++; } else { inQ=!inQ; } }
+        else if(c===ch && !inQ){ cnt++; }
+      }
+      if(cnt>0) score+=cnt;
+    }
+    if(score>best.score) best={ch,score};
+  }
+  return best.ch;
+}
+function splitQuoted(line, delim){
+  const out=[]; let cur=''; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='\"'){
+      if(inQ && line[i+1]==='\"'){ cur+='\"'; i++; } else { inQ=!inQ; }
+    }else if(ch===delim && !inQ){
+      out.push(cur); cur='';
+    }else{
+      cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out.map(s => s.replace(/\r$/,'').trim());
+}
+
+/* ====================== Parseo equipos desde textarea ====================== */
 function parseLine(line){
-  const raw=line.replace(/\\t/g,',').trim();
+  const raw=line.replace(/\t/g,',').trim();
   if(!raw) return null;
   let parts=raw.split(';'); if(parts.length===1) parts=raw.split(',');
   parts=parts.map(s=>s.trim()).filter(Boolean);
   const name=parts[0]||'';
-  const province=(parts[1]||'').replace(/\\*+$/,'').trim();
+  const province=(parts[1]||'').replace(/\*+$/,'').trim();
   let head=false;
-  if(parts.length>=3){head=/\\*|si|sí|yes|true|1|head/i.test(parts[2])}
-  if(/\\*$/.test(name)){head=true}
-  return {name:name.replace(/\\*+$/,'').trim(), province, head};
+  if(parts.length>=3){head=/\*|si|sí|head/i.test(parts[2])}
+  if(/\*$/.test(name)){head=true}
+  return {name:name.replace(/\*+$/,'').trim(), province, head};
 }
 function parseText(value){
-  const lines=value.split(/\\r?\\n/);
+  const lines=value.split(/\r?\n/);
   const teams=[];
   for(const line of lines){const t=parseLine(line); if(t&&t.name) teams.push(t)}
   return teams;
 }
-function sniffDelimiter(nonEmptyLines){
-  const lines = nonEmptyLines.slice(0, Math.min(10, nonEmptyLines.length));
-  const cands = [',',';','\\t'];
-  let best = ','; let bestScore = -1;
-  for(const d of cands){
-    let score=0;
-    for(const L of lines){
-      const cnt = (d==='\\t') ? (L.match(/\\t/g)||[]).length : (L.split(d).length-1);
-      score += cnt;
-    }
-    if(score>bestScore){ bestScore=score; best=d; }
-  }
-  return bestScore>0 ? best : ',';
-}
-function splitQuotedFactory(delim){
-  const D = (delim==='\\t') ? '\\t' : delim;
-  return function splitQuoted(line){
-    const out=[]; let cur=''; let inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){
-        if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; }
-      } else if(ch===D && !inQ){
-        out.push(cur); cur='';
-      } else {
-        cur+=ch;
-      }
-    }
-    out.push(cur);
-    return out.map(s=> s.trim());
-  }
-}
+
+/* ====================== CSV EQUIPOS ====================== */
 function importCSVTeams(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
-  const rawLines = text.split(/\\r?\\n/);
-  const lines = rawLines.filter(l=>l.trim().length>0);
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
+  const linesRaw = text.split(/\r?\n/);
+  const lines = linesRaw.filter(l=> l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
-  const delim = sniffDelimiter(lines);
-  const splitQuoted = splitQuotedFactory(delim);
-  const headRow = splitQuoted(lines[0]);
-  const hasHeader = headRow.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
+
+  const delim = detectDelimiter(lines);
+  const headFields = splitQuoted(lines[0], delim).map(v=>normalize(v));
+  const headerMap = {
+    name: ['equipo','team','nombre'],
+    province: ['provincia','province','region','región'],
+    head: ['cabeza','cabeza de serie','head','seed','cs']
+  };
+  const hasHeader = headFields.some(v=>[...headerMap.name, ...headerMap.province, ...headerMap.head].includes(v));
+
   let idx = { name:0, province:1, head:2 };
   if(hasHeader){
-    headRow.forEach((v,i)=>{
-      const s=v.toLowerCase();
-      if(/\\b(equipo|team|nombre)\\b/.test(s)) idx.name=i;
-      if(/\\b(provincia|province|regi[óo]n)\\b/.test(s)) idx.province=i;
-      if(/\\b(cabeza|cabeza de serie|head|seed)\\b/.test(s)) idx.head=i;
+    headFields.forEach((v,i)=>{
+      if(headerMap.name.includes(v)) idx.name=i;
+      if(headerMap.province.includes(v)) idx.province=i;
+      if(headerMap.head.includes(v)) idx.head=i;
     });
   }
+
   const body = hasHeader? lines.slice(1) : lines;
   const out=[];
   for(const line of body){
-    const parts=splitQuoted(line);
+    const parts=splitQuoted(line, delim);
     let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
     rawName=rawName.trim(); if(!rawName) continue;
-    const name=rawName.replace(/\\*+$/,'').trim();
+    const name=rawName.replace(/\*+$/,'').trim();
     const province=(parts[idx.province]||'').trim();
     const headRaw=(parts[idx.head]||'').trim();
-    const head=/^(si|sí|yes|true|1|\\*|x|head|seed|cs)$/i.test(headRaw) || /\\*$/.test(rawName);
+    const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(headRaw) || /\*$/.test(rawName);
     out.push({name, province, head});
   }
   return {list:out, delim};
 }
-let disciplines = []; 
-let categories = [];  
-function importCSVGeneric(text, kind){ 
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } 
-  const rawLines = text.split(/\\r?\\n/);
-  const lines = rawLines.filter(l=>l.trim().length>0);
+
+/* ====================== CSV DISCIPLINAS ====================== */
+let disciplines = []; // {name, seed?}
+function importCSVDisciplines(text){
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
+  const linesRaw = text.split(/\r?\n/);
+  const lines = linesRaw.filter(l=> l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
-  const delim = sniffDelimiter(lines);
-  const splitQuoted = splitQuotedFactory(delim);
-  const headRow = splitQuoted(lines[0]);
-  let idx = { name:0, extra:1 };
-  let hasHeader = false;
-  if(kind==='disc'){
-    hasHeader = headRow.some(v=>/^(disciplina|deporte|sport|nombre|semilla|seed|codigo|code)$/i.test(v));
-    if(hasHeader){
-      headRow.forEach((v,i)=>{
-        const s=v.toLowerCase();
-        if(/^(disciplina|deporte|sport|nombre)$/.test(s)) idx.name=i;
-        if(/^(semilla|seed|codigo|code)$/.test(s)) idx.extra=i;
-      });
-    }
-  }else{
-    hasHeader = headRow.some(v=>/^(categoria|categoría|category|division|nivel|level|nombre)$/i.test(v));
-    if(hasHeader){
-      headRow.forEach((v,i)=>{
-        const s=v.toLowerCase();
-        if(/^(categoria|categoría|category|division|nivel|level|nombre)$/.test(s)) idx.name=i;
-      });
-    }
+  const delim = detectDelimiter(lines);
+  const head = splitQuoted(lines[0], delim).map(v=>normalize(v));
+  const map = { name:['disciplina','deporte','sport','nombre'], seed:['semilla','seed','codigo','code'] };
+  const hasHeader = head.some(v=> map.name.concat(map.seed).includes(v) );
+  let idx = { name:0, seed:1 };
+  if(hasHeader){
+    head.forEach((v,i)=>{
+      if(map.name.includes(v)) idx.name=i;
+      if(map.seed.includes(v)) idx.seed=i;
+    });
   }
-  const body = hasHeader? lines.slice(1) : lines;
+  const body=hasHeader? lines.slice(1): lines;
   const out=[];
   for(const line of body){
-    const parts=splitQuoted(line);
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    if(kind==='disc'){
-      const seed=(parts[idx.extra]||'').trim();
-      out.push({name:rawName, seed: seed||rawName});
-    }else{
-      out.push({name:rawName});
-    }
+    const p=splitQuoted(line, delim);
+    const name=(p[idx.name]||'').trim(); if(!name) continue;
+    const seed=(p[idx.seed]||'').trim();
+    out.push({name, seed: seed||name});
   }
   return {list:out, delim};
 }
-function refreshSelect(selectId, items, placeholder){
-  const sel=document.getElementById(selectId);
-  sel.innerHTML='';
-  if(!items.length){
-    const opt=document.createElement('option'); opt.value=''; opt.textContent=placeholder; sel.appendChild(opt); sel.disabled=true; return;
-  }
-  const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar —'; sel.appendChild(opt0);
-  items.forEach(d=>{ const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; if(d.seed) o.dataset.seed=d.seed; sel.appendChild(o); });
-  sel.disabled=false;
-}
 function refreshDisciplineSelects(){
-  ['disciplineSelect','disciplineSelectSimple','disciplineSelectBracket'].forEach(id=>{
-    refreshSelect(id, disciplines, '— Cargá CSV de disciplinas —');
+  const sels=[document.getElementById('disciplineSelect'),
+              document.getElementById('disciplineSelectSimple'),
+              document.getElementById('disciplineSelectBracket')];
+  sels.forEach(sel=>{
+    sel.innerHTML='';
+    if(disciplines.length===0){
+      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de disciplinas —'; sel.appendChild(opt); sel.disabled=true;
+    }else{
+      const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar disciplina —'; sel.appendChild(opt0);
+      disciplines.forEach(d=>{
+        const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; o.dataset.seed=d.seed||d.name;
+        sel.appendChild(o);
+      });
+      sel.disabled=false;
+    }
   });
 }
-function refreshCategorySelect(){
-  refreshSelect('categorySelect', categories, '— Cargá CSV de categorías —');
-}
 function getSelectedDisciplineName(){
-  const sel=document.getElementById('disciplineSelect'); if(!sel) return ''; return sel.value||'';
+  const sel=document.getElementById('disciplineSelect');
+  if(!sel) return '';
+  return sel.value || '';
 }
 function getSelectedDisciplineSeed(){
-  const sel=document.getElementById('disciplineSelect'); if(!sel) return '';
+  const sel=document.getElementById('disciplineSelect');
+  if(!sel) return '';
   const opt=sel.selectedOptions[0];
   if(opt && opt.dataset && opt.dataset.seed){ return opt.dataset.seed }
   const name=sel.value||'';
   return name;
 }
-function setSelectedByName(selectIds, name, datasetSeed){
-  selectIds.forEach(id=>{
-    const sel=document.getElementById(id); if(!sel) return;
-    const options=Array.from(sel.options);
-    const found=options.find(o=>o.value===name);
-    if(found){ sel.value=name; }
-    else if(name){
-      const o=document.createElement('option'); o.value=name; o.textContent=name; if(datasetSeed) o.dataset.seed=datasetSeed;
-      sel.appendChild(o); sel.value=name; sel.disabled=false;
-    }
-  });
+
+/* ====================== CSV CATEGORIAS ====================== */
+let categories = []; // simple array of names
+function importCSVCategories(text){
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
+  const linesRaw = text.split(/\r?\n/);
+  const lines = linesRaw.filter(l=> l.trim().length>0);
+  if(!lines.length) return {list:[], delim:','};
+  const delim = detectDelimiter(lines);
+  const head = splitQuoted(lines[0], delim).map(v=>normalize(v));
+  const map = { name:['categoria','categoría','category','division','división','nombre'] };
+  const hasHeader = head.some(v=> map.name.includes(v) );
+  let idx = { name:0 };
+  if(hasHeader){ head.forEach((v,i)=>{ if(map.name.includes(v)) idx.name=i; }); }
+  const body=hasHeader? lines.slice(1): lines;
+  const out=[];
+  for(const line of body){
+    const p=splitQuoted(line, delim);
+    const name=(p[idx.name]||'').trim(); if(!name) continue;
+    out.push(name);
+  }
+  return {list:out, delim};
 }
+function refreshCategorySelect(){
+  const sel=document.getElementById('categorySelect');
+  sel.innerHTML='';
+  if(categories.length===0){
+    const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de categorías —'; sel.appendChild(opt); sel.disabled=true;
+  }else{
+    const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar categoría —'; sel.appendChild(opt0);
+    categories.forEach(name=>{ const o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o); });
+    sel.disabled=false;
+  }
+}
+
+/* ====================== Capacidades ====================== */
 function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
 function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24;if(n>=total) return caps;let deficits=total-n;const order=[3,1,2,0];let i=0;while(deficits>0){const idx=order[i%order.length];if(caps[idx]>0){caps[idx]--;deficits--}i++}return caps}
 function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24;if(n>=total) return caps;const d=total-n;const zeros=Math.floor(d/3);const twos=d%3;const order=[7,6,5,4,3,2,1,0];for(let i=0;i<zeros;i++){caps[order[i]]=0}let k=zeros;for(let j=0;j<twos && k<order.length;j++,k++){if(caps[order[k]]===3) caps[order[k]]=2}return caps}
+
+/* ====================== Sorteo (sin restricciones por provincia) ====================== */
+function placeHeads(groups,heads){for(let i=0;i<groups.length && i<heads.length;i++){groups[i].push(heads[i])}}
 function drawGroups(teams,z,seed,headsAsFirst,format){
   const rand=rngFromSeed(seed);
   const n=teams.length;
   if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
   if(n<z) return {error:'Hay menos equipos que zonas.'};
+
   const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24?capacitiesEightByThree(n):capacities(n,z));
   const groups=Array.from({length:z},()=>[]);
+
   const heads=shuffle(teams.filter(t=>t.head),rand);
   const others=shuffle(teams.filter(t=>!t.head),rand);
-  if(headsAsFirst&&heads.length){
-    for(let i=0;i<groups.length&&i<heads.length;i++){groups[i].push(heads[i])}
-  }
+  if(headsAsFirst&&heads.length){placeHeads(groups,heads)}
+
   const targetCaps=capsBase.slice();
   for(let i=0;i<groups.length;i++){targetCaps[i]=Math.max(0,targetCaps[i]-groups[i].length)}
+
   const pool=headsAsFirst?others:shuffle(teams,rand);
-  const g=groups.map(a=>a.slice()); const remaining=targetCaps.slice();
-  const order=shuffle(pool,rand);
-  for(const team of order){
-    const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]})).filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
-    if(!candidates.length){ return {error:'No se pudo asignar.'} }
-    const idx=candidates[0];
-    g[idx].push(team); remaining[idx]--;
+  const maxAttempts=400; let best=null;
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const g=groups.map(a=>a.slice()); const remaining=targetCaps.slice(); let ok=true;
+    const order=shuffle(pool,rand);
+    for(const team of order){
+      // candidatos: grupos con capacidad, priorizar más chicos
+      const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]}))
+                        .filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
+      if(!candidates.length){ ok=false; break; }
+      const pick=candidates[0]; // greedy: siempre el más chico
+      g[pick].push(team); remaining[pick]--;
+    }
+    if(ok){ return {groups:g,caps:capsBase,relaxed:false,attempt}; }
+    // improbable que falle, pero guardo el mejor (no uso penalty ya que no hay restricción)
+    if(!best){ best={groups:g,caps:capsBase,relaxed:true} }
   }
-  return {groups:g,caps:capsBase,relaxed:false};
+  return best||{error:'No se pudo asignar. Probá con otro formato.'};
 }
+
+/* ====================== Render / Export ====================== */
+let lastResult=null;
 function renderGroups(target,result){
-  if(result.error){ target.innerHTML='<div class="errorText">'+result.error+'</div>'; return }
+  lastResult = result && !result.error ? result : null;
+  if(result.error){ target.innerHTML='<div class="errorText">'+escapeHtml(result.error)+'</div>'; return }
   const {groups} = result;
   const grid=document.createElement('div'); grid.className='grid';
   groups.forEach((arr,gi)=>{
@@ -479,24 +532,26 @@ function renderGroups(target,result){
     card.appendChild(ol); grid.appendChild(card);
   });
   target.innerHTML=''; target.appendChild(grid);
+  document.getElementById('status').innerHTML='Sorteo realizado';
 }
+
 function exportGroupsCSV(groups){
-  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\\n';
+  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
   groups.forEach((arr,gi)=>{
     arr.forEach((t,i)=>{
-      csv+=(gi+1)+','+(i+1)+',\"'+t.name.replace(/\"/g,'\"\"')+'\"'+(t.province?',\"'+t.province.replace(/\"/g,'\"\"')+'\"':',')+(t.head?',si':',no')+'\\n';
+      csv+=(gi+1)+','+(i+1)+',"'+t.name.replace(/"/g,'""')+'"'+(t.province?',"'+t.province.replace(/"/g,'""')+'"':',')+(t.head?',si':',no')+'\n';
     });
   });
   downloadText(csv,'sorteo_zonas.csv');
 }
 function exportSimpleCSV(list){
-  let csv='Posicion,Equipo\\n';
-  list.forEach((n,i)=>{ csv+=(i+1)+',\"'+n.replace(/\"/g,'\"\"')+'\"\\n' });
+  let csv='Posicion,Equipo\n';
+  list.forEach((n,i)=>{ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'"\n' });
   downloadText(csv,'sorteo_simple.csv');
 }
 function exportBracketCSV(matches){
-  let csv='Llave,Partido,Equipo A,Equipo B\\n';
-  matches.forEach((m,i)=>{ csv+='Ronda 1,'+(i+1)+',\"'+m[0]+'\",\"'+m[1]+'\"\\n' });
+  let csv='Llave,Partido,Equipo A,Equipo B\n';
+  matches.forEach((m,i)=>{ csv+='Ronda 1,'+(i+1)+',"'+m[0]+'","'+m[1]+'"\n' });
   downloadText(csv,'llaves.csv');
 }
 function downloadText(text,filename){
@@ -512,6 +567,8 @@ function toast(msg){
   el.textContent=msg; el.style.position='fixed'; el.style.bottom='16px'; el.style.right='16px'; el.style.background='#111827'; el.style.border='1px solid #334155'; el.style.padding='10px 12px'; el.style.borderRadius='10px'; el.style.zIndex=9999;
   document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
 }
+
+/* ====================== Estado, listas activas/inactivas ====================== */
 let activeTeams=[], inactiveTeams=[];
 function buildListsFromTextarea(){
   activeTeams = parseText(document.getElementById('teamsInput').value);
@@ -523,19 +580,22 @@ function renderLists(){
   const aBox=document.getElementById('activeList');
   const iBox=document.getElementById('inactiveList');
   const showInactive=document.getElementById('toggleShowInactive').checked;
+
   document.getElementById('countActive').textContent = activeTeams.length;
   document.getElementById('countInactive').textContent = inactiveTeams.length;
+
   iBox.classList.toggle('hidden', !showInactive);
+
   aBox.innerHTML='';
   activeTeams.forEach((t,idx)=>{
     const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type=\"checkbox\" class=\"chkActive\" data-idx=\"'+idx+'\"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class=\"muted\">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class=\"pill\">Cabeza</span>':'');
+    row.innerHTML = '<input type="checkbox" class="chkActive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
     aBox.appendChild(row);
   });
   iBox.innerHTML='';
   inactiveTeams.forEach((t,idx)=>{
     const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type=\"checkbox\" class=\"chkInactive\" data-idx=\"'+idx+'\"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class=\"muted\">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class=\"pill\">Cabeza</span>':'');
+    row.innerHTML = '<input type="checkbox" class="chkInactive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
     iBox.appendChild(row);
   });
 }
@@ -562,26 +622,81 @@ function getActiveTeamsLive(){
   if(panelVisible) return activeTeams.slice();
   return parseText(document.getElementById('teamsInput').value);
 }
-function getFormat(){const r=document.querySelector('input[name=\"format\"]:checked');return r?r.value:'custom'}
+
+/* ====================== Compartir estado ====================== */
+function getFormat(){const r=document.querySelector('input[name="format"]:checked');return r?r.value:'custom'}
 function currentZones(){
   const fmt=getFormat();
   if(fmt==='8x3') return 8;
   if(fmt==='4x6') return 4;
   return parseInt(document.getElementById('zones').value,10)||1;
 }
+function gatherState(){
+  return {
+    teams:activeTeams, inactive:inactiveTeams,
+    z:currentZones(),
+    headsAsFirst:document.getElementById('headsAsFirst').checked,
+    discipline:getSelectedDisciplineName(), disciplineSeed:getSelectedDisciplineSeed(),
+    category:(document.getElementById('categorySelect').value||''),
+    gender:(document.getElementById('genderSelect').value||''),
+    format:getFormat()
+  }
+}
+function loadStateToUI(st){
+  if(st.teams){ activeTeams = st.teams }
+  if(st.inactive){ inactiveTeams = st.inactive }
+  document.getElementById('teamsInput').value = activeTeams.concat(inactiveTeams).map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
+  if(st.z) document.getElementById('zones').value=st.z;
+  if(typeof st.headsAsFirst==='boolean') document.getElementById('headsAsFirst').checked=st.headsAsFirst;
+  if(st.format) setFormat(st.format);
+  if(st.discipline){ setSelectedDisciplineByName(st.discipline) }
+  if(st.category){ setSelectedCategoryByName(st.category) }
+  if(st.gender){ document.getElementById('genderSelect').value = st.gender; }
+  document.getElementById('checkLists').classList.remove('hidden');
+  renderLists(); updateCapInfo();
+}
+function setSelectedDisciplineByName(name){
+  [document.getElementById('disciplineSelect'),
+   document.getElementById('disciplineSelectSimple'),
+   document.getElementById('disciplineSelectBracket')].forEach(sel=>{
+     if(!sel) return;
+     const options=Array.from(sel.options);
+     const found=options.find(o=>o.value===name);
+     if(found){ sel.value=name; sel.disabled=false; }
+     else if(name){
+       const o=document.createElement('option'); o.value=name; o.textContent=name; o.dataset.seed=name;
+       sel.appendChild(o); sel.value=name; sel.disabled=false;
+     }
+   });
+}
+function setSelectedCategoryByName(name){
+  const sel=document.getElementById('categorySelect');
+  if(!sel) return;
+  const options=Array.from(sel.options);
+  const found=options.find(o=>o.value===name);
+  if(found){ sel.value=name; sel.disabled=false; }
+  else if(name){
+    const o=document.createElement('option'); o.value=name; o.textContent=name;
+    sel.appendChild(o); sel.value=name; sel.disabled=false;
+  }
+}
 function encodeState(st){const json=JSON.stringify(st);return btoa(unescape(encodeURIComponent(json)))}
 function decodeState(b64){try{const json=decodeURIComponent(escape(atob(b64)));return JSON.parse(json)}catch(e){return null}}
-function setShareLink(){const st={teams:activeTeams, inactive:inactiveTeams, z:currentZones(), discipline:getSelectedDisciplineName(), disciplineSeed:getSelectedDisciplineSeed(), category:document.getElementById('categorySelect').value||'', gender:document.getElementById('genderSelect').value||'', format:getFormat()};const hash=encodeState(st);const url=location.origin+location.pathname+'#'+hash;copyText(url)}
-function tryLoadFromHash(){if(location.hash&&location.hash.length>1){const st=decodeState(location.hash.slice(1));if(st){document.getElementById('teamsInput').value = (st.teams||[]).concat(st.inactive||[]).map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n');buildListsFromTextarea(); if(st.z) document.getElementById('zones').value=st.z; setFormat(st.format||'8x3'); if(st.discipline){ setSelectedByName(['disciplineSelect','disciplineSelectSimple','disciplineSelectBracket'], st.discipline, st.disciplineSeed) } if(st.category){ setSelectedByName(['categorySelect'], st.category) } if(st.gender){ document.getElementById('genderSelect').value = st.gender; } toast('Estado restaurado')}}}
+function setShareLink(){const st=gatherState();const hash=encodeState(st);const url=location.origin+location.pathname+'#'+hash;copyText(url)}
+function tryLoadFromHash(){if(location.hash&&location.hash.length>1){const st=decodeState(location.hash.slice(1));if(st){loadStateToUI(st);toast('Estado restaurado')}}}
+
+/* ====================== PDF (A4) (opcional, no pedido) ====================== */
 async function exportPDF(){
   try{
     if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
     const teams = getActiveTeamsLive(); if(!teams.length){ toast('No hay equipos activos'); return }
     const z=currentZones();
+    const headsAsFirst=document.getElementById('headsAsFirst').checked;
     const seed=getSelectedDisciplineSeed();
     const fmt=getFormat();
-    const res=drawGroups(teams,z,seed,true,fmt);
+    const res=drawGroups(teams,z,seed,headsAsFirst,fmt);
     if(res.error){toast('Generá el sorteo primero');return}
+
     const sheet=document.createElement('div');
     sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#ffffff';sheet.style.color='#0f172a';
     sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';
@@ -595,13 +710,14 @@ async function exportPDF(){
     const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt));
     const discName=getSelectedDisciplineName(); if(discName) chips.appendChild(chip('Disciplina: '+discName));
     const catName=(document.getElementById('categorySelect').value||''); if(catName) chips.appendChild(chip('Categoría: '+catName));
-    const gender=(document.getElementById('genderSelect').value||''); if(gender) chips.appendChild(chip('Género: '+gender));
+    const genName=(document.getElementById('genderSelect').value||''); if(genName) chips.appendChild(chip('Género: '+genName));
     sheet.appendChild(chips);
     const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='0';
     res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
-      const head=document.createElement('div');head.style.display='flex';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
+      const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
       const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
-      head.appendChild(hleft);card.appendChild(head);
+      const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='';
+      head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
       const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='8px';ol.style.listStylePosition='inside';ol.style.fontSize='18px';ol.style.lineHeight='1.35';
       arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
     });
@@ -616,47 +732,44 @@ async function exportPDF(){
     pdf.addImage(img,'PNG',0,0,pw,ph); const dateStr=new Date().toISOString().slice(0,10); pdf.save('sorteo_'+dateStr+'.pdf');
   }catch(err){ console.error(err); alert('No se pudo exportar el PDF.'); }
 }
-function openResultInNewTab(res){
-  const disc=document.getElementById('disciplineSelect').value||'';
+
+/* ====================== Nueva ventana con resultado ====================== */
+function openResultInNewTab(result){
+  if(!result || result.error) return;
+  const disc=getSelectedDisciplineName();
   const cat=(document.getElementById('categorySelect').value||'');
-  const gender=(document.getElementById('genderSelect').value||'');
-  const safe=(t)=>t.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-  const html = `<!doctype html>
-  <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Resultado del sorteo</title>
-  <style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;background:#f6f8fb;color:#0f172a}
-  .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-  h1{margin:0 0 8px;font-size:22px}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px}
-  .chip{font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:999px;background:#fff}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .zone{background:#fff;border:1px solid #e2e8f0;border-radius:12px}
-  .zone h4{margin:0;padding:8px 10px;background:linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08));border-top-left-radius:12px;border-top-right-radius:12px}
-  .zone ol{margin:0;padding:8px 16px 12px}
-  </style></head><body>
-  <div class="wrap">
-    <h1>Resultado del sorteo</h1>
-    <div class="chips">
-      ${disc?`<span class="chip">Disciplina: ${safe(disc)}</span>`:''}
-      ${cat?`<span class="chip">Categoría: ${safe(cat)}</span>`:''}
-      ${gender?`<span class="chip">Género: ${safe(gender)}</span>`:''}
-    </div>
-    <div class="grid">
-      ${res.groups.map((arr,gi)=>`
-        <div class="zone">
-          <h4>Zona ${gi+1}</h4>
-          <ol>
-            ${arr.map(t=>`<li><b>${safe(t.name)}</b>${t.province?` — <span style="color:#64748b">${safe(t.province)}</span>`:''}${t.head?` <span style="border:1px solid #cbd5e1;border-radius:999px;padding:0 6px;font-size:11px">Cabeza</span>`:''}</li>`).join('')}
-          </ol>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-  </body></html>`;
-  const w = window.open('about:blank','_blank');
-  if(w && w.document){ w.document.open(); w.document.write(html); w.document.close(); }
+  const gen=(document.getElementById('genderSelect').value||'');
+  const z=currentZones();
+  const fmt=getFormat();
+  const chips = [];
+  chips.push(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z));
+  if(disc) chips.push('Disciplina: '+disc);
+  if(cat) chips.push('Categoría: '+cat);
+  if(gen) chips.push('Género: '+gen);
+
+  const w=window.open('', '_blank', 'noopener,noreferrer');
+  if(!w){ alert('El navegador bloqueó la apertura de la pestaña. Permití pop-ups para este sitio.'); return; }
+  const doc=w.document;
+  doc.write('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Resultado del sorteo</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:16px;background:#0f172a;color:#e5e7eb} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px} .zone{background:#0b1220;border:1px solid #223046;border-radius:12px;padding:10px} h2{margin:0 0 8px 0} h4{margin:4px 0 8px 0} ol{margin:0;padding-left:18px} .pill{display:inline-block;margin-right:6px;margin-bottom:6px;padding:3px 8px;border-radius:999px;border:1px solid #2b3b55;background:#0b1220;color:#e5e7eb;font-size:12px}</style></head><body>');
+  doc.write('<h2>Resultado del sorteo</h2>');
+  if(chips.length){
+    doc.write('<div>');
+    chips.forEach(c => doc.write('<span class="pill">'+escapeHtml(c)+'</span>'));
+    doc.write('</div>');
+  }
+  doc.write('<div class="grid">');
+  result.groups.forEach((arr,gi)=>{
+    doc.write('<div class="zone"><h4>Zona '+(gi+1)+'</h4><ol>');
+    arr.forEach(t=>{
+      doc.write('<li><b>'+escapeHtml(t.name)+'</b>'+(t.province? ' — <span style="opacity:.7">'+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'')+'</li>');
+    });
+    doc.write('</ol></div>');
+  });
+  doc.write('</div></body></html>');
+  doc.close();
 }
+
+/* ====================== UI y eventos ====================== */
 function setFormat(fmt){
   document.querySelectorAll('input[name="format"]').forEach(r=> r.checked=(r.value===fmt));
   const elZones=document.getElementById('zones');
@@ -674,17 +787,21 @@ function updateCapInfo(){
     if(teams<=24){const capsPrev=capacitiesFourBySix(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 6 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'}
     else { msg+=' — >24 equipos: distribución pareja' }
   } else if(fmt==='8x3'){
-    if(teams<=24){const capsPrev=capacitiesEightByThree(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 3 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'}
+    if(teams<=24){const capsPrev=capacitiesEightByThree(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 3 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'; if(teams<16){msg+=' — <span class="warnText"><b>Considere cambiar de sistema</b></span>'}}
     else { msg+=' — >24 equipos: distribución pareja' }
   } else {
     const per=(teams/z).toFixed(2); msg+=' — Promedio: '+per+' por zona';
   }
   document.getElementById('capInfo').innerHTML=msg;
 }
+
 document.addEventListener('DOMContentLoaded',function(){
+  // Radios de formato
   document.querySelectorAll('input[name="format"]').forEach(r=>{
     r.addEventListener('change',()=> setFormat(r.value));
   });
+
+  // Tabs
   document.querySelectorAll('.tab').forEach(btn=>{
     btn.addEventListener('click',()=>{
       document.querySelectorAll('.tab').forEach(b=> b.classList.toggle('active', b===btn));
@@ -692,44 +809,76 @@ document.addEventListener('DOMContentLoaded',function(){
       document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
     });
   });
+
+  // Panel de checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
   document.getElementById('btnSelectAllActive').addEventListener('click', ()=> selectAll('.chkActive'));
   document.getElementById('btnSelectAllInactive').addEventListener('click', ()=> selectAll('.chkInactive'));
+
+  // Equipos CSV
   document.getElementById('csvFile').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        const parsed=importCSVTeams(reader.result||'');
+        let text = reader.result||'';
+        if(typeof text !== 'string'){ text = String(text); }
+        const parsed=importCSVTeams(text);
         const teams=parsed.list;
         if(!teams.length){ toast('CSV vacío o no se detectaron equipos'); return }
-        document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n');
+        document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
         buildListsFromTextarea();
         const prev=teams.slice(0,3).map(t=> t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'' )).join(' · ');
-        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+ (parsed.delim==='\\t'?'TAB':parsed.delim) +'</b>'+(prev?' · Ej: '+prev:'');
+        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
         toast('CSV de equipos cargado');
+        e.target.value=''; // reset input
       }catch(err){ console.error(err); alert('No se pudo leer el CSV de equipos.'); }
     };
     reader.readAsText(file,'utf-8');
   });
+
+  // Disciplinas CSV
   document.getElementById('csvDisciplines').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        const parsed=importCSVGeneric(reader.result||'', 'disc');
+        let text = reader.result||'';
+        const parsed=importCSVDisciplines(text);
         disciplines = parsed.list;
         refreshDisciplineSelects();
         const prev=disciplines.slice(0,5).map(d=> d.name).join(' · ');
-        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+ (parsed.delim==='\\t'?'TAB':parsed.delim) +'</b>'+(prev?' · Ej: '+prev:'');
+        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
         toast('CSV de disciplinas cargado');
+        e.target.value='';
       }catch(err){ console.error(err); alert('No se pudo leer el CSV de disciplinas.'); }
     };
     reader.readAsText(file,'utf-8');
   });
+
+  // Categorías CSV
+  document.getElementById('csvCategories').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        let text = reader.result||'';
+        const parsed=importCSVCategories(text);
+        categories = parsed.list;
+        refreshCategorySelect();
+        const prev=categories.slice(0,5).join(' · ');
+        document.getElementById('catCSVInfo').innerHTML = 'CSV de categorías: <b>'+categories.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
+        toast('CSV de categorías cargado');
+        e.target.value='';
+      }catch(err){ console.error(err); alert('No se pudo leer el CSV de categorías.'); }
+    };
+    reader.readAsText(file,'utf-8');
+  });
+
+  // Demos
   document.getElementById('btnDiscDemo').addEventListener('click',()=>{
     disciplines = [
       {name:'Fútbol', seed:'futbol-24'},
@@ -738,77 +887,61 @@ document.addEventListener('DOMContentLoaded',function(){
       {name:'Handball', seed:'hand-24'},
       {name:'Hockey', seed:'hockey-24'}
     ];
-    refreshDisciplineSelects();
-    toast('Disciplinas demo cargadas');
-  });
-  document.getElementById('csvCategories').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const parsed=importCSVGeneric(reader.result||'', 'cat');
-        categories = parsed.list;
-        refreshCategorySelect();
-        const prev=categories.slice(0,8).map(d=> d.name).join(' · ');
-        document.getElementById('catCSVInfo').innerHTML = 'CSV de categorías: <b>'+categories.length+'</b> filas · Delimitador: <b>'+ (parsed.delim==='\\t'?'TAB':parsed.delim) +'</b>'+(prev?' · Ej: '+prev:'');
-        toast('CSV de categorías cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de categorías.'); }
-    };
-    reader.readAsText(file,'utf-8');
+    refreshDisciplineSelects(); toast('Disciplinas demo cargadas');
   });
   document.getElementById('btnCatDemo').addEventListener('click',()=>{
-    categories = [
-      {name:'Sub 12'}, {name:'Sub 14'}, {name:'Sub 16'}, {name:'Sub 18'}, {name:'Libre'}, {name:'Senior'}
-    ];
-    refreshCategorySelect();
-    toast('Categorías demo cargadas');
+    categories = ['Sub-14','Sub-16','Sub-18','Libre','Master'];
+    refreshCategorySelect(); toast('Categorías demo cargadas');
   });
+
+  // Sincronizar info al tipear (si no se abrió el panel de checks)
   document.getElementById('teamsInput').addEventListener('input', ()=>{
     if(document.getElementById('checkLists').classList.contains('hidden')){
       updateCapInfo();
     }
   });
+
+  // Utilidad
   document.getElementById('btnExample').addEventListener('click',()=>{
     const sample=[["River Plate","CABA","*"],["Boca Juniors","CABA","*"],["Newell's","Santa Fe",""],["Rosario Central","Santa Fe",""],["San Lorenzo","CABA",""],["Racing","Buenos Aires",""],["Independiente","Buenos Aires",""],["Estudiantes","Buenos Aires",""],["Talleres","Córdoba",""],["Belgrano","Córdoba",""],["Godoy Cruz","Mendoza",""],["Atl. Tucumán","Tucumán",""]];
-    document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\\n');
+    document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\n');
     updateCapInfo();
   });
   document.getElementById('btnClear').addEventListener('click',()=>{
     document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[]; document.getElementById('checkLists').classList.add('hidden');
     document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
   });
+
+  // Sorteo zonas (también abre nueva pestaña)
   document.getElementById('btnDrawGroups').addEventListener('click',()=>{
     const teams = getActiveTeamsLive();
     if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
     const z=currentZones();
     const seed=getSelectedDisciplineSeed();
-    const res=drawGroups(teams,z,seed,true,getFormat());
+    const res=drawGroups(teams,z,seed,document.getElementById('headsAsFirst').checked,getFormat());
     renderGroups(document.getElementById('resultGroups'),res);
     if(!res.error){
       const iso=new Date().toISOString().replace('T',' ').slice(0,19);
       const item=document.createElement('div'); item.className='item';
       const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-      const disc=getSelectedDisciplineName();
-      const cat=(document.getElementById('categorySelect').value||'');
-      const gender=(document.getElementById('genderSelect').value||'');
-      item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+(cat?('('+cat+') '):'')+(gender?('{'+gender+'} '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+      const disc=getSelectedDisciplineName(); const cat=(document.getElementById('categorySelect').value||''); const gen=(document.getElementById('genderSelect').value||'');
+      item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+(cat?('('+cat+') '):'')+(gen?('{'+gen+'} '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
       document.getElementById('history').prepend(item);
       openResultInNewTab(res);
-      document.getElementById('status').textContent='Sorteo realizado.';
+      if(getFormat()==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>'}
     }
   });
+
+  // Export/Copy/Share/PDF
   document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
-    const teams = getActiveTeamsLive();
-    const z=currentZones();
-    const seed=getSelectedDisciplineSeed();
-    const res=drawGroups(teams,z,seed,true,getFormat());
-    if(res.error){toast('Generá el sorteo primero'); return}
+    const res = lastResult;
+    if(!res || !res.groups){ toast('No hay resultado para exportar'); return }
     exportGroupsCSV(res.groups);
   });
   document.getElementById('btnCopy').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado'); return}
-    let txt=''; boxes.forEach((zone,zi)=>{ txt+='Zona '+(zi+1)+'\\n'; zone.querySelectorAll('li').forEach((li,i)=>{ txt+=(i+1)+'. '+li.innerText+'\\n' }); txt+='\\n' });
+    const res = lastResult;
+    if(!res || !res.groups){ toast('No hay resultado'); return }
+    let txt=''; res.groups.forEach((arr,zi)=>{ txt+='Zona '+(zi+1)+'\n'; arr.forEach((t,i)=>{ txt+=(i+1)+'. '+t.name+(t.province?(' — '+t.province):'')+(t.head?' *':'')+'\n' }); txt+='\n' });
     copyText(txt);
   });
   document.getElementById('btnShare').addEventListener('click', ()=>{
@@ -819,16 +952,42 @@ document.addEventListener('DOMContentLoaded',function(){
     setShareLink();
   });
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
+
+  // Simple
+  document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
+    const names = getActiveTeamsLive().map(t=>t.name);
+    document.getElementById('simpleInput').value = names.join('\n');
+  });
+  document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
+  document.getElementById('btnDrawSimple').addEventListener('click',()=>{
+    const seed=getSelectedDisciplineSeed();
+    const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
+    const rand=rngFromSeed(seed); const list=shuffle(names,rand);
+    const out=list.map((n,i)=> (i+1)+'. '+n).join('\n');
+    document.getElementById('resultSimple').innerHTML = '<pre>'+escapeHtml(out)+'</pre>';
+    document.getElementById('statusSimple').textContent = 'Sorteo realizado.';
+  });
+  document.getElementById('btnExportSimple').addEventListener('click',()=>{
+    const names=document.getElementById('resultSimple').innerText.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean);
+    if(!names.length){ toast('Generá el sorteo primero'); return }
+    exportSimpleCSV(names);
+  });
+  document.getElementById('btnCopySimple').addEventListener('click',()=>{
+    const txt=document.getElementById('resultSimple').innerText; if(!txt){ toast('No hay resultado'); return } copyText(txt);
+  });
+
+  // Bracket
   function nextPow2(x){let p=1;while(p<x) p<<=1;return p}
   function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
   function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML='<h4>Partido '+(i+1)+'</h4><ol><li><b>'+escapeHtml(m[0])+'</b></li><li><b>'+escapeHtml(m[1])+'</b></li></ol>';grid.appendChild(card)});target.appendChild(grid)}
   document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{
-    document.getElementById('bracketInput').value = getActiveTeamsLive().map(t=>t.name).join('\\n');
+    document.getElementById('bracketInput').value = getActiveTeamsLive().map(t=>t.name).join('\n');
   });
   document.getElementById('btnClearBracket').addEventListener('click',()=>{document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML=''});
   document.getElementById('btnDrawBracket').addEventListener('click',()=>{
     const seed=getSelectedDisciplineSeed();
-    const names=document.getElementById('bracketInput').value.split(/\\r?\\n/).map(s=>s.trim()).filter(Boolean);
+    const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
     const matches=buildBracket(names, seed);
     renderBracket(document.getElementById('resultBracket'), matches);
@@ -839,6 +998,7 @@ document.addEventListener('DOMContentLoaded',function(){
     const matches=[]; boxes.forEach(b=>{ const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText, lis[1].innerText]); });
     exportBracketCSV(matches);
   });
+
   tryLoadFromHash();
   setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
   updateCapInfo();
