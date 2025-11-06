@@ -846,7 +846,7 @@ function openResultInNewTab(result) {
     .container { max-width: 1100px; margin: 0 auto; }
     h1 { margin-bottom: 16px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    .chip { background: #1f2937; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
+    .chip { background: #ffffff; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
     .zone { background: #ffffff; border: 2px solid #223046; border-radius: 6px; padding: 10px; }
     .zone h4 { margin: 4px 0 8px 0; }
@@ -904,7 +904,7 @@ function openResultInNewTab(result) {
 
         // Zones grid
         const grid = document.createElement('div');
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 1;';
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 0;';
         grid.innerHTML = '${zonesHTML.replace(/'/g, "\\'")}';
         sheet.appendChild(grid);
 
