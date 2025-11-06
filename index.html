@@ -60,7 +60,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v2.2</span>
+      <span class="badge">v2.3</span>
     </header>
 
     <div class="panel">
@@ -167,7 +167,6 @@ Newell's; Santa Fe
               <button class="btn" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
               <button class="btn" id="btnCopy" type="button">📋 Copiar</button>
               <button class="btn" id="btnShare" type="button">🔗 Compartir</button>
-              <button class="btn" id="btnExportPDF" type="button">🖨️ Exportar PDF</button>
             </div>
             <div id="status" class="tiny" style="margin-top:8px"></div>
           </div>
@@ -398,8 +397,8 @@ function importTeamsCSV(text) {
   }
 }
 
-// ====================== IMPORTACIÓN DE DISCIPLINAS/CATEGORÍAS ======================
-function importGenericCSV(text, nameField, seedField) {
+// ====================== IMPORTACIÓN DE DISCIPLINAS ======================
+function importDisciplinesCSV(text) {
   try {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     
@@ -410,8 +409,8 @@ function importGenericCSV(text, nameField, seedField) {
     if (headers.length > 0) {
       headers.forEach((header, idx) => {
         const h = header.toLowerCase();
-        if (new RegExp(nameField.join('|')).test(h)) nameIdx = idx;
-        if (new RegExp(seedField.join('|')).test(h)) seedIdx = idx;
+        if (h.includes('disciplina') || h.includes('deporte') || h.includes('nombre')) nameIdx = idx;
+        if (h.includes('semilla') || h.includes('seed') || h.includes('código')) seedIdx = idx;
       });
     }
     
@@ -428,8 +427,96 @@ function importGenericCSV(text, nameField, seedField) {
     
     return {items, delimiter, hasHeaders: headers.length > 0};
   } catch (error) {
-    console.error('Error importando CSV:', error);
-    throw new Error('No se pudo leer el CSV');
+    console.error('Error importando disciplinas:', error);
+    throw new Error('No se pudo leer el CSV de disciplinas');
+  }
+}
+
+// ====================== IMPORTACIÓN DE CATEGORÍAS ======================
+function importCategoriesCSV(text) {
+  try {
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    
+    const {headers, rows, delimiter} = parseCSV(text);
+    
+    let nameIdx = 0, seedIdx = 1;
+    
+    if (headers.length > 0) {
+      headers.forEach((header, idx) => {
+        const h = header.toLowerCase();
+        if (h.includes('categoría') || h.includes('category') || h.includes('división')) nameIdx = idx;
+        if (h.includes('semilla') || h.includes('seed') || h.includes('código')) seedIdx = idx;
+      });
+    }
+    
+    const items = [];
+    for (const row of rows) {
+      if (row.length <= nameIdx) continue;
+      
+      const name = (row[nameIdx] || '').trim();
+      if (!name) continue;
+      
+      const seed = (row[seedIdx] || name).trim();
+      items.push({name, seed});
+    }
+    
+    return {items, delimiter, hasHeaders: headers.length > 0};
+  } catch (error) {
+    console.error('Error importando categorías:', error);
+    throw new Error('No se pudo leer el CSV de categorías');
+  }
+}
+
+// ====================== GESTIÓN DE SELECTORES ======================
+function refreshDisciplineSelects() {
+  const selects = [
+    document.getElementById('disciplineSelect'),
+    document.getElementById('disciplineSelectSimple'),
+    document.getElementById('disciplineSelectBracket')
+  ];
+  
+  selects.forEach(select => {
+    if (!select) return;
+    
+    // Guardar selección actual
+    const currentValue = select.value;
+    
+    // Limpiar opciones
+    select.innerHTML = '<option value="">— Seleccionar disciplina —</option>';
+    
+    // Agregar disciplinas
+    disciplines.forEach(d => {
+      const option = document.createElement('option');
+      option.value = d.seed;
+      option.textContent = d.name;
+      option.dataset.seed = d.seed;
+      select.appendChild(option);
+    });
+    
+    // Restaurar selección si existe
+    if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
+      select.value = currentValue;
+    }
+  });
+}
+
+function refreshCategorySelects() {
+  const select = document.getElementById('categorySelect');
+  if (!select) return;
+  
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">— Seleccionar categoría —</option>';
+  
+  categories.forEach(c => {
+    const option = document.createElement('option');
+    option.value = c.name;
+    option.textContent = c.name;
+    option.dataset.seed = c.seed;
+    select.appendChild(option);
+  });
+  
+  if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
+    select.value = currentValue;
   }
 }
 
@@ -718,6 +805,7 @@ function renderGroups(target, result) {
   document.getElementById('status').innerHTML = `Sorteo realizado${status}${attempts}`;
 }
 
+// ====================== VISTA PREVIA EN NUEVA PESTAÑA CON PDF ======================
 function openResultInNewTab(result) {
   const w = window.open('', '_blank');
   if (!w) {
@@ -725,16 +813,28 @@ function openResultInNewTab(result) {
     return;
   }
   
+  const discipline = document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '';
+  const category = document.getElementById('categorySelect').value || '';
+  const gender = document.getElementById('genderSelect').value || '';
+  
   const zonesHTML = result.groups.map((arr, gi) => {
     const items = arr.map(t => 
       `<li><b>${escapeHtml(t.name)}</b>` +
-      (t.province ? ` — ${escapeHtml(t.province)}` : '') +
+      (t.province ? ` — ${escapeHtml(t.province)}</span>` : '') +
       (t.head ? ' ★' : '') +
       `</li>`
     ).join('');
     
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
+
+  const chipsHTML = [
+    discipline ? `<span class="chip">Disciplina: ${escapeHtml(discipline)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    `<span class="chip">${result.groups.length} zonas</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
   
   const html = `<!DOCTYPE html>
 <html>
@@ -745,19 +845,99 @@ function openResultInNewTab(result) {
     body { font-family: system-ui; background: #0f172a; color: #e5e7eb; margin: 0; padding: 20px; }
     .container { max-width: 1100px; margin: 0 auto; }
     h1 { margin-bottom: 16px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip { background: #1f2937; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
     .zone { background: #0b1220; border: 1px solid #223046; border-radius: 14px; padding: 10px; }
     .zone h4 { margin: 4px 0 8px 0; }
     .zone ol { margin: 0; padding-left: 18px; }
     .muted { color: #94a3b8; }
     .pill { display: inline-flex; padding: 3px 8px; border: 1px solid #2b3b55; border-radius: 999px; background: #0b1220; font-size: 12px; }
+    .btn { background: #0b1220; color: #e5e7eb; border: 1px solid #223046; padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+    .btn:hover { border-color: #3b82f6; }
+    .btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); border: 0; color: #052e16; }
+    .controls { margin: 20px 0; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
 </head>
 <body>
   <div class="container">
     <h1>🎲 Resultado del Sorteo</h1>
+    <div class="chips">${chipsHTML}</div>
     <div class="grid">${zonesHTML}</div>
+    <div class="controls">
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
   </div>
+  <script>
+    function exportPDF() {
+      try {
+        if (!window.jspdf || !window.html2canvas) {
+          alert('Librerías de PDF no cargadas. Intenta recargar la página.');
+          return;
+        }
+
+        const sheet = document.createElement('div');
+        sheet.style.width = '794px';
+        sheet.style.height = '1123px';
+        sheet.style.background = '#ffffff';
+        sheet.style.color = '#0f172a';
+        sheet.style.position = 'fixed';
+        sheet.style.left = '-9999px';
+        sheet.style.top = '0';
+        sheet.style.display = 'flex';
+        sheet.style.flexDirection = 'column';
+        sheet.style.fontFamily = 'system-ui, sans-serif';
+        sheet.style.padding = '20px';
+
+        // Header
+        const header = document.createElement('div');
+        header.innerHTML = '<h1 style="margin: 0 0 16px 0; font-size: 24px;">Resultado del Sorteo</h1>';
+        sheet.appendChild(header);
+
+        // Chips
+        const chips = document.createElement('div');
+        chips.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;';
+        chips.innerHTML = '${chipsHTML.replace(/'/g, "\\'")}';
+        sheet.appendChild(chips);
+
+        // Zones grid
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 1;';
+        grid.innerHTML = '${zonesHTML.replace(/'/g, "\\'")}';
+        sheet.appendChild(grid);
+
+        document.body.appendChild(sheet);
+
+        html2canvas(sheet, { 
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true 
+        }).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          document.body.removeChild(sheet);
+
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+          });
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save('sorteo_${new Date().toISOString().slice(0,10)}.pdf');
+        });
+
+      } catch (error) {
+        console.error('Error generando PDF:', error);
+        alert('Error al generar PDF: ' + error.message);
+      }
+    }
+  <\/script>
 </body>
 </html>`;
   
@@ -772,7 +952,7 @@ function exportGroupsCSV(groups) {
   groups.forEach((arr, gi) => {
     arr.forEach((t, i) => {
       csv += `${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}",` +
-             `"${t.province.replace(/"/g, '""')}",` +
+             `"${(t.province || '').replace(/"/g, '""')}",` +
              `${t.head ? 'si' : 'no'}\n`;
     });
   });
@@ -832,7 +1012,7 @@ function updateCapInfo() {
 
 // ====================== INICIALIZACIÓN ======================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v2.2 cargado');
+  console.log('Sorteador v2.3 cargado');
   
   // Tabs
   document.querySelectorAll('.tab').forEach(btn => {
@@ -903,6 +1083,80 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     };
     reader.readAsText(file, 'UTF-8');
+  });
+
+  // Importación de disciplinas CSV
+  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importDisciplinesCSV(reader.result);
+        disciplines = result.items;
+        refreshDisciplineSelects();
+        
+        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('discCSVInfo').innerHTML = info;
+        toast('CSV de disciplinas cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // Importación de categorías CSV
+  document.getElementById('csvCategories').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importCategoriesCSV(reader.result);
+        categories = result.items;
+        refreshCategorySelects();
+        
+        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('catCSVInfo').innerHTML = info;
+        toast('CSV de categorías cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // Demo disciplinas
+  document.getElementById('btnDiscDemo').addEventListener('click', () => {
+    disciplines = [
+      {name: 'Fútbol', seed: 'futbol'},
+      {name: 'Básquet', seed: 'basquet'},
+      {name: 'Vóley', seed: 'voley'},
+      {name: 'Hockey', seed: 'hockey'}
+    ];
+    refreshDisciplineSelects();
+    document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
+    toast('Disciplinas demo cargadas');
+  });
+
+  // Demo categorías
+  document.getElementById('btnCatDemo').addEventListener('click', () => {
+    categories = [
+      {name: 'Sub-15', seed: 'sub15'},
+      {name: 'Sub-17', seed: 'sub17'},
+      {name: 'Senior', seed: 'senior'},
+      {name: 'Libre', seed: 'libre'}
+    ];
+    refreshCategorySelects();
+    document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
+    toast('Categorías demo cargadas');
   });
   
   // Ejemplo y limpiar
@@ -998,6 +1252,69 @@ Atl. Tucumán; Tucumán`;
       });
       text += '\n';
     });
+    
+    copyText(text);
+  });
+
+  // Sorteo simple - Usar lista del tab Grupos
+  document.getElementById('btnUseFromGroups').addEventListener('click', () => {
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    document.getElementById('simpleInput').value = teamNames.join('\n');
+    toast('Lista copiada al tab Sorteo simple');
+  });
+
+  // Sorteo simple - Limpiar
+  document.getElementById('btnClearSimple').addEventListener('click', () => {
+    document.getElementById('simpleInput').value = '';
+    document.getElementById('resultSimple').innerHTML = '';
+  });
+
+  // Sorteo simple - Sortear
+  document.getElementById('btnDrawSimple').addEventListener('click', () => {
+    const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
+    const names = document.getElementById('simpleInput').value.split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
+      return;
+    }
+    
+    const rand = rngFromSeed(seed);
+    const shuffled = shuffle(names, rand);
+    
+    const resultHTML = shuffled.map((name, index) => 
+      `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
+    ).join('');
+    
+    document.getElementById('resultSimple').innerHTML = resultHTML;
+    document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
+  });
+
+  // Sorteo simple - Exportar CSV
+  document.getElementById('btnExportSimple').addEventListener('click', () => {
+    const names = document.getElementById('resultSimple').textContent
+      .split('\n')
+      .map(line => line.replace(/^\d+\.\s*/, '').trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      toast('No hay resultado para exportar');
+      return;
+    }
+    
+    exportSimpleCSV(names);
+  });
+
+  // Sorteo simple - Copiar
+  document.getElementById('btnCopySimple').addEventListener('click', () => {
+    const text = document.getElementById('resultSimple').textContent;
+    if (!text.trim()) {
+      toast('No hay resultado para copiar');
+      return;
+    }
     
     copyText(text);
   });
