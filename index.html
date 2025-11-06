@@ -534,6 +534,60 @@ function renderGroups(target,result){
   target.innerHTML=''; target.appendChild(grid);
   document.getElementById('status').innerHTML='Sorteo realizado';
 }
+// Abre el resultado en una pestaña nueva y escribe el HTML completo ahí
+function openResultInNewTab(res){
+  try{
+    const w = window.open('', '_blank');           // debe ejecutarse dentro del click handler para evitar bloqueos
+    if(!w){ toast('Permití pop-ups para ver el resultado'); return; }
+
+    // Construimos el HTML de las zonas con el mismo contenido que la UI principal
+    const groupsHTML = res.groups.map((arr, gi)=>{
+      const items = arr.map(t =>
+        `<li><b>${escapeHtml(t.name)}</b>` +
+          (t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : '') +
+          (t.head ? ` <span class="pill">Cabeza</span>` : '') +
+        `</li>`
+      ).join('');
+      return `<div class="zone">
+                <h4>Zona ${gi+1}</h4>
+                <ol>${items}</ol>
+              </div>`;
+    }).join('');
+
+    const docHTML = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Resultado — Sorteador v2.0</title>
+<style>
+  body{margin:0;background:#0f172a;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+  .container{max-width:1100px;margin:0 auto;padding:24px}
+  h1{margin:0 0 16px 0;font-size:24px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
+  .zone h4{margin:4px 0 8px 0}
+  .zone ol{margin:0;padding-left:18px}
+  .muted{color:#94a3b8}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resultado del sorteo</h1>
+    <div class="grid">${groupsHTML}</div>
+  </div>
+</body>
+</html>`;
+
+    w.document.open();
+    w.document.write(docHTML);
+    w.document.close();
+  }catch(e){
+    console.error(e);
+    toast('No se pudo abrir el resultado en una pestaña nueva');
+  }
+}
 
 function exportGroupsCSV(groups){
   let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
