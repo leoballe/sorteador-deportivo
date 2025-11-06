@@ -265,6 +265,61 @@ Newell's; Santa Fe
 
 <script>
 'use strict';
+/* === Vista previa en nueva pestaña (sin (x/x), síncrona y confiable) === */
+function openPreviewWindow(result, meta){
+  const w = window.open('', '_blank', 'noopener,noreferrer');
+  if(!w){ alert('La vista previa fue bloqueada por el navegador. Permití pop-ups para este sitio.'); return }
+
+  const cols = (result.groups.length >= 6) ? 4 : 2;
+  const css = `
+  :root{--ink:#0f172a;--muted:#64748b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  h2{margin:0 0 4px 0;font-size:22px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+  .chip{font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:999px;background:#f8fafc}
+  .grid{display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px}
+  .zone{border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+  .zone h4{margin:0;padding:6px 10px;background:linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08));border-top-left-radius:12px;border-top-right-radius:12px;font-size:14px}
+  .zone ol{margin:0;padding:10px 12px 12px 18px;list-style-position:inside}
+  .muted{color:var(--muted)}
+  @media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  @media (max-width:600px){.grid{grid-template-columns:1fr}}
+  `;
+
+  let zonesHTML = '';
+  result.groups.forEach((arr, gi)=>{
+    const items = arr.map(t => 
+      `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+    ).join('');
+    // Importante: SIN (x/x) a la derecha del título
+    zonesHTML += `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+  <html lang="es"><head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resultado del sorteo</title>
+    <style>${css}</style>
+  </head><body>
+    <div class="wrap">
+      <h2>Resultado del sorteo</h2>
+      <div class="chips">
+        ${meta.discipline ? `<span class="chip">Disciplina: ${escapeHtml(meta.discipline)}</span>` : ''}
+        ${meta.gender ? `<span class="chip">Género: ${escapeHtml(meta.gender)}</span>` : ''}
+        ${meta.category ? `<span class="chip">Categoría: ${escapeHtml(meta.category)}</span>` : ''}
+        <span class="chip">${result.groups.length} zonas</span>
+        <span class="chip">${new Date().toLocaleString()}</span>
+      </div>
+      <div class="grid">${zonesHTML}</div>
+    </div>
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 
 /* ====================== Helpers ====================== */
 function escapeHtml(s){
@@ -974,6 +1029,13 @@ document.addEventListener('DOMContentLoaded',function(){
     const seed=getSelectedDisciplineSeed();
     const res=drawGroups(teams,z,seed,document.getElementById('headsAsFirst').checked,getFormat());
     renderGroups(document.getElementById('resultGroups'),res);
+      if(!res.error){
+    openPreviewWindow(res, {
+      discipline: getSelectedDisciplineName(),
+      gender: document.getElementById('genderSelect')?.value || '',
+      category: document.getElementById('categorySelect')?.value || ''
+    });
+  }
     if(!res.error){
       const iso=new Date().toISOString().replace('T',' ').slice(0,19);
       const item=document.createElement('div'); item.className='item';
