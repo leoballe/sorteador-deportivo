@@ -29,8 +29,8 @@
     .btn.warn{background:linear-gradient(135deg,var(--warn),#d97706);border:0;color:#3b1d00}
     .tiny{font-size:12px;color:var(--muted)}
     .tabs{display:flex;gap:8px;margin-bottom:12px}
-    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer}
-    .tab.active{background:#0a3622;border-color:#1b5e3b}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer;color:#e5e7eb}
+    .tab.active{background:#0a3622;border-color:#1b5e3b;color:#22c55e}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
     .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
@@ -123,36 +123,38 @@ Newell's; Santa Fe
                 <label>Nº de zonas / grupos</label>
                 <input type="number" id="zones" min="1" value="8" />
               </div>
-              <div style="min-width:180px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
-                <select id="disciplineSelect" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
+                <select id="disciplineSelect">
+                  <option value="">— Seleccionar disciplina —</option>
                 </select>
               </div>
-              <div style="min-width:180px;flex:1">
+            </div>
+            <div class="controls">
+              <div style="min-width:220px;flex:1">
                 <label>Categoría</label>
-                <select id="categorySelect" disabled>
-                  <option value="">— Cargá CSV de categorías —</option>
+                <select id="categorySelect">
+                  <option value="">— Seleccionar categoría —</option>
                 </select>
               </div>
-              <div style="min-width:160px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Género</label>
                 <select id="genderSelect">
-                  <option value="">No Aplica</option>
-                  <option>Masculino</option>
-                  <option>Femenino</option>
-                  <option>Mixto</option>
+                  <option value="">— Seleccionar género —</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                  <option value="Mixto">Mixto</option>
+                  <option value="No Aplica">No Aplica</option>
                 </select>
               </div>
             </div>
             <div class="controls">
               <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
               <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnDiscDemo" type="button">Demo disciplinas</button>
-
+              <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
               <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
               <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnCatDemo" type="button">Demo categorías</button>
+              <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
             </div>
             <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
             <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
@@ -196,25 +198,10 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:180px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
-                <select id="disciplineSelectSimple" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
-                </select>
-              </div>
-              <div style="min-width:180px;flex:1">
-                <label>Categoría</label>
-                <select id="categorySelectSimple" disabled>
-                  <option value="">— Cargá CSV de categorías —</option>
-                </select>
-              </div>
-              <div style="min-width:160px;flex:1">
-                <label>Género</label>
-                <select id="genderSelectSimple">
-                  <option value="">No Aplica</option>
-                  <option>Masculino</option>
-                  <option>Femenino</option>
-                  <option>Mixto</option>
+                <select id="disciplineSelectSimple">
+                  <option value="">— Seleccionar disciplina —</option>
                 </select>
               </div>
             </div>
@@ -246,25 +233,10 @@ Newell's; Santa Fe
           <div class="card">
             <h3>Parámetros</h3>
             <div class="controls">
-              <div style="min-width:180px;flex:1">
+              <div style="min-width:220px;flex:1">
                 <label>Disciplina</label>
-                <select id="disciplineSelectBracket" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
-                </select>
-              </div>
-              <div style="min-width:180px;flex:1">
-                <label>Categoría</label>
-                <select id="categorySelectBracket" disabled>
-                  <option value="">— Cargá CSV de categorías —</option>
-                </select>
-              </div>
-              <div style="min-width:160px;flex:1">
-                <label>Género</label>
-                <select id="genderSelectBracket">
-                  <option value="">No Aplica</option>
-                  <option>Masculino</option>
-                  <option>Femenino</option>
-                  <option>Mixto</option>
+                <select id="disciplineSelectBracket">
+                  <option value="">— Seleccionar disciplina —</option>
                 </select>
               </div>
             </div>
@@ -283,728 +255,755 @@ Newell's; Santa Fe
       </div>
     </div>
 
-    <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente (no se sube nada). Podés guardar y compartir con “🔗 Compartir”.</div>
+    <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente (no se sube nada). Podés guardar y compartir con "🔗 Compartir".</div>
   </div>
 
 <script>
 'use strict';
 
-/* ====================== RNG y utils ====================== */
-function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
-function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
-function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
-function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i++){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;"}[c]))}
+// ====================== CONFIGURACIÓN INICIAL ======================
+let activeTeams = [];
+let inactiveTeams = [];
+let disciplines = [];
+let categories = [];
 
-/* ====================== CSV GENÉRICO ====================== */
-function detectDelimiter(lines){
-  const cands=[',',';','\\t'];
-  let best=',', bestScore=-Infinity, bestVar=Infinity, bestAvg=0;
-  for(const d of cands){
-    const counts=[];
-    for(let i=0;i<Math.min(lines.length,50);i++){
-      const ln=lines[i];
-      if(!ln) continue;
-      const parts=splitQuoted(ln,d);
-      counts.push(parts.length);
+// ====================== UTILIDADES BÁSICAS ======================
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+function downloadText(text, filename) {
+  const blob = new Blob([text], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => toast('Copiado'))
+    .catch(() => alert('No se pudo copiar'));
+}
+
+// ====================== PARSERS DE CSV ======================
+function parseCSV(text) {
+  if (!text.trim()) return {headers: [], rows: []};
+  
+  // Detectar delimitador
+  const firstLine = text.split('\n')[0];
+  const delimiters = [',', ';', '\t'];
+  let bestDelimiter = ',';
+  let maxCount = 0;
+  
+  for (const delim of delimiters) {
+    const count = (firstLine.match(new RegExp(delim, 'g')) || []).length;
+    if (count > maxCount) {
+      maxCount = count;
+      bestDelimiter = delim;
     }
-    if(!counts.length) continue;
-    const avg=counts.reduce((a,b)=>a+b,0)/counts.length;
-    const variance=counts.reduce((a,b)=>a+Math.pow(b-avg,2),0)/counts.length;
-    // prefer higher avg cols (>=2) and lower variance
-    const score=(avg>=2?avg:0)-variance*0.1;
-    if(score>bestScore){bestScore=score;best=d;bestVar=variance;bestAvg=avg;}
   }
-  return best;
+  
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  const headers = parseCSVLine(lines[0], bestDelimiter);
+  const rows = lines.slice(1).map(line => parseCSVLine(line, bestDelimiter));
+  
+  return {headers, rows, delimiter: bestDelimiter};
 }
-function splitQuoted(line, delim){
-  const out=[]; let cur=''; let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){
-      if(inQ && line[i+1]==='"'){ cur+='"'; i++; }
-      else { inQ=!inQ; }
-    }else if((delim==='\\t'? ch==='\\t': ch===delim) && !inQ){
-      out.push(cur); cur='';
-    }else{
-      cur+=ch;
+
+function parseCSVLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
     }
   }
-  out.push(cur);
-  return out.map(s=> s.trim());
-}
-function csvParse(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
-  const rawLines = text.split(/\\r?\\n/);
-  const lines = rawLines.filter(l=> l!=null && l.length>0);
-  const delim = detectDelimiter(lines);
-  const rows = lines.map(l=> splitQuoted(l,delim==='\\t' ? '\\t' : delim));
-  return {rows, delim};
+  
+  result.push(current.trim());
+  return result;
 }
 
-/* ====================== Parseo equipos ====================== */
-function parseLine(line){
-  const raw=line.replace(/\\t/g,',').trim();
-  if(!raw) return null;
-  let parts=raw.split(';'); if(parts.length===1) parts=raw.split(',');
-  parts=parts.map(s=>s.trim()).filter(Boolean);
-  const name=parts[0]||'';
-  const province=(parts[1]||'').replace(/\\*+$/,'').trim();
-  let head=false;
-  if(parts.length>=3){head=/\\*|si|sí|head/i.test(parts[2])}
-  if(/\\*$/.test(name)){head=true}
-  return {name:name.replace(/\\*+$/,'').trim(), province, head};
-}
-function parseText(value){
-  const lines=value.split(/\\r?\\n/);
-  const teams=[];
-  for(const line of lines){const t=parseLine(line); if(t&&t.name) teams.push(t)}
-  return teams;
-}
-
-/* ====================== CSV equipos/disciplinas/categorías ====================== */
-function importCSVTeams(text){
-  const {rows, delim} = csvParse(text||'');
-  if(!rows.length) return {list:[], delim};
-  const header = rows[0].map(s=> s.toLowerCase());
-  const hasHeader = header.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/.test(v));
-  let idx = {name:0, province:1, head:2};
-  if(hasHeader){
-    header.forEach((v,i)=>{
-      if(/^(equipo|team|nombre)$/.test(v)) idx.name=i;
-      if(/^(provincia|province|regi[óo]n)$/.test(v)) idx.province=i;
-      if(/^(cabeza|cabeza de serie|head|seed)$/.test(v)) idx.head=i;
-    });
-  }
-  const body = hasHeader ? rows.slice(1) : rows;
-  const out=[];
-  for(const parts of body){
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    const name=rawName.replace(/\\*+$/,'').trim();
-    const province=(parts[idx.province]||'').trim();
-    const headRaw=(parts[idx.head]||'').trim();
-    const head=/^(si|sí|true|1|\\*|x|head|seed|cs)$/i.test(headRaw) || /\\*$/.test(rawName);
-    out.push({name, province, head});
-  }
-  return {list:out, delim};
-}
-
-let disciplines=[]; // {name, seed}
-function importCSVDisciplines(text){
-  const {rows, delim} = csvParse(text||'');
-  if(!rows.length) return {list:[], delim};
-  const header = rows[0].map(s=> s.toLowerCase());
-  const hasHeader = header.some(v=>/^(disciplina|deporte|sport|nombre|semilla|seed|codigo|code)$/.test(v));
-  let idx={name:0, seed:1};
-  if(hasHeader){
-    header.forEach((v,i)=>{
-      if(/^(disciplina|deporte|sport|nombre)$/.test(v)) idx.name=i;
-      if(/^(semilla|seed|codigo|code)$/.test(v)) idx.seed=i;
-    });
-  }
-  const body = hasHeader ? rows.slice(1) : rows;
-  const out=[];
-  for(const parts of body){
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    const name=rawName;
-    const seed=(parts[idx.seed]||'').trim();
-    out.push({name, seed: seed||name});
-  }
-  return {list:out, delim};
-}
-
-let categories=[]; // {name}
-function importCSVCategories(text){
-  const {rows, delim} = csvParse(text||'');
-  if(!rows.length) return {list:[], delim};
-  const header = rows[0].map(s=> s.toLowerCase());
-  const hasHeader = header.some(v=>/^(categoria|categoría|category|nombre|name)$/.test(v));
-  let idx={name:0};
-  if(hasHeader){
-    header.forEach((v,i)=>{
-      if(/^(categoria|categoría|category|nombre|name)$/.test(v)) idx.name=i;
-    });
-  }
-  const body = hasHeader ? rows.slice(1) : rows;
-  const out=[];
-  for(const parts of body){
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    out.push({name:rawName});
-  }
-  return {list:out, delim};
-}
-
-function refreshDisciplineSelects(){
-  const sels=[document.getElementById('disciplineSelect'),
-              document.getElementById('disciplineSelectSimple'),
-              document.getElementById('disciplineSelectBracket')];
-  sels.forEach(sel=>{
-    sel.innerHTML='';
-    if(disciplines.length===0){
-      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de disciplinas —'; sel.appendChild(opt); sel.disabled=true;
-    }else{
-      const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar disciplina —'; sel.appendChild(opt0);
-      disciplines.forEach(d=>{
-        const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; o.dataset.seed=d.seed||d.name;
-        sel.appendChild(o);
+// ====================== IMPORTACIÓN DE EQUIPOS ======================
+function importTeamsCSV(text) {
+  try {
+    // Limpiar BOM si existe
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    
+    const {headers, rows, delimiter} = parseCSV(text);
+    
+    // Detectar índices de columnas
+    let nameIdx = 0, provinceIdx = 1, headIdx = 2;
+    
+    if (headers.length > 0) {
+      headers.forEach((header, idx) => {
+        const h = header.toLowerCase();
+        if (h.includes('equipo') || h.includes('team') || h.includes('nombre')) nameIdx = idx;
+        if (h.includes('provincia') || h.includes('province') || h.includes('región')) provinceIdx = idx;
+        if (h.includes('cabeza') || h.includes('head') || h.includes('seed')) headIdx = idx;
       });
-      sel.disabled=false;
     }
-  });
-}
-function refreshCategorySelects(){
-  const sels=[document.getElementById('categorySelect'),
-              document.getElementById('categorySelectSimple'),
-              document.getElementById('categorySelectBracket')];
-  sels.forEach(sel=>{
-    sel.innerHTML='';
-    if(categories.length===0){
-      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de categorías —'; sel.appendChild(opt); sel.disabled=true;
-    }else{
-      const opt0=document.createElement('option'); opt0.value=''; opt.textContent='— Seleccionar categoría —'; sel.appendChild(opt0);
-      categories.forEach(c=>{
-        const o=document.createElement('option'); o.value=c.name; o.textContent=c.name;
-        sel.appendChild(o);
-      });
-      sel.disabled=false;
+    
+    const teams = [];
+    for (const row of rows) {
+      if (row.length <= nameIdx) continue;
+      
+      const name = (row[nameIdx] || '').replace(/\*+$/, '').trim();
+      if (!name) continue;
+      
+      const province = (row[provinceIdx] || '').replace(/\*+$/, '').trim();
+      const headValue = (row[headIdx] || '').toLowerCase().trim();
+      const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/.test(headValue) || 
+                  (row[nameIdx] || '').includes('*');
+      
+      teams.push({name, province, head});
     }
-  });
-}
-
-function getSelectedDisciplineName(){
-  const sel=document.getElementById('disciplineSelect');
-  if(!sel) return '';
-  const val=sel.value || '';
-  return val;
-}
-function getSelectedDisciplineSeed(){
-  const sel=document.getElementById('disciplineSelect');
-  if(!sel) return '';
-  const opt=sel.selectedOptions[0];
-  if(opt && opt.dataset && opt.dataset.seed){ return opt.dataset.seed }
-  const name=sel.value||'';
-  return name;
-}
-function getSelectedCategoryName(){
-  const sel=document.getElementById('categorySelect');
-  if(!sel) return '';
-  return sel.value || '';
-}
-function getSelectedGender(){
-  const sel=document.getElementById('genderSelect');
-  return sel ? (sel.value||'') : '';
-}
-function setSelectedDisciplineByName(name){
-  [document.getElementById('disciplineSelect'),
-   document.getElementById('disciplineSelectSimple'),
-   document.getElementById('disciplineSelectBracket')].forEach(sel=>{
-     if(!sel) return;
-     const options=Array.from(sel.options);
-     const found=options.find(o=>o.value===name);
-     if(found){ sel.value=name; }
-     else if(name){
-       const o=document.createElement('option'); o.value=name; o.textContent=name; o.dataset.seed=name;
-       sel.appendChild(o); sel.value=name; sel.disabled=false;
-     }
-   });
-}
-
-/* ====================== Capacidades ====================== */
-function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
-function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24;if(n>=total) return caps;let deficits=total-n;const order=[3,1,2,0];let i=0;while(deficits>0){const idx=order[i%order.length];if(caps[idx]>0){caps[idx]--;deficits--}i++}return caps}
-function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24;if(n>=total) return caps;const d=total-n;const zeros=Math.floor(d/3);const twos=d%3;const order=[7,6,5,4,3,2,1,0];for(let i=0;i<zeros;i++){caps[order[i]]=0}let k=zeros;for(let j=0;j<twos && k<order.length;j++,k++){if(caps[order[k]]===3) caps[order[k]]=2}return caps}
-
-/* ====================== Sorteo ====================== */
-function drawGroups(teams,z,headsAsFirst,format){
-  const rand=rngFromSeed(getSelectedDisciplineSeed());
-  const n=teams.length;
-  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
-  if(n<z) return {error:'Hay menos equipos que zonas.'};
-  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24?capacitiesEightByThree(n):capacities(n,z));
-  const groups=Array.from({length:z},()=>[]);
-
-  const heads=shuffle(teams.filter(t=>t.head),rand);
-  const others=shuffle(teams.filter(t=>!t.head),rand);
-  if(headsAsFirst&&heads.length){
-    for(let i=0;i<groups.length && i<heads.length;i++){ groups[i].push(heads[i]); }
+    
+    return {teams, delimiter, hasHeaders: headers.length > 0};
+  } catch (error) {
+    console.error('Error importando equipos:', error);
+    throw new Error('No se pudo leer el CSV de equipos');
   }
-  const targetCaps=capsBase.map((cap,i)=> cap - groups[i].length);
-  const pool=headsAsFirst?others:shuffle(teams,rand);
-  // Llenado balanceado simple
-  pool.forEach(team=>{
-    // elegir el grupo con menor tamaño que tenga cupo
-    const candidates=groups.map((arr,idx)=>({idx,size:arr.length,cap:targetCaps[idx]}))
-      .filter(x=>x.cap>0)
-      .sort((a,b)=> a.size-b.size || a.idx-b.idx);
-    if(candidates.length){
-      const idx=candidates[0].idx;
-      groups[idx].push(team);
-      targetCaps[idx]--;
+}
+
+// ====================== IMPORTACIÓN DE DISCIPLINAS/CATEGORÍAS ======================
+function importGenericCSV(text, nameField, seedField) {
+  try {
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    
+    const {headers, rows, delimiter} = parseCSV(text);
+    
+    let nameIdx = 0, seedIdx = 1;
+    
+    if (headers.length > 0) {
+      headers.forEach((header, idx) => {
+        const h = header.toLowerCase();
+        if (new RegExp(nameField.join('|')).test(h)) nameIdx = idx;
+        if (new RegExp(seedField.join('|')).test(h)) seedIdx = idx;
+      });
     }
-  });
-  return {groups,caps:capsBase,relaxed:false};
+    
+    const items = [];
+    for (const row of rows) {
+      if (row.length <= nameIdx) continue;
+      
+      const name = (row[nameIdx] || '').trim();
+      if (!name) continue;
+      
+      const seed = (row[seedIdx] || name).trim();
+      items.push({name, seed});
+    }
+    
+    return {items, delimiter, hasHeaders: headers.length > 0};
+  } catch (error) {
+    console.error('Error importando CSV:', error);
+    throw new Error('No se pudo leer el CSV');
+  }
 }
 
-/* ====================== Export y helpers ====================== */
-function renderGroups(target,result){
-  if(result.error){ target.innerHTML='<div class="errorText">'+result.error+'</div>'; return }
-  const {groups} = result;
-  const grid=document.createElement('div'); grid.className='grid';
-  groups.forEach((arr,gi)=>{
-    const card=document.createElement('div'); card.className='zone';
-    card.innerHTML='<h4>Zona '+(gi+1)+'</h4>';
-    const ol=document.createElement('ol');
-    arr.forEach(t=>{
-      const li=document.createElement('li');
-      li.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'');
-      ol.appendChild(li);
-    });
-    card.appendChild(ol); grid.appendChild(card);
-  });
-  target.innerHTML=''; target.appendChild(grid);
-  document.getElementById('status').innerHTML='Sorteo realizado';
-}
-
-function exportGroupsCSV(groups){
-  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\\n';
-  groups.forEach((arr,gi)=>{
-    arr.forEach((t,i)=>{
-      csv+=(gi+1)+','+(i+1)+',"'+t.name.replace(/"/g,'""')+'"'+(t.province?',"'+t.province.replace(/"/g,'""')+'"':',')+(t.head?',si':',no')+'\\n';
-    });
-  });
-  downloadText(csv,'sorteo_zonas.csv');
-}
-function exportSimpleCSV(list){
-  let csv='Posicion,Equipo\\n';
-  list.forEach((n,i)=>{ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'\"\\n' });
-  downloadText(csv,'sorteo_simple.csv');
-}
-function exportBracketCSV(matches){
-  let csv='Llave,Partido,Equipo A,Equipo B\\n';
-  matches.forEach((m,i)=>{ csv+='Ronda 1,'+(i+1)+',"'+m[0]+'","'+m[1]+'\"\\n' });
-  downloadText(csv,'llaves.csv');
-}
-function downloadText(text,filename){
-  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
-}
-function copyText(text){
-  navigator.clipboard.writeText(text).then(()=>{toast('Copiado')}).catch(()=>alert('No se pudo copiar'))
-}
-function toast(msg){
-  const el=document.createElement('div');
-  el.textContent=msg; el.style.position='fixed'; el.style.bottom='16px'; el.style.right='16px'; el.style.background='#111827'; el.style.border='1px solid #334155'; el.style.padding='10px 12px'; el.style.borderRadius='10px'; el.style.zIndex=9999;
-  document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
-}
-
-/* ====================== Estado, listas activas/inactivas ====================== */
-let activeTeams=[], inactiveTeams=[];
-
-function buildListsFromTextarea(){
-  activeTeams = parseText(document.getElementById('teamsInput').value);
+// ====================== GESTIÓN DE LISTAS ACTIVAS/INACTIVAS ======================
+function buildListsFromTextarea() {
+  const text = document.getElementById('teamsInput').value;
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  
+  activeTeams = lines.map(line => {
+    const parts = line.split(';').map(p => p.trim());
+    const name = parts[0].replace(/\*+$/, '').trim();
+    const province = parts[1] ? parts[1].replace(/\*+$/, '').trim() : '';
+    const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : 
+                parts[0].includes('*');
+    
+    return {name, province, head};
+  }).filter(team => team.name);
+  
   inactiveTeams = [];
   document.getElementById('checkLists').classList.remove('hidden');
-  renderLists(); updateCapInfo();
-}
-function renderLists(){
-  const aBox=document.getElementById('activeList');
-  const iBox=document.getElementById('inactiveList');
-  const showInactive=document.getElementById('toggleShowInactive').checked;
-
-  document.getElementById('countActive').textContent = activeTeams.length;
-  document.getElementById('countInactive').textContent = inactiveTeams.length;
-  iBox.classList.toggle('hidden', !showInactive);
-
-  aBox.innerHTML='';
-  activeTeams.forEach((t,idx)=>{
-    const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type="checkbox" class="chkActive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
-    aBox.appendChild(row);
-  });
-  iBox.innerHTML='';
-  inactiveTeams.forEach((t,idx)=>{
-    const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type="checkbox" class="chkInactive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
-    iBox.appendChild(row);
-  });
-}
-function getChecked(selector){
-  return Array.from(document.querySelectorAll(selector+':checked')).map(el=> parseInt(el.getAttribute('data-idx'),10)).filter(n=>!isNaN(n));
-}
-function moveSelectedToInactive(){
-  const idxs=getChecked('.chkActive').sort((a,b)=>b-a);
-  const moved=[];
-  idxs.forEach(i=>{ if(activeTeams[i]) moved.push(activeTeams.splice(i,1)[0]); });
-  inactiveTeams = moved.concat(inactiveTeams);
-  renderLists(); updateCapInfo();
-}
-function restoreSelectedFromInactive(){
-  const idxs=getChecked('.chkInactive').sort((a,b)=>b-a);
-  const moved=[];
-  idxs.forEach(i=>{ if(inactiveTeams[i]) moved.push(inactiveTeams.splice(i,1)[0]); });
-  activeTeams = activeTeams.concat(moved);
-  renderLists(); updateCapInfo();
-}
-function selectAll(selector){ document.querySelectorAll(selector).forEach(el=>{ el.checked=true }) }
-function getActiveTeamsLive(){
-  const panelVisible = !document.getElementById('checkLists').classList.contains('hidden');
-  if(panelVisible) return activeTeams.slice();
-  return parseText(document.getElementById('teamsInput').value);
-}
-
-/* ====================== Compartir estado ====================== */
-function getFormat(){const r=document.querySelector('input[name="format"]:checked');return r?r.value:'custom'}
-function currentZones(){
-  const fmt=getFormat();
-  if(fmt==='8x3') return 8;
-  if(fmt==='4x6') return 4;
-  return parseInt(document.getElementById('zones').value,10)||1;
-}
-function gatherState(){
-  return {teams:activeTeams, inactive:inactiveTeams, z:currentZones(), headsAsFirst:document.getElementById('headsAsFirst').checked, discipline:getSelectedDisciplineName(), disciplineSeed:getSelectedDisciplineSeed(), category:getSelectedCategoryName(), gender:getSelectedGender(), format:getFormat()}
-}
-function loadStateToUI(st){
-  if(st.teams){ activeTeams = st.teams }
-  if(st.inactive){ inactiveTeams = st.inactive }
-  document.getElementById('teamsInput').value = activeTeams.concat(inactiveTeams).map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n');
-  if(st.z) document.getElementById('zones').value=st.z;
-  if(typeof st.headsAsFirst==='boolean') document.getElementById('headsAsFirst').checked=st.headsAsFirst;
-  if(st.format) setFormat(st.format);
-  if(st.discipline){ setSelectedDisciplineByName(st.discipline) }
-  if(st.category){ /* will set after categories load */ }
-  document.getElementById('checkLists').classList.remove('hidden');
-  renderLists(); updateCapInfo();
-}
-function encodeState(st){const json=JSON.stringify(st);return btoa(unescape(encodeURIComponent(json)))}
-function decodeState(b64){try{const json=decodeURIComponent(escape(atob(b64)));return JSON.parse(json)}catch(e){return null}}
-function setShareLink(){const st=gatherState();const hash=encodeState(st);const url=location.origin+location.pathname+'#'+hash;copyText(url)}
-function tryLoadFromHash(){if(location.hash&&location.hash.length>1){const st=decodeState(location.hash.slice(1));if(st){loadStateToUI(st);toast('Estado restaurado')}}}
-
-/* ====================== Vista previa en pestaña nueva ====================== */
-function openPreviewInNewTab(groups){
-  const disc=getSelectedDisciplineName();
-  const cat=getSelectedCategoryName();
-  const gen=getSelectedGender();
-  const chips=[];
-  if(disc) chips.push('Disciplina: '+disc);
-  if(cat) chips.push('Categoría: '+cat);
-  if(gen) chips.push('Género: '+gen);
-
-  let html='<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Resultado del sorteo</title>';
-  html+='<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f8fafc;color:#0f172a;margin:0;padding:24px}';
-  html+='.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}h1{margin:0;font-size:20px}';
-  html+='.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0} .chip{font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:999px;background:#fff}';
-  html+='.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}';
-  html+='.zone{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 0 rgba(0,0,0,.04)}.zone h4{margin:0;padding:8px 10px;background:linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08));border-top-left-radius:12px;border-top-right-radius:12px}';
-  html+='.zone ol{margin:0;padding:10px 16px 12px 28px;}</style>';
-  html+='</head><body>';
-  html+='<div class="head"><h1>Resultado del sorteo</h1><div>'+new Date().toLocaleString()+'</div></div>';
-  if(chips.length){ html+='<div class="chips">'+chips.map(c=>'<span class="chip">'+c.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>').join('')+'</div>'; }
-  html+='<div class="grid">';
-  groups.forEach((arr,gi)=>{
-    html+='<div class="zone"><h4>Zona '+(gi+1)+'</h4><ol>';
-    arr.forEach(t=>{
-      const name=(t.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const prov=t.province?(' — '+t.province.replace(/&/g,'&amp;').replace(/</g,'&lt;')):'';
-      const head=t.head?' ★':'';
-      html+='<li><b>'+name+'</b>'+prov+head+'</li>';
-    });
-    html+='</ol></div>';
-  });
-  html+='</div></body></html>';
-
-  const win=window.open('', 'resultadoSorteo');
-  if(win){
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-  }else{
-    alert('El navegador bloqueó la ventana emergente. Permití pop‑ups para ver la vista previa.');
-  }
-}
-
-/* ====================== PDF (A4) ====================== */
-async function exportPDF(){
-  try{
-    if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
-    const teams = getActiveTeamsLive(); if(!teams.length){ toast('No hay equipos activos'); return }
-    const z=currentZones();
-    const headsAsFirst=document.getElementById('headsAsFirst').checked;
-    const fmt=getFormat();
-    const res=drawGroups(teams,z,headsAsFirst,fmt);
-    if(res.error){toast('Generá el sorteo primero');return}
-
-    const sheet=document.createElement('div');
-    sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#ffffff';sheet.style.color='#0f172a';
-    sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';
-    sheet.style.fontFamily='Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
-    const bar=document.createElement('div');bar.style.height='8px';bar.style.background='linear-gradient(90deg,#22c55e,#38bdf8)';sheet.appendChild(bar);
-    const header=document.createElement('div');header.style.display='flex';header.style.justifyContent='space-between';header.style.alignItems='center';header.style.padding='12px 16px 8px';
-    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='600';title.textContent='Sorteo de Zonas';const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teams.length+'</b><br>'+new Date().toLocaleString();
-    header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
-    const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
-    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='500px';s.style.background='#f8fafc';return s}
-    const ztxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(ztxt));
-    const disc=getSelectedDisciplineName(); if(disc) chips.appendChild(chip('Disciplina: '+disc));
-    const cat=getSelectedCategoryName(); if(cat) chips.appendChild(chip('Categoría: '+cat));
-    const gen=getSelectedGender(); if(gen) chips.appendChild(chip('Género: '+gen));
-    sheet.appendChild(chips);
-    const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='0';
-    res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
-      const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
-      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
-      head.appendChild(hleft);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='8px';ol.style.listStylePosition='inside';ol.style.fontSize='16px';ol.style.lineHeight='1.35';
-      arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
-    });
-    sheet.appendChild(grid);
-    const footer=document.createElement('div');footer.style.fontSize='10px';footer.style.color='#64748b';footer.style.textAlign='right';footer.style.padding='4px 12px 10px';footer.textContent='Generado con Sorteador Deportivo — '+(location.href.split('#')[0]||'');sheet.appendChild(footer);
-    document.body.appendChild(sheet);
-    await new Promise(r=>setTimeout(r,20));
-    const canvas=await html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true});
-    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-    pdf.addImage(img,'PNG',0,0,pw,ph); const dateStr=new Date().toISOString().slice(0,10); pdf.save('sorteo_'+dateStr+'.pdf');
-  }catch(err){ console.error(err); alert('No se pudo exportar el PDF.'); }
-}
-
-/* ====================== UI y eventos ====================== */
-function setFormat(fmt){
-  document.querySelectorAll('input[name="format"]').forEach(r=> r.checked=(r.value===fmt));
-  const elZones=document.getElementById('zones');
-  if(fmt==='8x3'){ elZones.value=8; elZones.disabled=true }
-  else if(fmt==='4x6'){ elZones.value=4; elZones.disabled=true }
-  else { elZones.disabled=false }
+  renderLists();
   updateCapInfo();
 }
-function summaryCaps(caps){const c3=caps.filter(x=>x===3).length;const c2=caps.filter(x=>x===2).length;const c0=caps.filter(x=>x===0).length;return {c3,c2,c0,txt:`${c3}×3, ${c2}×2, ${c0}×0`}}
-function updateCapInfo(){
-  const teams=getActiveTeamsLive().length;
-  const z=currentZones(); const fmt=getFormat();
-  let msg='Activos: '+teams+' · Zonas: '+z;
-  if(fmt==='4x6'){
-    if(teams<=24){const capsPrev=capacitiesFourBySix(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 6 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'}
-    else { msg+=' — >24 equipos: distribución pareja' }
-  } else if(fmt==='8x3'){
-    if(teams<=24){const capsPrev=capacitiesEightByThree(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 3 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'; if(teams<16){msg+=' — <span class="warnText"><b>Considere cambiar de sistema</b></span>'}}
-    else { msg+=' — >24 equipos: distribución pareja' }
-  } else {
-    const per=(teams/z).toFixed(2); msg+=' — Promedio: '+per+' por zona';
-  }
-  document.getElementById('capInfo').innerHTML=msg;
+
+function renderLists() {
+  const activeList = document.getElementById('activeList');
+  const inactiveList = document.getElementById('inactiveList');
+  const showInactive = document.getElementById('toggleShowInactive').checked;
+  
+  document.getElementById('countActive').textContent = activeTeams.length;
+  document.getElementById('countInactive').textContent = inactiveTeams.length;
+  
+  inactiveList.classList.toggle('hidden', !showInactive);
+  
+  // Render lista activa
+  activeList.innerHTML = '';
+  activeTeams.forEach((team, idx) => {
+    const row = document.createElement('div');
+    row.className = 'itemRow';
+    row.innerHTML = `
+      <input type="checkbox" class="chkActive" data-idx="${idx}">
+      <b>${escapeHtml(team.name)}</b>
+      ${team.province ? `<span class="muted">— ${escapeHtml(team.province)}</span>` : ''}
+      ${team.head ? '<span class="pill">Cabeza</span>' : ''}
+    `;
+    activeList.appendChild(row);
+  });
+  
+  // Render lista inactiva
+  inactiveList.innerHTML = '';
+  inactiveTeams.forEach((team, idx) => {
+    const row = document.createElement('div');
+    row.className = 'itemRow';
+    row.innerHTML = `
+      <input type="checkbox" class="chkInactive" data-idx="${idx}">
+      <b>${escapeHtml(team.name)}</b>
+      ${team.province ? `<span class="muted">— ${escapeHtml(team.province)}</span>` : ''}
+      ${team.head ? '<span class="pill">Cabeza</span>' : ''}
+    `;
+    inactiveList.appendChild(row);
+  });
 }
 
-document.addEventListener('DOMContentLoaded',function(){
-  document.querySelectorAll('input[name="format"]').forEach(r=>{
-    r.addEventListener('change',()=> setFormat(r.value));
-  });
+function getChecked(selector) {
+  return Array.from(document.querySelectorAll(selector))
+    .map(el => parseInt(el.dataset.idx))
+    .filter(idx => !isNaN(idx))
+    .sort((a, b) => b - a);
+}
 
-  document.querySelectorAll('.tab').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.tab').forEach(b=> b.classList.toggle('active', b===btn));
-      document.querySelectorAll('.tabcontent').forEach(c=> c.classList.add('hidden'));
-      document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+function moveSelectedToInactive() {
+  const indices = getChecked('.chkActive:checked');
+  const moved = indices.map(idx => activeTeams[idx]);
+  
+  indices.forEach(idx => activeTeams.splice(idx, 1));
+  inactiveTeams.unshift(...moved);
+  
+  renderLists();
+  updateCapInfo();
+}
+
+function restoreSelectedFromInactive() {
+  const indices = getChecked('.chkInactive:checked');
+  const moved = indices.map(idx => inactiveTeams[idx]);
+  
+  indices.forEach(idx => inactiveTeams.splice(idx, 1));
+  activeTeams.push(...moved);
+  
+  renderLists();
+  updateCapInfo();
+}
+
+function selectAll(selector) {
+  document.querySelectorAll(selector).forEach(cb => cb.checked = true);
+}
+
+function getActiveTeamsLive() {
+  if (document.getElementById('checkLists').classList.contains('hidden')) {
+    const text = document.getElementById('teamsInput').value;
+    const lines = text.split(/\r?\n/).filter(line => line.trim());
+    return lines.map(line => {
+      const parts = line.split(';').map(p => p.trim());
+      return {
+        name: parts[0].replace(/\*+$/, '').trim(),
+        province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
+        head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
+      };
+    }).filter(team => team.name);
+  }
+  return [...activeTeams];
+}
+
+// ====================== SISTEMA DE SORTEO ======================
+function xmur3(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = h << 13 | h >>> 19;
+  }
+  return function() {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return (h ^ h >>> 16) >>> 0;
+  };
+}
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function rngFromSeed(seed) {
+  if (!seed || seed.trim() === "") return Math.random;
+  const h = xmur3(String(seed))();
+  return mulberry32(h);
+}
+
+function shuffle(array, rand) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function capacities(n, z) {
+  const base = Math.floor(n / z);
+  const rest = n % z;
+  return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0));
+}
+
+function capacitiesFourBySix(n) {
+  const caps = [6, 6, 6, 6];
+  const total = 24;
+  if (n >= total) return caps;
+  
+  let deficits = total - n;
+  const order = [3, 1, 2, 0];
+  let i = 0;
+  
+  while (deficits > 0) {
+    const idx = order[i % order.length];
+    if (caps[idx] > 0) {
+      caps[idx]--;
+      deficits--;
+    }
+    i++;
+  }
+  return caps;
+}
+
+function capacitiesEightByThree(n) {
+  const caps = Array(8).fill(3);
+  const total = 24;
+  if (n >= total) return caps;
+  
+  const d = total - n;
+  const zeros = Math.floor(d / 3);
+  const twos = d % 3;
+  const order = [7, 6, 5, 4, 3, 2, 1, 0];
+  
+  for (let i = 0; i < zeros; i++) caps[order[i]] = 0;
+  
+  let k = zeros;
+  for (let j = 0; j < twos && k < order.length; j++, k++) {
+    if (caps[order[k]] === 3) caps[order[k]] = 2;
+  }
+  
+  return caps;
+}
+
+function drawGroups(teams, z, headsAsFirst, seed, format) {
+  const rand = rngFromSeed(seed);
+  const n = teams.length;
+  
+  if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
+  if (n < z) return {error: 'Hay menos equipos que zonas.'};
+  
+  const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) :
+                  (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) :
+                  capacities(n, z);
+  
+  const groups = Array.from({length: z}, () => []);
+  const heads = shuffle(teams.filter(t => t.head), rand);
+  const others = shuffle(teams.filter(t => !t.head), rand);
+  
+  if (headsAsFirst && heads.length) {
+    for (let i = 0; i < groups.length && i < heads.length; i++) {
+      groups[i].push(heads[i]);
+    }
+  }
+  
+  const targetCaps = capsBase.map((cap, i) => Math.max(0, cap - groups[i].length));
+  const pool = headsAsFirst ? others : shuffle(teams, rand);
+  
+  const maxAttempts = 500;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const g = groups.map(arr => [...arr]);
+    const remaining = [...targetCaps];
+    let ok = true;
+    
+    const order = shuffle(pool, rand);
+    
+    for (const team of order) {
+      const candidates = g
+        .map((arr, idx) => ({idx, size: arr.length, cap: remaining[idx]}))
+        .filter(x => x.cap > 0)
+        .sort((a, b) => a.size - b.size || a.idx - b.idx)
+        .map(x => x.idx);
+      
+      if (candidates.length === 0) {
+        ok = false;
+        break;
+      }
+      
+      const pick = candidates[Math.floor(rand() * candidates.length)];
+      g[pick].push(team);
+      remaining[pick]--;
+    }
+    
+    if (ok) return {groups: g, caps: capsBase, relaxed: false, attempt};
+  }
+  
+  return {error: 'No se pudo asignar después de varios intentos'};
+}
+
+// ====================== RENDERIZADO DE RESULTADOS ======================
+function renderGroups(target, result) {
+  if (result.error) {
+    target.innerHTML = `<div class="errorText">${result.error}</div>`;
+    return;
+  }
+  
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  
+  result.groups.forEach((arr, gi) => {
+    const card = document.createElement('div');
+    card.className = 'zone';
+    // SIN (x/x) - solo "Zona N"
+    card.innerHTML = `<h4>Zona ${gi + 1}</h4>`;
+    
+    const ol = document.createElement('ol');
+    arr.forEach(t => {
+      const li = document.createElement('li');
+      li.innerHTML = `<b>${escapeHtml(t.name)}</b>` +
+        (t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : '') +
+        (t.head ? ' <span class="pill">Cabeza</span>' : '');
+      ol.appendChild(li);
+    });
+    
+    card.appendChild(ol);
+    grid.appendChild(card);
+  });
+  
+  target.innerHTML = '';
+  target.appendChild(grid);
+  
+  const status = result.relaxed ? ' (con relajación)' : '';
+  const attempts = result.attempt != null ? ` (intentos: ${result.attempt + 1})` : '';
+  document.getElementById('status').innerHTML = `Sorteo realizado${status}${attempts}`;
+}
+
+function openResultInNewTab(result) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado en nueva pestaña');
+    return;
+  }
+  
+  const zonesHTML = result.groups.map((arr, gi) => {
+    const items = arr.map(t => 
+      `<li><b>${escapeHtml(t.name)}</b>` +
+      (t.province ? ` — ${escapeHtml(t.province)}` : '') +
+      (t.head ? ' ★' : '') +
+      `</li>`
+    ).join('');
+    
+    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+  }).join('');
+  
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resultado del Sorteo</title>
+  <style>
+    body { font-family: system-ui; background: #0f172a; color: #e5e7eb; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h1 { margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .zone { background: #0b1220; border: 1px solid #223046; border-radius: 14px; padding: 10px; }
+    .zone h4 { margin: 4px 0 8px 0; }
+    .zone ol { margin: 0; padding-left: 18px; }
+    .muted { color: #94a3b8; }
+    .pill { display: inline-flex; padding: 3px 8px; border: 1px solid #2b3b55; border-radius: 999px; background: #0b1220; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 Resultado del Sorteo</h1>
+    <div class="grid">${zonesHTML}</div>
+  </div>
+</body>
+</html>`;
+  
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// ====================== EXPORTACIÓN ======================
+function exportGroupsCSV(groups) {
+  let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
+  groups.forEach((arr, gi) => {
+    arr.forEach((t, i) => {
+      csv += `${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}",` +
+             `"${t.province.replace(/"/g, '""')}",` +
+             `${t.head ? 'si' : 'no'}\n`;
     });
   });
+  downloadText(csv, 'sorteo_zonas.csv');
+}
 
+function exportSimpleCSV(list) {
+  let csv = 'Posicion,Equipo\n';
+  list.forEach((name, i) => {
+    csv += `${i + 1},"${name.replace(/"/g, '""')}"\n`;
+  });
+  downloadText(csv, 'sorteo_simple.csv');
+}
+
+// ====================== GESTIÓN DE ESTADO ======================
+function getFormat() {
+  const selected = document.querySelector('input[name="format"]:checked');
+  return selected ? selected.value : 'custom';
+}
+
+function currentZones() {
+  const fmt = getFormat();
+  if (fmt === '8x3') return 8;
+  if (fmt === '4x6') return 4;
+  return parseInt(document.getElementById('zones').value) || 1;
+}
+
+function updateCapInfo() {
+  const teams = getActiveTeamsLive().length;
+  const z = currentZones();
+  const fmt = getFormat();
+  
+  let msg = `Equipos: ${teams} · Zonas: ${z}`;
+  
+  if (fmt === '4x6') {
+    if (teams <= 24) {
+      const caps = capacitiesFourBySix(teams);
+      msg += ` — Distribución: ${caps.join('-')}`;
+    } else {
+      msg += ' — Distribución pareja';
+    }
+  } else if (fmt === '8x3') {
+    if (teams <= 24) {
+      const caps = capacitiesEightByThree(teams);
+      msg += ` — Distribución: ${caps.join('-')}`;
+      if (teams < 16) msg += ' — <span class="warnText">Considere cambiar de sistema</span>';
+    } else {
+      msg += ' — Distribución pareja';
+    }
+  } else {
+    const avg = (teams / z).toFixed(2);
+    msg += ` — Promedio: ${avg} por zona`;
+  }
+  
+  document.getElementById('capInfo').innerHTML = msg;
+}
+
+// ====================== INICIALIZACIÓN ======================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Sorteador v2.2 cargado');
+  
+  // Tabs
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
+      btn.classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    });
+  });
+  
+  // Formato de zonas
+  document.querySelectorAll('input[name="format"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const zonesInput = document.getElementById('zones');
+      if (radio.value === '8x3') {
+        zonesInput.value = '8';
+        zonesInput.disabled = true;
+      } else if (radio.value === '4x6') {
+        zonesInput.value = '4';
+        zonesInput.disabled = true;
+      } else {
+        zonesInput.disabled = false;
+      }
+      updateCapInfo();
+    });
+  });
+  
+  // Lista de checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', ()=> selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', ()=> selectAll('.chkInactive'));
-
-  // Equipos CSV
-  document.getElementById('csvFile').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const parsed=importCSVTeams(reader.result||'');
-        const teams=parsed.list;
-        if(!teams.length){ toast('CSV vacío o no se detectaron equipos'); return }
-        document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\\n');
+  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
+  document.getElementById('btnSelectAllInactive').addEventListener('click', () => selectAll('.chkInactive'));
+  
+  // Importación de equipos CSV
+  document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importTeamsCSV(reader.result);
+        
+        if (result.teams.length === 0) {
+          toast('CSV vacío o no se detectaron equipos');
+          return;
+        }
+        
+        // Actualizar textarea
+        document.getElementById('teamsInput').value = result.teams
+          .map(t => `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`)
+          .join('\n');
+        
         buildListsFromTextarea();
-        const prev=teams.slice(0,3).map(t=> t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'' )).join(' · ');
-        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        toast('CSV de equipos cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de equipos.'); }
+        
+        // Mostrar info
+        const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('csvInfo').innerHTML = info;
+        toast('CSV de equipos cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
     };
-    reader.readAsText(file,'utf-8');
+    reader.readAsText(file, 'UTF-8');
   });
-
-  // Disciplinas CSV
-  document.getElementById('csvDisciplines').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const parsed=importCSVDisciplines(reader.result||'');
-        disciplines = parsed.list;
-        refreshDisciplineSelects();
-        const prev=disciplines.slice(0,5).map(d=> d.name).join(' · ');
-        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        toast('CSV de disciplinas cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de disciplinas.'); }
-    };
-    reader.readAsText(file,'utf-8');
-  });
-
-  // Categorías CSV
-  document.getElementById('csvCategories').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const parsed=importCSVCategories(reader.result||'');
-        categories = parsed.list;
-        refreshCategorySelects();
-        const prev=categories.slice(0,5).map(c=> c.name).join(' · ');
-        document.getElementById('catCSVInfo').innerHTML = 'CSV de categorías: <b>'+categories.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        toast('CSV de categorías cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de categorías.'); }
-    };
-    reader.readAsText(file,'utf-8');
-  });
-
-  // Demo disciplinas
-  document.getElementById('btnDiscDemo').addEventListener('click',()=>{
-    disciplines = [
-      {name:'Fútbol', seed:'futbol-24'},
-      {name:'Básquet', seed:'basquet-24'},
-      {name:'Vóley', seed:'voley-24'},
-      {name:'Handball', seed:'hand-24'},
-      {name:'Hockey', seed:'hockey-24'}
-    ];
-    refreshDisciplineSelects();
-    toast('Disciplinas demo cargadas');
-  });
-
-  // Demo categorías
-  document.getElementById('btnCatDemo').addEventListener('click',()=>{
-    categories = [{name:'Sub-14'},{name:'Sub-16'},{name:'Sub-18'},{name:'Libre'},{name:'Mayores'}];
-    refreshCategorySelects();
-    toast('Categorías demo cargadas');
-  });
-
-  // Sincronizar info al tipear (si no se abrió el panel de checks)
-  document.getElementById('teamsInput').addEventListener('input', ()=>{
-    if(document.getElementById('checkLists').classList.contains('hidden')){
-      updateCapInfo();
-    }
-  });
-
-  // Utilidad
-  document.getElementById('btnExample').addEventListener('click',()=>{
-    const sample=[["River Plate","CABA","*"],["Boca Juniors","CABA","*"],["Newell's","Santa Fe",""],["Rosario Central","Santa Fe",""],["San Lorenzo","CABA",""],["Racing","Buenos Aires",""],["Independiente","Buenos Aires",""],["Estudiantes","Buenos Aires",""],["Talleres","Córdoba",""],["Belgrano","Córdoba",""],["Godoy Cruz","Mendoza",""],["Atl. Tucumán","Tucumán",""]];
-    document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\\n');
+  
+  // Ejemplo y limpiar
+  document.getElementById('btnExample').addEventListener('click', () => {
+    const example = `River Plate; CABA; *
+Boca Juniors; CABA; *
+Newell's; Santa Fe
+Rosario Central; Santa Fe
+San Lorenzo; CABA
+Racing; Buenos Aires
+Independiente; Buenos Aires
+Estudiantes; Buenos Aires
+Talleres; Córdoba
+Belgrano; Córdoba
+Godoy Cruz; Mendoza
+Atl. Tucumán; Tucumán`;
+    document.getElementById('teamsInput').value = example;
     updateCapInfo();
   });
-  document.getElementById('btnClear').addEventListener('click',()=>{
-    document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[]; document.getElementById('checkLists').classList.add('hidden');
-    document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
+  
+  document.getElementById('btnClear').addEventListener('click', () => {
+    document.getElementById('teamsInput').value = '';
+    document.getElementById('resultGroups').innerHTML = '';
+    document.getElementById('status').innerHTML = '';
+    activeTeams = [];
+    inactiveTeams = [];
+    document.getElementById('checkLists').classList.add('hidden');
+    updateCapInfo();
   });
-
-  // Sorteo zonas
-  document.getElementById('btnDrawGroups').addEventListener('click',()=>{
+  
+  // Sorteo de zonas
+  document.getElementById('btnDrawGroups').addEventListener('click', () => {
     const teams = getActiveTeamsLive();
-    if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
-    const z=currentZones();
-    const res=drawGroups(teams,z,document.getElementById('headsAsFirst').checked,getFormat());
-    renderGroups(document.getElementById('resultGroups'),res);
-    if(!res.error){
-      const iso=new Date().toISOString().replace('T',' ').slice(0,19);
-      const item=document.createElement('div'); item.className='item';
-      const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-      const disc=getSelectedDisciplineName();
-      const cat=getSelectedCategoryName();
-      const gen=getSelectedGender();
-      const chips=[disc?('['+disc+']'):'',cat?('('+cat+')'):'',gen?('{'+gen+'}'):''].filter(Boolean).join(' ');
-      item.textContent=iso+' — '+(chips?chips+' ':'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+    if (teams.length === 0) {
+      document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
+      return;
+    }
+    
+    const z = currentZones();
+    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
+    const headsAsFirst = document.getElementById('headsAsFirst').checked;
+    const format = getFormat();
+    
+    const result = drawGroups(teams, z, headsAsFirst, seed, format);
+    renderGroups(document.getElementById('resultGroups'), result);
+    
+    if (!result.error) {
+      // Abrir en nueva pestaña
+      openResultInNewTab(result);
+      
+      // Actualizar historial
+      const now = new Date().toLocaleString();
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.textContent = `${now} — ${teams.length} equipos · ${z} zonas`;
       document.getElementById('history').prepend(item);
-      // Abrir vista previa en pestaña nueva
-      openPreviewInNewTab(res.groups);
-      if(getFormat()==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>'}
+      
+      if (format === '8x3' && teams.length < 16) {
+        document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
+      }
     }
   });
-
-  // Export/Copy/Share/PDF
-  document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
+  
+  // Exportar y compartir
+  document.getElementById('btnExportCSV').addEventListener('click', () => {
     const teams = getActiveTeamsLive();
-    const z=currentZones();
-    const res=drawGroups(teams,z,document.getElementById('headsAsFirst').checked,getFormat());
-    if(res.error){toast('Generá el sorteo primero'); return}
-    exportGroupsCSV(res.groups);
-  });
-  document.getElementById('btnCopy').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado'); return}
-    let txt=''; boxes.forEach((zone,zi)=>{ txt+='Zona '+(zi+1)+'\\n'; zone.querySelectorAll('li').forEach((li,i)=>{ txt+=(i+1)+'. '+li.innerText+'\\n' }); txt+='\\n' });
-    copyText(txt);
-  });
-  document.getElementById('btnShare').addEventListener('click', ()=>{
-    if(document.getElementById('checkLists').classList.contains('hidden')){
-      activeTeams = parseText(document.getElementById('teamsInput').value);
-      inactiveTeams = [];
+    const z = currentZones();
+    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
+    const headsAsFirst = document.getElementById('headsAsFirst').checked;
+    const format = getFormat();
+    
+    const result = drawGroups(teams, z, headsAsFirst, seed, format);
+    if (result.error) {
+      toast('Generá el sorteo primero');
+      return;
     }
-    setShareLink();
+    
+    exportGroupsCSV(result.groups);
   });
-  document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
-
-  // Simple
-  document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
-    const names = getActiveTeamsLive().map(t=>t.name);
-    document.getElementById('simpleInput').value = names.join('\\n');
+  
+  document.getElementById('btnCopy').addEventListener('click', () => {
+    const zones = document.querySelectorAll('#resultGroups .zone');
+    if (zones.length === 0) {
+      toast('No hay resultado para copiar');
+      return;
+    }
+    
+    let text = '';
+    zones.forEach((zone, i) => {
+      text += `Zona ${i + 1}\n`;
+      zone.querySelectorAll('li').forEach((li, j) => {
+        text += `${j + 1}. ${li.textContent}\n`;
+      });
+      text += '\n';
+    });
+    
+    copyText(text);
   });
-  document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
-  document.getElementById('btnDrawSimple').addEventListener('click',()=>{
-    const names=document.getElementById('simpleInput').value.split(/\\r?\\n/).map(s=>s.trim()).filter(Boolean);
-    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
-    const rand=rngFromSeed(getSelectedDisciplineSeed()); const list=shuffle(names,rand);
-    const out=list.map((n,i)=> (i+1)+'. '+n).join('\\n');
-    document.getElementById('resultSimple').innerHTML = '<pre>'+escapeHtml(out)+'</pre>';
-    document.getElementById('statusSimple').textContent = 'Sorteo realizado.';
-  });
-  document.getElementById('btnExportSimple').addEventListener('click',()=>{
-    const names=document.getElementById('resultSimple').innerText.split('\\n').map(s=>s.replace(/^\\d+\\.\\s*/,'').trim()).filter(Boolean);
-    if(!names.length){ toast('Generá el sorteo primero'); return }
-    exportSimpleCSV(names);
-  });
-  document.getElementById('btnCopySimple').addEventListener('click',()=>{
-    const txt=document.getElementById('resultSimple').innerText; if(!txt){ toast('No hay resultado'); return } copyText(txt);
-  });
-
-  // Bracket
-  function nextPow2(x){let p=1;while(p<x) p<<=1;return p}
-  function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
-  function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML='<h4>Partido '+(i+1)+'</h4><ol><li><b>'+escapeHtml(m[0])+'</b></li><li><b>'+escapeHtml(m[1])+'</b></li></ol>';grid.appendChild(card)});target.appendChild(grid)}
-  document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{
-    document.getElementById('bracketInput').value = getActiveTeamsLive().map(t=>t.name).join('\\n');
-  });
-  document.getElementById('btnClearBracket').addEventListener('click',()=>{document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML=''});
-  document.getElementById('btnDrawBracket').addEventListener('click',()=>{
-    const names=document.getElementById('bracketInput').value.split(/\\r?\\n/).map(s=>s.trim()).filter(Boolean);
-    if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
-    const matches=buildBracket(names, getSelectedDisciplineSeed());
-    renderBracket(document.getElementById('resultBracket'), matches);
-    document.getElementById('statusBracket').textContent = 'Llaves generadas (ronda 1).';
-  });
-  document.getElementById('btnExportBracket').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultBracket .zone'); if(!boxes.length){ toast('Generá las llaves primero'); return }
-    const matches=[]; boxes.forEach(b=>{ const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText, lis[1].innerText]); });
-    exportBracketCSV(matches);
-  });
-
-  tryLoadFromHash();
-  setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
+  
+  // Inicialización
   updateCapInfo();
-  refreshDisciplineSelects();
-  refreshCategorySelects();
 });
 </script>
 </body>
