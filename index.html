@@ -635,20 +635,20 @@ async function exportPDF(){
     sheet.style.fontFamily='Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
     const bar=document.createElement('div');bar.style.height='8px';bar.style.background='linear-gradient(90deg,#22c55e,#38bdf8)';sheet.appendChild(bar);
     const header=document.createElement('div');header.style.display='flex';header.style.justifyContent='space-between';header.style.alignItems='center';header.style.padding='12px 16px 8px';
-    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='800';title.textContent='Sorteo de Zonas';const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teams.length+'</b><br>'+new Date().toLocaleString();
+    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='600';title.textContent='Sorteo de Zonas';const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teams.length+'</b><br>'+new Date().toLocaleString();
     header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
     const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
-    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='999px';s.style.background='#f8fafc';return s}
+    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='500px';s.style.background='#f8fafc';return s}
     const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt));
     const discName=getSelectedDisciplineName(); if(discName) chips.appendChild(chip('Disciplina: '+discName));
     sheet.appendChild(chips);
     const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='1';
     res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
       const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
-      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='12px';hleft.textContent='Zona '+(gi+1);
-      const hright=document.createElement('div');hright.style.fontSize='11px';hright.style.color='#334155';hright.textContent='('+arr.length+'/'+res.caps[gi]+')';
+      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
+      const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='('+arr.length+'/'+res.caps[gi]+')';
       head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='18px';ol.style.fontSize='32px';ol.style.lineHeight='1.35';
+      const body=document.createElement('div');body.style.padding='8px 12px 10px';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='18px';ol.style.fontSize='22px';ol.style.lineHeight='1.35';
       arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
     });
     sheet.appendChild(grid);
