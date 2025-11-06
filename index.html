@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sorteador Deportivo</title>
+  <title>Sorteador Deportivo v2.1</title>
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
@@ -60,7 +60,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v2.0</span>
+      <span class="badge">v2.1</span>
     </header>
 
     <div class="panel">
@@ -82,7 +82,7 @@ Newell's; Santa Fe
 ..."></textarea>
             <div class="controls" style="margin-top:8px">
               <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
-              <input id="csvFile" type="file" accept=".csv,text/csv,.txt" class="hidden" />
+              <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
               <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
               <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
               <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
@@ -132,38 +132,37 @@ Newell's; Santa Fe
             </div>
             <div class="controls">
               <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
-              <input id="csvDisciplines" type="file" accept=".csv,text/csv,.txt" class="hidden" />
+              <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
               <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
             </div>
             <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
 
-            <div class="controls">
+            <div class="controls" style="margin-top:8px">
               <div style="min-width:220px;flex:1">
                 <label>Categoría</label>
                 <select id="categorySelect" disabled>
                   <option value="">— Cargá CSV de categorías —</option>
                 </select>
               </div>
+              <div style="min-width:200px;flex:1">
+                <label>Género</label>
+                <select id="genderSelect">
+                  <option value="">— Seleccionar —</option>
+                  <option>Masculino</option>
+                  <option>Femenino</option>
+                  <option>Mixto</option>
+                  <option>No Aplica</option>
+                </select>
+              </div>
             </div>
             <div class="controls">
               <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
-              <input id="csvCategories" type="file" accept=".csv,text/csv,.txt" class="hidden" />
+              <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
               <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
             </div>
             <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
 
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Género</label>
-                <select id="genderSelect">
-                  <option value="Masculino">Masculino</option>
-                  <option value="Femenino">Femenino</option>
-                  <option value="Mixto">Mixto</option>
-                  <option value="No Aplica" selected>No Aplica</option>
-                </select>
-              </div>
-            </div>
-
+            <!-- Eliminado: Evitar provincias (pedido del usuario) -->
             <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
             <div id="capInfo" class="tiny" style="margin-top:6px"></div>
 
@@ -209,6 +208,22 @@ Newell's; Santa Fe
                   <option value="">— Cargá CSV de disciplinas —</option>
                 </select>
               </div>
+              <div style="min-width:220px;flex:1">
+                <label>Categoría</label>
+                <select id="categorySelectSimple" disabled>
+                  <option value="">— Cargá CSV de categorías —</option>
+                </select>
+              </div>
+              <div style="min-width:200px;flex:1">
+                <label>Género</label>
+                <select id="genderSelectSimple">
+                  <option value="">— Seleccionar —</option>
+                  <option>Masculino</option>
+                  <option>Femenino</option>
+                  <option>Mixto</option>
+                  <option>No Aplica</option>
+                </select>
+              </div>
             </div>
             <div class="controls" style="margin-top:10px">
               <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
@@ -244,6 +259,22 @@ Newell's; Santa Fe
                   <option value="">— Cargá CSV de disciplinas —</option>
                 </select>
               </div>
+              <div style="min-width:220px;flex:1">
+                <label>Categoría</label>
+                <select id="categorySelectBracket" disabled>
+                  <option value="">— Cargá CSV de categorías —</option>
+                </select>
+              </div>
+              <div style="min-width:200px;flex:1">
+                <label>Género</label>
+                <select id="genderSelectBracket">
+                  <option value="">— Seleccionar —</option>
+                  <option>Masculino</option>
+                  <option>Femenino</option>
+                  <option>Mixto</option>
+                  <option>No Aplica</option>
+                </select>
+              </div>
             </div>
             <div class="controls" style="margin-top:10px">
               <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
@@ -265,113 +296,15 @@ Newell's; Santa Fe
 
 <script>
 'use strict';
-/* === Vista previa en nueva pestaña (sin (x/x), síncrona y confiable) === */
-function openPreviewWindow(result, meta){
-  const w = window.open('', '_blank', 'noopener,noreferrer');
-  if(!w){ alert('La vista previa fue bloqueada por el navegador. Permití pop-ups para este sitio.'); return }
 
-  const cols = (result.groups.length >= 6) ? 4 : 2;
-  const css = `
-  :root{--ink:#0f172a;--muted:#64748b;}
-  *{box-sizing:border-box}
-  html,body{margin:0;background:#fff;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
-  h2{margin:0 0 4px 0;font-size:22px}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
-  .chip{font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:999px;background:#f8fafc}
-  .grid{display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px}
-  .zone{border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
-  .zone h4{margin:0;padding:6px 10px;background:linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08));border-top-left-radius:12px;border-top-right-radius:12px;font-size:14px}
-  .zone ol{margin:0;padding:10px 12px 12px 18px;list-style-position:inside}
-  .muted{color:var(--muted)}
-  @media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
-  @media (max-width:600px){.grid{grid-template-columns:1fr}}
-  `;
-
-  let zonesHTML = '';
-  result.groups.forEach((arr, gi)=>{
-    const items = arr.map(t => 
-      `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
-    ).join('');
-    // Importante: SIN (x/x) a la derecha del título
-    zonesHTML += `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
-  });
-
-  const html = `<!DOCTYPE html>
-  <html lang="es"><head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Resultado del sorteo</title>
-    <style>${css}</style>
-  </head><body>
-    <div class="wrap">
-      <h2>Resultado del sorteo</h2>
-      <div class="chips">
-        ${meta.discipline ? `<span class="chip">Disciplina: ${escapeHtml(meta.discipline)}</span>` : ''}
-        ${meta.gender ? `<span class="chip">Género: ${escapeHtml(meta.gender)}</span>` : ''}
-        ${meta.category ? `<span class="chip">Categoría: ${escapeHtml(meta.category)}</span>` : ''}
-        <span class="chip">${result.groups.length} zonas</span>
-        <span class="chip">${new Date().toLocaleString()}</span>
-      </div>
-      <div class="grid">${zonesHTML}</div>
-    </div>
-  </body></html>`;
-
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}
-
-/* ====================== Helpers ====================== */
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function normalize(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
-
-/* RNG */
+/* ====================== RNG y utils ====================== */
 function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
 function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
-function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i++){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;"}[c]))}
 
-/* ====================== CSV core ====================== */
-function detectDelimiter(lines){
-  // look at first up to 10 non-empty lines
-  const sample = lines.slice(0,10).filter(l=>l.trim().length>0);
-  let best = {ch:',', score:0};
-  const cand = [',',';','\t'];
-  for(const ch of cand){
-    let score=0;
-    for(const ln of sample){
-      // count ch outside quotes
-      let inQ=false, cnt=0;
-      for(let i=0;i<ln.length;i++){
-        const c=ln[i];
-        if(c==='\"'){ if(inQ && ln[i+1]==='\"'){ i++; } else { inQ=!inQ; } }
-        else if(c===ch && !inQ){ cnt++; }
-      }
-      if(cnt>0) score+=cnt;
-    }
-    if(score>best.score) best={ch,score};
-  }
-  return best.ch;
-}
-function splitQuoted(line, delim){
-  const out=[]; let cur=''; let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='\"'){
-      if(inQ && line[i+1]==='\"'){ cur+='\"'; i++; } else { inQ=!inQ; }
-    }else if(ch===delim && !inQ){
-      out.push(cur); cur='';
-    }else{
-      cur+=ch;
-    }
-  }
-  out.push(cur);
-  return out.map(s => s.replace(/\r$/,'').trim());
-}
-
-/* ====================== Parseo equipos desde textarea ====================== */
+/* ====================== Parseo equipos ====================== */
 function parseLine(line){
   const raw=line.replace(/\t/g,',').trim();
   if(!raw) return null;
@@ -391,35 +324,56 @@ function parseText(value){
   return teams;
 }
 
-/* ====================== CSV EQUIPOS ====================== */
+/* ====================== CSV equipos ====================== */
 function importCSVTeams(text){
   if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
-  const linesRaw = text.split(/\r?\n/);
-  const lines = linesRaw.filter(l=> l.trim().length>0);
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
 
-  const delim = detectDelimiter(lines);
-  const headFields = splitQuoted(lines[0], delim).map(v=>normalize(v));
-  const headerMap = {
-    name: ['equipo','team','nombre'],
-    province: ['provincia','province','region','región'],
-    head: ['cabeza','cabeza de serie','head','seed','cs']
-  };
-  const hasHeader = headFields.some(v=>[...headerMap.name, ...headerMap.province, ...headerMap.head].includes(v));
+  const sample = lines[0];
+  const cntComma = (sample.match(/,/g)||[]).length;
+  const cntSemi  = (sample.match(/;/g)||[]).length;
+  const cntTab   = (sample.match(/\t/g)||[]).length;
+  let delim = ',';
+  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
+  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
+  else if(cntComma>0) delim = ',';
+
+  const delimChar = (delim==='\t') ? '\t' : delim;
+
+  function splitQuoted(line){
+    const out=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch=='"'){
+        if(inQ && line[i+1]=='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+      } else if(ch===delimChar && !inQ){
+        out.push(cur); cur='';
+      } else {
+        cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=> s.trim());
+  }
+
+  const headRow = splitQuoted(lines[0]);
+  const hasHeader = headRow.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
 
   let idx = { name:0, province:1, head:2 };
   if(hasHeader){
-    headFields.forEach((v,i)=>{
-      if(headerMap.name.includes(v)) idx.name=i;
-      if(headerMap.province.includes(v)) idx.province=i;
-      if(headerMap.head.includes(v)) idx.head=i;
+    headRow.forEach((v,i)=>{
+      const s=v.toLowerCase();
+      if(/equipo|team|nombre/.test(s)) idx.name=i;
+      if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
+      if(/cabeza|cabeza de serie|head|seed/.test(s)) idx.head=i;
     });
   }
 
   const body = hasHeader? lines.slice(1) : lines;
   const out=[];
   for(const line of body){
-    const parts=splitQuoted(line, delim);
+    const parts=splitQuoted(line);
     let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
     rawName=rawName.trim(); if(!rawName) continue;
     const name=rawName.replace(/\*+$/,'').trim();
@@ -431,34 +385,64 @@ function importCSVTeams(text){
   return {list:out, delim};
 }
 
-/* ====================== CSV DISCIPLINAS ====================== */
+/* ====================== CSV disciplinas ====================== */
 let disciplines = []; // {name, seed?}
 function importCSVDisciplines(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
-  const linesRaw = text.split(/\r?\n/);
-  const lines = linesRaw.filter(l=> l.trim().length>0);
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
-  const delim = detectDelimiter(lines);
-  const head = splitQuoted(lines[0], delim).map(v=>normalize(v));
-  const map = { name:['disciplina','deporte','sport','nombre'], seed:['semilla','seed','codigo','code'] };
-  const hasHeader = head.some(v=> map.name.concat(map.seed).includes(v) );
+
+  const sample = lines[0];
+  const cntComma = (sample.match(/,/g)||[]).length;
+  const cntSemi  = (sample.match(/;/g)||[]).length;
+  const cntTab   = (sample.match(/\t/g)||[]).length;
+  let delim = ',';
+  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
+  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
+  else if(cntComma>0) delim = ',';
+  const delimChar = (delim==='\t') ? '\t' : delim;
+
+  function splitQuoted(line){
+    const out=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch=='"'){
+        if(inQ && line[i+1]=='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+      } else if(ch===delimChar && !inQ){
+        out.push(cur); cur='';
+      } else {
+        cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=> s.trim());
+  }
+
+  const headRow = splitQuoted(lines[0]);
+  const hasHeader = headRow.some(v=>/^(disciplina|deporte|sport|nombre|semilla|seed|codigo|code)$/i.test(v));
+
   let idx = { name:0, seed:1 };
   if(hasHeader){
-    head.forEach((v,i)=>{
-      if(map.name.includes(v)) idx.name=i;
-      if(map.seed.includes(v)) idx.seed=i;
+    headRow.forEach((v,i)=>{
+      const s=v.toLowerCase();
+      if(/^(disciplina|deporte|sport|nombre)$/.test(s)) idx.name=i;
+      if(/^(semilla|seed|codigo|code)$/.test(s)) idx.seed=i;
     });
   }
-  const body=hasHeader? lines.slice(1): lines;
+
+  const body = hasHeader? lines.slice(1) : lines;
   const out=[];
   for(const line of body){
-    const p=splitQuoted(line, delim);
-    const name=(p[idx.name]||'').trim(); if(!name) continue;
-    const seed=(p[idx.seed]||'').trim();
+    const parts=splitQuoted(line);
+    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
+    rawName=rawName.trim(); if(!rawName) continue;
+    const name=rawName;
+    const seed=(parts[idx.seed]||'').trim();
     out.push({name, seed: seed||name});
   }
   return {list:out, delim};
 }
+
 function refreshDisciplineSelects(){
   const sels=[document.getElementById('disciplineSelect'),
               document.getElementById('disciplineSelectSimple'),
@@ -477,10 +461,12 @@ function refreshDisciplineSelects(){
     }
   });
 }
+
 function getSelectedDisciplineName(){
   const sel=document.getElementById('disciplineSelect');
   if(!sel) return '';
-  return sel.value || '';
+  const val=sel.value || '';
+  return val;
 }
 function getSelectedDisciplineSeed(){
   const sel=document.getElementById('disciplineSelect');
@@ -490,39 +476,109 @@ function getSelectedDisciplineSeed(){
   const name=sel.value||'';
   return name;
 }
+function setSelectedDisciplineByName(name){
+  [document.getElementById('disciplineSelect'),
+   document.getElementById('disciplineSelectSimple'),
+   document.getElementById('disciplineSelectBracket')].forEach(sel=>{
+     if(!sel) return;
+     const options=Array.from(sel.options);
+     const found=options.find(o=>o.value===name);
+     if(found){ sel.value=name; }
+     else if(name){
+       const o=document.createElement('option'); o.value=name; o.textContent=name; o.dataset.seed=name;
+       sel.appendChild(o); sel.value=name; sel.disabled=false;
+     }
+   });
+}
 
-/* ====================== CSV CATEGORIAS ====================== */
-let categories = []; // simple array of names
+/* ====================== CSV categorías ====================== */
+let categories = []; // {name, code?}
 function importCSVCategories(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) }
-  const linesRaw = text.split(/\r?\n/);
-  const lines = linesRaw.filter(l=> l.trim().length>0);
+  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
   if(!lines.length) return {list:[], delim:','};
-  const delim = detectDelimiter(lines);
-  const head = splitQuoted(lines[0], delim).map(v=>normalize(v));
-  const map = { name:['categoria','categoría','category','division','división','nombre'] };
-  const hasHeader = head.some(v=> map.name.includes(v) );
-  let idx = { name:0 };
-  if(hasHeader){ head.forEach((v,i)=>{ if(map.name.includes(v)) idx.name=i; }); }
-  const body=hasHeader? lines.slice(1): lines;
+
+  const sample = lines[0];
+  const cntComma = (sample.match(/,/g)||[]).length;
+  const cntSemi  = (sample.match(/;/g)||[]).length;
+  const cntTab   = (sample.match(/\t/g)||[]).length;
+  let delim = ',';
+  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
+  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
+  else if(cntComma>0) delim = ',';
+  const delimChar = (delim==='\t') ? '\t' : delim;
+
+  function splitQuoted(line){
+    const out=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch=='"'){
+        if(inQ && line[i+1]=='"'){ cur+='"'; i++; } else { inQ=!inQ; }
+      } else if(ch===delimChar && !inQ){
+        out.push(cur); cur='';
+      } else {
+        cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=> s.trim());
+  }
+
+  const headRow = splitQuoted(lines[0]);
+  const hasHeader = headRow.some(v=>/^(categor[ií]a|categoria|category|nombre|c[oó]digo|codigo|code)$/i.test(v));
+
+  let idx = { name:0, code:1 };
+  if(hasHeader){
+    headRow.forEach((v,i)=>{
+      const s=v.toLowerCase();
+      if(/^(categor[ií]a|categoria|category|nombre)$/.test(s)) idx.name=i;
+      if(/^(c[oó]digo|codigo|code)$/.test(s)) idx.code=i;
+    });
+  }
+
+  const body = hasHeader? lines.slice(1) : lines;
   const out=[];
   for(const line of body){
-    const p=splitQuoted(line, delim);
-    const name=(p[idx.name]||'').trim(); if(!name) continue;
-    out.push(name);
+    const parts=splitQuoted(line);
+    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
+    rawName=rawName.trim(); if(!rawName) continue;
+    const name=rawName;
+    const code=(parts[idx.code]||'').trim();
+    out.push({name, code});
   }
   return {list:out, delim};
 }
-function refreshCategorySelect(){
+
+function refreshCategorySelects(){
+  const sels=[document.getElementById('categorySelect'),
+              document.getElementById('categorySelectSimple'),
+              document.getElementById('categorySelectBracket')];
+  sels.forEach(sel=>{
+    sel.innerHTML='';
+    if(categories.length===0){
+      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de categorías —'; sel.appendChild(opt); sel.disabled=true;
+    }else{
+      const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar categoría —'; sel.appendChild(opt0);
+      categories.forEach(c=>{
+        const o=document.createElement('option'); o.value=c.name; o.textContent=c.name; o.dataset.code=c.code||'';
+        sel.appendChild(o);
+      });
+      sel.disabled=false;
+    }
+  });
+}
+
+function getSelectedCategoryName(){
   const sel=document.getElementById('categorySelect');
-  sel.innerHTML='';
-  if(categories.length===0){
-    const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de categorías —'; sel.appendChild(opt); sel.disabled=true;
-  }else{
-    const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar categoría —'; sel.appendChild(opt0);
-    categories.forEach(name=>{ const o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o); });
-    sel.disabled=false;
-  }
+  if(!sel) return '';
+  return sel.value || '';
+}
+
+function getSelectedCategoryCode(){
+  const sel=document.getElementById('categorySelect');
+  if(!sel) return '';
+  const opt=sel.selectedOptions[0];
+  return (opt && opt.dataset) ? (opt.dataset.code||'') : '';
 }
 
 /* ====================== Capacidades ====================== */
@@ -530,7 +586,8 @@ function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({
 function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24;if(n>=total) return caps;let deficits=total-n;const order=[3,1,2,0];let i=0;while(deficits>0){const idx=order[i%order.length];if(caps[idx]>0){caps[idx]--;deficits--}i++}return caps}
 function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24;if(n>=total) return caps;const d=total-n;const zeros=Math.floor(d/3);const twos=d%3;const order=[7,6,5,4,3,2,1,0];for(let i=0;i<zeros;i++){caps[order[i]]=0}let k=zeros;for(let j=0;j<twos && k<order.length;j++,k++){if(caps[order[k]]===3) caps[order[k]]=2}return caps}
 
-/* ====================== Sorteo (sin restricciones por provincia) ====================== */
+/* ====================== Restricciones y sorteo ====================== */
+function canPlace(team,group){ return true }
 function placeHeads(groups,heads){for(let i=0;i<groups.length && i<heads.length;i++){groups[i].push(heads[i])}}
 function drawGroups(teams,z,seed,headsAsFirst,format){
   const rand=rngFromSeed(seed);
@@ -554,25 +611,21 @@ function drawGroups(teams,z,seed,headsAsFirst,format){
     const g=groups.map(a=>a.slice()); const remaining=targetCaps.slice(); let ok=true;
     const order=shuffle(pool,rand);
     for(const team of order){
-      // candidatos: grupos con capacidad, priorizar más chicos
-      const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]}))
-                        .filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
-      if(!candidates.length){ ok=false; break; }
-      const pick=candidates[0]; // greedy: siempre el más chico
-      g[pick].push(team); remaining[pick]--;
+      const candidates=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]})).filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
+      let placed=false;
+      for(const idx of candidates){ if(canPlace(team,g[idx])){ g[idx].push(team); remaining[idx]--; placed=true; break; } }
+      if(!placed && candidates.length){ const pick=candidates[Math.floor(rand()*candidates.length)]; g[pick].push(team); remaining[pick]--; placed=true; }
+      if(!placed){ ok=false; break; }
     }
     if(ok){ return {groups:g,caps:capsBase,relaxed:false,attempt}; }
-    // improbable que falle, pero guardo el mejor (no uso penalty ya que no hay restricción)
-    if(!best){ best={groups:g,caps:capsBase,relaxed:true} }
+    if(!best){ best={groups:g,caps:capsBase,relaxed:true,score:0} }
   }
-  return best||{error:'No se pudo asignar. Probá con otro formato.'};
+  return best||{error:'No se pudo asignar.'};
 }
 
-/* ====================== Render / Export ====================== */
-let lastResult=null;
+/* ====================== Export y helpers ====================== */
 function renderGroups(target,result){
-  lastResult = result && !result.error ? result : null;
-  if(result.error){ target.innerHTML='<div class="errorText">'+escapeHtml(result.error)+'</div>'; return }
+  if(result.error){ target.innerHTML='<div class="errorText">'+result.error+'</div>'; return }
   const {groups} = result;
   const grid=document.createElement('div'); grid.className='grid';
   groups.forEach((arr,gi)=>{
@@ -589,61 +642,6 @@ function renderGroups(target,result){
   target.innerHTML=''; target.appendChild(grid);
   document.getElementById('status').innerHTML='Sorteo realizado';
 }
-// Abre el resultado en una pestaña nueva y escribe el HTML completo ahí
-function openResultInNewTab(res){
-  try{
-    const w = window.open('', '_blank');           // debe ejecutarse dentro del click handler para evitar bloqueos
-    if(!w){ toast('Permití pop-ups para ver el resultado'); return; }
-
-    // Construimos el HTML de las zonas con el mismo contenido que la UI principal
-    const groupsHTML = res.groups.map((arr, gi)=>{
-      const items = arr.map(t =>
-        `<li><b>${escapeHtml(t.name)}</b>` +
-          (t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : '') +
-          (t.head ? ` <span class="pill">Cabeza</span>` : '') +
-        `</li>`
-      ).join('');
-      return `<div class="zone">
-                <h4>Zona ${gi+1}</h4>
-                <ol>${items}</ol>
-              </div>`;
-    }).join('');
-
-    const docHTML = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Resultado — Sorteador v2.0</title>
-<style>
-  body{margin:0;background:#0f172a;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
-  .container{max-width:1100px;margin:0 auto;padding:24px}
-  h1{margin:0 0 16px 0;font-size:24px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-  .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
-  .zone h4{margin:4px 0 8px 0}
-  .zone ol{margin:0;padding-left:18px}
-  .muted{color:#94a3b8}
-  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
-</style>
-</head>
-<body>
-  <div class="container">
-    <h1>Resultado del sorteo</h1>
-    <div class="grid">${groupsHTML}</div>
-  </div>
-</body>
-</html>`;
-
-    w.document.open();
-    w.document.write(docHTML);
-    w.document.close();
-  }catch(e){
-    console.error(e);
-    toast('No se pudo abrir el resultado en una pestaña nueva');
-  }
-}
-
 function exportGroupsCSV(groups){
   let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
   groups.forEach((arr,gi)=>{
@@ -655,12 +653,12 @@ function exportGroupsCSV(groups){
 }
 function exportSimpleCSV(list){
   let csv='Posicion,Equipo\n';
-  list.forEach((n,i)=>{ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'"\n' });
+  list.forEach((n,i)=>{ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'\n' });
   downloadText(csv,'sorteo_simple.csv');
 }
 function exportBracketCSV(matches){
   let csv='Llave,Partido,Equipo A,Equipo B\n';
-  matches.forEach((m,i)=>{ csv+='Ronda 1,'+(i+1)+',"'+m[0]+'","'+m[1]+'"\n' });
+  matches.forEach((m,i)=>{ csv+='Ronda 1,'+(i+1)+',"'+m[0]+'","'+m[1]+'\n' });
   downloadText(csv,'llaves.csv');
 }
 function downloadText(text,filename){
@@ -677,8 +675,119 @@ function toast(msg){
   document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
 }
 
+/* ====================== Vista previa en nueva pestaña ====================== */
+function openPreviewWindow(result, meta){
+  const cols = (result.groups.length >= 6) ? 4 : 2;
+  const css = `
+  :root{--ink:#0f172a;--muted:#64748b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  h2{margin:0 0 4px 0;font-size:22px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+  .chip{font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:999px;background:#f8fafc}
+  .grid{display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px}
+  .zone{border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+  .zone h4{margin:0;padding:6px 10px;background:linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08));border-top-left-radius:12px;border-top-right-radius:12px;font-size:14px}
+  .zone ol{margin:0;padding:10px 12px 12px 18px;list-style-position:inside}
+  .muted{color:var(--muted)}
+  @media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  @media (max-width:600px){.grid{grid-template-columns:1fr}}
+  `;
+
+  let zonesHTML = '';
+  result.groups.forEach((arr, gi)=>{
+    const items = arr.map(t =>
+      `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+    ).join('');
+    zonesHTML += `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+  <html lang="es"><head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resultado del sorteo</title>
+    <style>${css}</style>
+  </head><body>
+    <div class="wrap">
+      <h2>Resultado del sorteo</h2>
+      <div class="chips">
+        ${meta.discipline ? `<span class="chip">Disciplina: ${escapeHtml(meta.discipline)}</span>` : ''}
+        ${meta.gender ? `<span class="chip">Género: ${escapeHtml(meta.gender)}</span>` : ''}
+        ${meta.category ? `<span class="chip">Categoría: ${escapeHtml(meta.category)}</span>` : ''}
+        <span class="chip">${result.groups.length} zonas</span>
+        <span class="chip">${new Date().toLocaleString()}</span>
+      </div>
+      <div class="grid">${zonesHTML}</div>
+    </div>
+  </body></html>`;
+
+  try{
+    const blob = new Blob([html], {type:'text/html'});
+    const url  = URL.createObjectURL(blob);
+    const w    = window.open(url, '_blank');
+    if(!w){ alert('La vista previa fue bloqueada. Permití pop-ups para este sitio.'); }
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    const w = window.open('', '_blank');
+    if(w){ w.document.open(); w.document.write(html); w.document.close(); }
+    else { alert('No pude abrir la vista previa. Verificá el bloqueador de pop-ups.'); }
+  }
+}
+
+/* ====================== PDF (A4) ====================== */
+async function exportPDF(){
+  try{
+    if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
+    const teams = getActiveTeamsLive(); if(!teams.length){ toast('No hay equipos activos'); return }
+    const z=currentZones();
+    const headsAsFirst=document.getElementById('headsAsFirst').checked;
+    const seed=getSelectedDisciplineSeed();
+    const fmt=getFormat();
+    const res=drawGroups(teams,z,seed,headsAsFirst,fmt);
+    if(res.error){toast('Generá el sorteo primero');return}
+
+    const sheet=document.createElement('div');
+    sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#ffffff';sheet.style.color='#0f172a';
+    sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';
+    sheet.style.fontFamily='Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
+    const bar=document.createElement('div');bar.style.height='8px';bar.style.background='linear-gradient(90deg,#22c55e,#38bdf8)';sheet.appendChild(bar);
+    const header=document.createElement('div');header.style.display='flex';header.style.justifyContent='space-between';header.style.alignItems='center';header.style.padding='12px 16px 8px';
+    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='600';title.textContent='Sorteo de Zonas';
+    const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teams.length+'</b><br>'+new Date().toLocaleString();
+    header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
+    const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
+    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='500px';s.style.background='#f8fafc';return s}
+    const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt));
+    const discName=getSelectedDisciplineName(); if(discName) chips.appendChild(chip('Disciplina: '+discName));
+    const gen=document.getElementById('genderSelect')?.value||''; if(gen) chips.appendChild(chip('Género: '+gen));
+    const cat=getSelectedCategoryName(); if(cat) chips.appendChild(chip('Categoría: '+cat));
+    sheet.appendChild(chips);
+    const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='1';
+    res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
+      const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
+      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
+      const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='';
+      head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
+      const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='8px';ol.style.listStylePosition='inside';ol.style.fontSize='18px';ol.style.lineHeight='1.35';
+      arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
+    });
+    sheet.appendChild(grid);
+    const footer=document.createElement('div');footer.style.fontSize='10px';footer.style.color='#64748b';footer.style.textAlign='right';footer.style.padding='4px 12px 10px';footer.textContent='Generado con Sorteador Deportivo — '+(location.href.split('#')[0]||'');sheet.appendChild(footer);
+    document.body.appendChild(sheet);
+    await new Promise(r=>setTimeout(r,20));
+    const canvas=await html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+    pdf.addImage(img,'PNG',0,0,pw,ph); const dateStr=new Date().toISOString().slice(0,10); pdf.save('sorteo_'+dateStr+'.pdf');
+  }catch(err){ console.error(err); alert('No se pudo exportar el PDF.'); }
+}
+
 /* ====================== Estado, listas activas/inactivas ====================== */
 let activeTeams=[], inactiveTeams=[];
+
+// Construye listas desde el textarea (resetea descartados)
 function buildListsFromTextarea(){
   activeTeams = parseText(document.getElementById('teamsInput').value);
   inactiveTeams = [];
@@ -726,6 +835,7 @@ function restoreSelectedFromInactive(){
   renderLists(); updateCapInfo();
 }
 function selectAll(selector){ document.querySelectorAll(selector).forEach(el=>{ el.checked=true }) }
+
 function getActiveTeamsLive(){
   const panelVisible = !document.getElementById('checkLists').classList.contains('hidden');
   if(panelVisible) return activeTeams.slice();
@@ -742,12 +852,15 @@ function currentZones(){
 }
 function gatherState(){
   return {
-    teams:activeTeams, inactive:inactiveTeams,
+    teams:activeTeams,
+    inactive:inactiveTeams,
     z:currentZones(),
     headsAsFirst:document.getElementById('headsAsFirst').checked,
-    discipline:getSelectedDisciplineName(), disciplineSeed:getSelectedDisciplineSeed(),
-    category:(document.getElementById('categorySelect').value||''),
-    gender:(document.getElementById('genderSelect').value||''),
+    discipline:getSelectedDisciplineName(),
+    disciplineSeed:getSelectedDisciplineSeed(),
+    category:getSelectedCategoryName(),
+    categoryCode:getSelectedCategoryCode(),
+    gender:document.getElementById('genderSelect')?.value||'',
     format:getFormat()
   }
 }
@@ -759,124 +872,24 @@ function loadStateToUI(st){
   if(typeof st.headsAsFirst==='boolean') document.getElementById('headsAsFirst').checked=st.headsAsFirst;
   if(st.format) setFormat(st.format);
   if(st.discipline){ setSelectedDisciplineByName(st.discipline) }
-  if(st.category){ setSelectedCategoryByName(st.category) }
+  if(st.category){
+    const csel=document.getElementById('categorySelect');
+    const exists = Array.from(csel.options).some(o=>o.value===st.category);
+    if(!exists){
+      const o=document.createElement('option'); o.value=st.category; o.textContent=st.category; o.dataset.code=st.categoryCode||'';
+      csel.appendChild(o); csel.value=st.category; csel.disabled=false;
+    }else{
+      csel.value=st.category;
+    }
+  }
   if(st.gender){ document.getElementById('genderSelect').value = st.gender; }
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists(); updateCapInfo();
-}
-function setSelectedDisciplineByName(name){
-  [document.getElementById('disciplineSelect'),
-   document.getElementById('disciplineSelectSimple'),
-   document.getElementById('disciplineSelectBracket')].forEach(sel=>{
-     if(!sel) return;
-     const options=Array.from(sel.options);
-     const found=options.find(o=>o.value===name);
-     if(found){ sel.value=name; sel.disabled=false; }
-     else if(name){
-       const o=document.createElement('option'); o.value=name; o.textContent=name; o.dataset.seed=name;
-       sel.appendChild(o); sel.value=name; sel.disabled=false;
-     }
-   });
-}
-function setSelectedCategoryByName(name){
-  const sel=document.getElementById('categorySelect');
-  if(!sel) return;
-  const options=Array.from(sel.options);
-  const found=options.find(o=>o.value===name);
-  if(found){ sel.value=name; sel.disabled=false; }
-  else if(name){
-    const o=document.createElement('option'); o.value=name; o.textContent=name;
-    sel.appendChild(o); sel.value=name; sel.disabled=false;
-  }
 }
 function encodeState(st){const json=JSON.stringify(st);return btoa(unescape(encodeURIComponent(json)))}
 function decodeState(b64){try{const json=decodeURIComponent(escape(atob(b64)));return JSON.parse(json)}catch(e){return null}}
 function setShareLink(){const st=gatherState();const hash=encodeState(st);const url=location.origin+location.pathname+'#'+hash;copyText(url)}
 function tryLoadFromHash(){if(location.hash&&location.hash.length>1){const st=decodeState(location.hash.slice(1));if(st){loadStateToUI(st);toast('Estado restaurado')}}}
-
-/* ====================== PDF (A4) (opcional, no pedido) ====================== */
-async function exportPDF(){
-  try{
-    if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
-    const teams = getActiveTeamsLive(); if(!teams.length){ toast('No hay equipos activos'); return }
-    const z=currentZones();
-    const headsAsFirst=document.getElementById('headsAsFirst').checked;
-    const seed=getSelectedDisciplineSeed();
-    const fmt=getFormat();
-    const res=drawGroups(teams,z,seed,headsAsFirst,fmt);
-    if(res.error){toast('Generá el sorteo primero');return}
-
-    const sheet=document.createElement('div');
-    sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#ffffff';sheet.style.color='#0f172a';
-    sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';
-    sheet.style.fontFamily='Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
-    const bar=document.createElement('div');bar.style.height='8px';bar.style.background='linear-gradient(90deg,#22c55e,#38bdf8)';sheet.appendChild(bar);
-    const header=document.createElement('div');header.style.display='flex';header.style.justifyContent='space-between';header.style.alignItems='center';header.style.padding='12px 16px 8px';
-    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='600';title.textContent='Sorteo de Zonas';const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teams.length+'</b><br>'+new Date().toLocaleString();
-    header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
-    const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
-    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='500px';s.style.background='#f8fafc';return s}
-    const fmtTxt=(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z)); chips.appendChild(chip(fmtTxt));
-    const discName=getSelectedDisciplineName(); if(discName) chips.appendChild(chip('Disciplina: '+discName));
-    const catName=(document.getElementById('categorySelect').value||''); if(catName) chips.appendChild(chip('Categoría: '+catName));
-    const genName=(document.getElementById('genderSelect').value||''); if(genName) chips.appendChild(chip('Género: '+genName));
-    sheet.appendChild(chips);
-    const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='0';
-    res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
-      const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
-      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
-      const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='';
-      head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='8px';ol.style.listStylePosition='inside';ol.style.fontSize='18px';ol.style.lineHeight='1.35';
-      arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
-    });
-    sheet.appendChild(grid);
-    const footer=document.createElement('div');footer.style.fontSize='10px';footer.style.color='#64748b';footer.style.textAlign='right';footer.style.padding='4px 12px 10px';footer.textContent='Generado con Sorteador Deportivo — '+(location.href.split('#')[0]||'');sheet.appendChild(footer);
-    document.body.appendChild(sheet);
-    await new Promise(r=>setTimeout(r,20));
-    const canvas=await html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true});
-    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-    pdf.addImage(img,'PNG',0,0,pw,ph); const dateStr=new Date().toISOString().slice(0,10); pdf.save('sorteo_'+dateStr+'.pdf');
-  }catch(err){ console.error(err); alert('No se pudo exportar el PDF.'); }
-}
-
-/* ====================== Nueva ventana con resultado ====================== */
-function openResultInNewTab(result){
-  if(!result || result.error) return;
-  const disc=getSelectedDisciplineName();
-  const cat=(document.getElementById('categorySelect').value||'');
-  const gen=(document.getElementById('genderSelect').value||'');
-  const z=currentZones();
-  const fmt=getFormat();
-  const chips = [];
-  chips.push(fmt==='8x3'?'Formato: 8×3':(fmt==='4x6'?'Formato: 4×6':'Zonas: '+z));
-  if(disc) chips.push('Disciplina: '+disc);
-  if(cat) chips.push('Categoría: '+cat);
-  if(gen) chips.push('Género: '+gen);
-
-  const w=window.open('', '_blank', 'noopener,noreferrer');
-  if(!w){ alert('El navegador bloqueó la apertura de la pestaña. Permití pop-ups para este sitio.'); return; }
-  const doc=w.document;
-  doc.write('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Resultado del sorteo</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:16px;background:#0f172a;color:#e5e7eb} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px} .zone{background:#0b1220;border:1px solid #223046;border-radius:12px;padding:10px} h2{margin:0 0 8px 0} h4{margin:4px 0 8px 0} ol{margin:0;padding-left:18px} .pill{display:inline-block;margin-right:6px;margin-bottom:6px;padding:3px 8px;border-radius:999px;border:1px solid #2b3b55;background:#0b1220;color:#e5e7eb;font-size:12px}</style></head><body>');
-  doc.write('<h2>Resultado del sorteo</h2>');
-  if(chips.length){
-    doc.write('<div>');
-    chips.forEach(c => doc.write('<span class="pill">'+escapeHtml(c)+'</span>'));
-    doc.write('</div>');
-  }
-  doc.write('<div class="grid">');
-  result.groups.forEach((arr,gi)=>{
-    doc.write('<div class="zone"><h4>Zona '+(gi+1)+'</h4><ol>');
-    arr.forEach(t=>{
-      doc.write('<li><b>'+escapeHtml(t.name)+'</b>'+(t.province? ' — <span style="opacity:.7">'+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'')+'</li>');
-    });
-    doc.write('</ol></div>');
-  });
-  doc.write('</div></body></html>');
-  doc.close();
-}
 
 /* ====================== UI y eventos ====================== */
 function setFormat(fmt){
@@ -905,12 +918,10 @@ function updateCapInfo(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  // Radios de formato
   document.querySelectorAll('input[name="format"]').forEach(r=>{
     r.addEventListener('change',()=> setFormat(r.value));
   });
 
-  // Tabs
   document.querySelectorAll('.tab').forEach(btn=>{
     btn.addEventListener('click',()=>{
       document.querySelectorAll('.tab').forEach(b=> b.classList.toggle('active', b===btn));
@@ -919,7 +930,6 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 
-  // Panel de checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
@@ -927,67 +937,59 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btnSelectAllActive').addEventListener('click', ()=> selectAll('.chkActive'));
   document.getElementById('btnSelectAllInactive').addEventListener('click', ()=> selectAll('.chkInactive'));
 
-  // Equipos CSV
   document.getElementById('csvFile').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        let text = reader.result||'';
-        if(typeof text !== 'string'){ text = String(text); }
-        const parsed=importCSVTeams(text);
+        const parsed=importCSVTeams(reader.result||'');
         const teams=parsed.list;
         if(!teams.length){ toast('CSV vacío o no se detectaron equipos'); return }
         document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
         buildListsFromTextarea();
         const prev=teams.slice(0,3).map(t=> t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'' )).join(' · ');
-        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
+        const delimTxt = (parsed.delim==='\t'?'TAB':parsed.delim);
+        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+delimTxt+'</b>'+(prev?' · Ej: '+prev:'');
         toast('CSV de equipos cargado');
-        e.target.value=''; // reset input
       }catch(err){ console.error(err); alert('No se pudo leer el CSV de equipos.'); }
     };
     reader.readAsText(file,'utf-8');
   });
 
-  // Disciplinas CSV
   document.getElementById('csvDisciplines').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        let text = reader.result||'';
-        const parsed=importCSVDisciplines(text);
+        const parsed=importCSVDisciplines(reader.result||'');
         disciplines = parsed.list;
         refreshDisciplineSelects();
         const prev=disciplines.slice(0,5).map(d=> d.name).join(' · ');
-        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
+        const delimTxt = (parsed.delim==='\t'?'TAB':parsed.delim);
+        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+delimTxt+'</b>'+(prev?' · Ej: '+prev:'');
         toast('CSV de disciplinas cargado');
-        e.target.value='';
       }catch(err){ console.error(err); alert('No se pudo leer el CSV de disciplinas.'); }
     };
     reader.readAsText(file,'utf-8');
   });
 
-  // Categorías CSV
   document.getElementById('csvCategories').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        let text = reader.result||'';
-        const parsed=importCSVCategories(text);
+        const parsed=importCSVCategories(reader.result||'');
         categories = parsed.list;
-        refreshCategorySelect();
-        const prev=categories.slice(0,5).join(' · ');
-        document.getElementById('catCSVInfo').innerHTML = 'CSV de categorías: <b>'+categories.length+'</b> filas · Delimitador: <b>'+(parsed.delim==='\\t'?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+escapeHtml(prev):'');
+        refreshCategorySelects();
+        const prev=categories.slice(0,5).map(c=> c.name).join(' · ');
+        const delimTxt = (parsed.delim==='\t'?'TAB':parsed.delim);
+        document.getElementById('catCSVInfo').innerHTML = 'CSV de categorías: <b>'+categories.length+'</b> filas · Delimitador: <b>'+delimTxt+'</b>'+(prev?' · Ej: '+prev:'');
         toast('CSV de categorías cargado');
-        e.target.value='';
       }catch(err){ console.error(err); alert('No se pudo leer el CSV de categorías.'); }
     };
     reader.readAsText(file,'utf-8');
   });
 
-  // Demos
   document.getElementById('btnDiscDemo').addEventListener('click',()=>{
     disciplines = [
       {name:'Fútbol', seed:'futbol-24'},
@@ -996,21 +998,26 @@ document.addEventListener('DOMContentLoaded',function(){
       {name:'Handball', seed:'hand-24'},
       {name:'Hockey', seed:'hockey-24'}
     ];
-    refreshDisciplineSelects(); toast('Disciplinas demo cargadas');
+    refreshDisciplineSelects();
+    toast('Disciplinas demo cargadas');
   });
   document.getElementById('btnCatDemo').addEventListener('click',()=>{
-    categories = ['Sub-14','Sub-16','Sub-18','Libre','Master'];
-    refreshCategorySelect(); toast('Categorías demo cargadas');
+    categories = [
+      {name:'Sub 12', code:'U12'},
+      {name:'Sub 14', code:'U14'},
+      {name:'Sub 16', code:'U16'},
+      {name:'Libre', code:'Libre'}
+    ];
+    refreshCategorySelects();
+    toast('Categorías demo cargadas');
   });
 
-  // Sincronizar info al tipear (si no se abrió el panel de checks)
   document.getElementById('teamsInput').addEventListener('input', ()=>{
     if(document.getElementById('checkLists').classList.contains('hidden')){
       updateCapInfo();
     }
   });
 
-  // Utilidad
   document.getElementById('btnExample').addEventListener('click',()=>{
     const sample=[["River Plate","CABA","*"],["Boca Juniors","CABA","*"],["Newell's","Santa Fe",""],["Rosario Central","Santa Fe",""],["San Lorenzo","CABA",""],["Racing","Buenos Aires",""],["Independiente","Buenos Aires",""],["Estudiantes","Buenos Aires",""],["Talleres","Córdoba",""],["Belgrano","Córdoba",""],["Godoy Cruz","Mendoza",""],["Atl. Tucumán","Tucumán",""]];
     document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\n');
@@ -1021,43 +1028,66 @@ document.addEventListener('DOMContentLoaded',function(){
     document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
   });
 
-  // Sorteo zonas (también abre nueva pestaña)
-  document.getElementById('btnDrawGroups').addEventListener('click',()=>{
+  if(!window.__DRAW_GROUPS_BOUND__){
+    window.__DRAW_GROUPS_BOUND__ = true;
+
+    const btnDraw = document.getElementById('btnDrawGroups');
+    btnDraw.addEventListener('click', ()=>{
+      if (btnDraw.dataset.busy === '1') return;
+      btnDraw.dataset.busy = '1';
+      try{
+        const teams = getActiveTeamsLive();
+        if(teams.length===0){
+          document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>';
+          return;
+        }
+        const z    = currentZones();
+        const seed = getSelectedDisciplineSeed();
+        const res  = drawGroups(
+          teams,
+          z,
+          seed,
+          document.getElementById('headsAsFirst').checked,
+          getFormat()
+        );
+
+        renderGroups(document.getElementById('resultGroups'), res);
+
+        if(!res.error){
+          openPreviewWindow(res, {
+            discipline: getSelectedDisciplineName(),
+            gender: document.getElementById('genderSelect')?.value || '',
+            category: getSelectedCategoryName()
+          });
+
+          const iso=new Date().toISOString().replace('T',' ').slice(0,19);
+          const item=document.createElement('div'); item.className='item';
+          const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
+          const disc=getSelectedDisciplineName();
+          const cat = getSelectedCategoryName();
+          const gen = document.getElementById('genderSelect')?.value || '';
+          item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+(cat?('('+cat+') '):'')+(gen?(''+gen+' '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+          document.getElementById('history').prepend(item);
+          if(getFormat()==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' • <span class="warnText">Considere cambiar de sistema</span>'}
+        }
+      } finally {
+        btnDraw.dataset.busy = '0';
+      }
+    });
+  }
+
+  document.getElementById('btnExportCSV').addEventListener('click',()=>{
+    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado para exportar'); return}
     const teams = getActiveTeamsLive();
-    if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
     const z=currentZones();
     const seed=getSelectedDisciplineSeed();
     const res=drawGroups(teams,z,seed,document.getElementById('headsAsFirst').checked,getFormat());
-    renderGroups(document.getElementById('resultGroups'),res);
-      if(!res.error){
-    openPreviewWindow(res, {
-      discipline: getSelectedDisciplineName(),
-      gender: document.getElementById('genderSelect')?.value || '',
-      category: document.getElementById('categorySelect')?.value || ''
-    });
-  }
-    if(!res.error){
-      const iso=new Date().toISOString().replace('T',' ').slice(0,19);
-      const item=document.createElement('div'); item.className='item';
-      const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-      const disc=getSelectedDisciplineName(); const cat=(document.getElementById('categorySelect').value||''); const gen=(document.getElementById('genderSelect').value||'');
-      item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+(cat?('('+cat+') '):'')+(gen?('{'+gen+'} '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
-      document.getElementById('history').prepend(item);
-      openResultInNewTab(res);
-      if(getFormat()==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>'}
-    }
-  });
-
-  // Export/Copy/Share/PDF
-  document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    const res = lastResult;
-    if(!res || !res.groups){ toast('No hay resultado para exportar'); return }
+    if(res.error){toast('Generá el sorteo primero'); return}
     exportGroupsCSV(res.groups);
   });
   document.getElementById('btnCopy').addEventListener('click',()=>{
-    const res = lastResult;
-    if(!res || !res.groups){ toast('No hay resultado'); return }
-    let txt=''; res.groups.forEach((arr,zi)=>{ txt+='Zona '+(zi+1)+'\n'; arr.forEach((t,i)=>{ txt+=(i+1)+'. '+t.name+(t.province?(' — '+t.province):'')+(t.head?' *':'')+'\n' }); txt+='\n' });
+    const boxes=document.querySelectorAll('#resultGroups .zone'); if(!boxes.length){toast('No hay resultado'); return}
+    let txt=''; boxes.forEach((zone,zi)=>{ txt+='Zona '+(zi+1)+'\n'; zone.querySelectorAll('li').forEach((li,i)=>{ txt+=(i+1)+'. '+li.innerText+'\n' }); txt+='\n' });
     copyText(txt);
   });
   document.getElementById('btnShare').addEventListener('click', ()=>{
@@ -1069,7 +1099,6 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
 
-  // Simple
   document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
     const names = getActiveTeamsLive().map(t=>t.name);
     document.getElementById('simpleInput').value = names.join('\n');
@@ -1093,7 +1122,6 @@ document.addEventListener('DOMContentLoaded',function(){
     const txt=document.getElementById('resultSimple').innerText; if(!txt){ toast('No hay resultado'); return } copyText(txt);
   });
 
-  // Bracket
   function nextPow2(x){let p=1;while(p<x) p<<=1;return p}
   function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
   function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML='<h4>Partido '+(i+1)+'</h4><ol><li><b>'+escapeHtml(m[0])+'</b></li><li><b>'+escapeHtml(m[1])+'</b></li></ol>';grid.appendChild(card)});target.appendChild(grid)}
@@ -1119,7 +1147,7 @@ document.addEventListener('DOMContentLoaded',function(){
   setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
   updateCapInfo();
   refreshDisciplineSelects();
-  refreshCategorySelect();
+  refreshCategorySelects();
 });
 </script>
 </body>
