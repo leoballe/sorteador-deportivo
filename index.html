@@ -380,30 +380,47 @@ function initAuth() {
       });
   });
 }
-// Guardar sorteo en Firebase - VERSIÓN COMPARTIDA
-// Guardar sorteo en Firebase - VERSIÓN CORREGIDA
+// Guardar sorteo en Firebase - VERSIÓN CORREGIDA PARA ARRAYS ANIDADOS
 async function saveDrawToCloud(type, parameters, result) {
   try {
     await initAuth();
     
-    // ID VERDADERAMENTE ÚNICO - combinar timestamp y número random
+    // ID VERDADERAMENTE ÚNICO
     const uniqueId = 'shared_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    // CONVERTIR arrays anidados a objetos para Firestore
+    let processedResult = result;
+    
+    if (type === 'grupos' && result.groups) {
+      // Convertir el array de grupos a un objeto serializable
+      processedResult = {
+        ...result,
+        groups: result.groups.map((group, index) => ({
+          zoneNumber: index + 1,
+          teams: group.map(team => ({
+            name: team.name,
+            province: team.province || '',
+            head: team.head || false
+          }))
+        }))
+      };
+    }
     
     const draw = {
       id: uniqueId,
       type,
       parameters,
-      result,
+      result: processedResult, // ← USAR EL RESULTADO PROCESADO
       date: new Date().toLocaleString(),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       userId: 'shared_user'
     };
     
     await db.collection('draws').doc(uniqueId).set(draw);
-    console.log('Sorteo guardado en Firebase:', type, uniqueId);
+    console.log('✅ Sorteo guardado en Firebase:', type, uniqueId);
     return draw;
   } catch (error) {
-    console.error('Error guardando en Firebase:', error);
+    console.error('❌ Error guardando en Firebase:', error);
     throw error;
   }
 }
@@ -618,10 +635,11 @@ async function renderSavedDraws() {
           ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
           ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
           ${draw.date}
-        </div>
-        <div class="tiny">
+                <div class="tiny">
           ${draw.type === 'grupos' ? 
-            `${draw.result.groups?.length || 0} zonas • ${draw.result.groups?.flat().length || 0} equipos` : 
+            `${draw.result.groups?.length || 0} zonas • ${(draw.result.groups && Array.isArray(draw.result.groups[0]?.teams) ? 
+              draw.result.groups.reduce((total, zone) => total + (zone.teams?.length || 0), 0) : 
+              draw.result.groups?.flat().length || 0)} equipos` : 
             draw.type === 'simple' ?
             `${draw.result.list?.length || 0} equipos` :
             `${draw.result.brackets?.length || 0} llaves`
@@ -636,7 +654,7 @@ async function renderSavedDraws() {
   `).join('');
 }
 
-// Modificar openSavedDraw para ser async
+// Modificar openSavedDraw para ser async - VERSIÓN CORREGIDA
 async function openSavedDraw(id) {
   const savedDraws = await getSavedDraws();
   const draw = savedDraws.find(d => d.id === id);
@@ -646,7 +664,18 @@ async function openSavedDraw(id) {
   }
   
   if (draw.type === 'grupos') {
-    openResultInNewTab(draw.result, draw.parameters);
+    // RECONVERTIR la estructura si es necesario
+    let resultToOpen = draw.result;
+    
+    // Si los grupos están en formato de objeto, convertirlos de vuelta a array
+    if (draw.result.groups && Array.isArray(draw.result.groups) && draw.result.groups[0] && draw.result.groups[0].teams) {
+      resultToOpen = {
+        ...draw.result,
+        groups: draw.result.groups.map(zone => zone.teams)
+      };
+    }
+    
+    openResultInNewTab(resultToOpen, draw.parameters);
   } else if (draw.type === 'simple') {
     openSimpleResultInNewTab(draw.result, draw.parameters);
   }
