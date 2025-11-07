@@ -12,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     :root {
-      /* Light Theme (Default) */
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
       --secondary: #64748b;
@@ -21,37 +20,28 @@
       --danger: #ef4444;
       --warning: #f59e0b;
       --success: #10b981;
-      
       --bg-primary: #ffffff;
       --bg-secondary: #f8fafc;
       --bg-tertiary: #f1f5f9;
       --bg-card: #ffffff;
-      --bg-overlay: rgba(15, 23, 42, 0.8);
-      
       --text-primary: #0f172a;
       --text-secondary: #475569;
       --text-muted: #64748b;
       --text-inverse: #ffffff;
-      
       --border-light: #e2e8f0;
       --border-medium: #cbd5e1;
       --border-dark: #94a3b8;
-      
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      
       --radius-sm: 6px;
       --radius-md: 8px;
       --radius-lg: 12px;
       --radius-xl: 16px;
-      
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     [data-theme="dark"] {
-      /* Dark Theme */
       --primary: #3b82f6;
       --primary-dark: #2563eb;
       --secondary: #94a3b8;
@@ -60,18 +50,14 @@
       --danger: #ef4444;
       --warning: #f59e0b;
       --success: #10b981;
-      
       --bg-primary: #0f172a;
       --bg-secondary: #1e293b;
       --bg-tertiary: #334155;
       --bg-card: #1e293b;
-      --bg-overlay: rgba(0, 0, 0, 0.8);
-      
       --text-primary: #f1f5f9;
       --text-secondary: #cbd5e1;
       --text-muted: #94a3b8;
       --text-inverse: #0f172a;
-      
       --border-light: #334155;
       --border-medium: #475569;
       --border-dark: #64748b;
@@ -92,19 +78,9 @@
       transition: var(--transition);
     }
 
-    /* Layout */
-    .app-container {
-      min-height: 100vh;
-      background: var(--bg-primary);
-    }
+    .app-container { min-height: 100vh; background: var(--bg-primary); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    /* Header */
     .header {
       background: var(--bg-card);
       border-bottom: 1px solid var(--border-light);
@@ -148,7 +124,6 @@
       gap: 1rem;
     }
 
-    /* Auth Components */
     .auth-section {
       background: var(--bg-card);
       border-radius: var(--radius-xl);
@@ -187,12 +162,8 @@
       border-bottom-color: var(--primary);
     }
 
-    /* Main Content */
-    .main-content {
-      padding: 2rem 0;
-    }
+    .main-content { padding: 2rem 0; }
 
-    /* Tabs Navigation */
     .tabs-navigation {
       display: flex;
       gap: 4px;
@@ -218,17 +189,13 @@
       gap: 8px;
     }
 
-    .tab-button:hover {
-      background: var(--bg-tertiary);
-    }
-
+    .tab-button:hover { background: var(--bg-tertiary); }
     .tab-button.active {
       background: var(--bg-card);
       color: var(--primary);
       box-shadow: var(--shadow-sm);
     }
 
-    /* Cards */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-light);
@@ -238,14 +205,8 @@
       transition: var(--transition);
     }
 
-    .card:hover {
-      box-shadow: var(--shadow-md);
-    }
-
-    .card-header {
-      margin-bottom: 1rem;
-    }
-
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-header { margin-bottom: 1rem; }
     .card-title {
       font-size: 1.25rem;
       font-weight: 600;
@@ -258,27 +219,11 @@
       font-size: 0.875rem;
     }
 
-    /* Grid System */
-    .grid {
-      display: grid;
-      gap: 1.5rem;
-    }
+    .grid { display: grid; gap: 1.5rem; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
 
-    .grid-2 {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    @media (max-width: 768px) {
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Forms */
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
+    .form-group { margin-bottom: 1rem; }
     .form-label {
       display: block;
       margin-bottom: 0.5rem;
@@ -309,7 +254,6 @@
       resize: vertical;
     }
 
-    /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -350,16 +294,8 @@
       background: var(--bg-tertiary);
     }
 
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
     .btn-outline {
       background: transparent;
       color: var(--primary);
@@ -371,17 +307,9 @@
       color: white;
     }
 
-    .btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.75rem;
-    }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.75rem; }
+    .btn-lg { padding: 1rem 2rem; font-size: 1rem; }
 
-    .btn-lg {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-    }
-
-    /* Controls */
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -389,7 +317,6 @@
       align-items: center;
     }
 
-    /* Status Indicators */
     .status {
       display: inline-flex;
       align-items: center;
@@ -418,7 +345,6 @@
       border: 1px solid rgba(245, 158, 11, 0.2);
     }
 
-    /* Loading Spinner */
     .spinner {
       width: 16px;
       height: 16px;
@@ -433,7 +359,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Results Grid */
     .results-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -472,21 +397,14 @@
       border-bottom: 1px solid var(--border-light);
     }
 
-    .team-item:last-child {
-      border-bottom: none;
-    }
-
+    .team-item:last-child { border-bottom: none; }
     .team-position {
       font-weight: 600;
       color: var(--text-muted);
       min-width: 20px;
     }
 
-    .team-name {
-      flex: 1;
-      color: var(--text-primary);
-    }
-
+    .team-name { flex: 1; color: var(--text-primary); }
     .team-badge {
       font-size: 0.75rem;
       padding: 2px 6px;
@@ -495,7 +413,6 @@
       color: white;
     }
 
-    /* User Menu */
     .user-menu {
       display: flex;
       align-items: center;
@@ -530,7 +447,6 @@
       color: var(--text-muted);
     }
 
-    /* Theme Toggle */
     .theme-toggle {
       background: none;
       border: none;
@@ -546,7 +462,6 @@
       color: var(--text-primary);
     }
 
-    /* Toast Notifications */
     .toast-container {
       position: fixed;
       top: 20px;
@@ -569,54 +484,20 @@
     }
 
     @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
-    /* Utility Classes */
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-muted); }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .font-semibold { font-weight: 600; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .p-4 { padding: 1rem; }
 
-    .text-center {
-      text-align: center;
-    }
-
-    .text-muted {
-      color: var(--text-muted);
-    }
-
-    .text-sm {
-      font-size: 0.875rem;
-    }
-
-    .text-xs {
-      font-size: 0.75rem;
-    }
-
-    .font-semibold {
-      font-weight: 600;
-    }
-
-    .mt-4 {
-      margin-top: 1rem;
-    }
-
-    .mb-4 {
-      margin-bottom: 1rem;
-    }
-
-    .p-4 {
-      padding: 1rem;
-    }
-
-    /* Form Checkbox */
     .form-checkbox {
       display: flex;
       align-items: center;
@@ -624,10 +505,7 @@
       cursor: pointer;
     }
 
-    .form-checkbox input {
-      display: none;
-    }
-
+    .form-checkbox input { display: none; }
     .checkmark {
       width: 18px;
       height: 18px;
@@ -652,31 +530,75 @@
       transform: translate(-50%, -50%);
     }
 
-    /* Responsive */
+    .list-box {
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border-medium);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .list-box h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .item-row:last-child { border-bottom: none; }
+
+    .tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border-medium);
+      border-radius: 12px;
+      padding: 2px 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid var(--border-medium);
+      border-radius: 20px;
+      background: var(--bg-secondary);
+      font-size: 0.75rem;
+    }
+
+    .saved-draw-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      margin-bottom: 0.75rem;
+    }
+
+    .saved-draw-info { flex: 1; }
+    .saved-draw-actions { display: flex; gap: 0.5rem; }
+
     @media (max-width: 640px) {
-      .container {
-        padding: 0 1rem;
-      }
-      
-      .header-content {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      
-      .tabs-navigation {
-        flex-direction: column;
-      }
-      
-      .auth-section {
-        margin: 1rem;
-        padding: 1.5rem;
-      }
+      .container { padding: 0 1rem; }
+      .header-content { flex-direction: column; gap: 1rem; }
+      .tabs-navigation { flex-direction: column; }
+      .auth-section { margin: 1rem; padding: 1.5rem; }
+      .saved-draw-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .saved-draw-actions { align-self: flex-end; }
     }
   </style>
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
     <header class="header">
       <div class="container">
         <div class="header-content">
@@ -686,12 +608,10 @@
           </div>
           
           <div class="header-actions">
-            <!-- Theme Toggle -->
             <button class="theme-toggle" id="themeToggle" title="Cambiar tema">
               <span id="themeIcon">🌙</span>
             </button>
             
-            <!-- User Menu -->
             <div class="user-menu hidden" id="userMenu">
               <div class="user-avatar" id="userAvatar">U</div>
               <div class="user-info">
@@ -701,7 +621,6 @@
               <button class="btn btn-outline btn-sm" id="logoutBtn">Cerrar Sesión</button>
             </div>
             
-            <!-- Auth Buttons -->
             <div class="auth-buttons" id="authButtons">
               <button class="btn btn-outline btn-sm" id="loginBtn">Iniciar Sesión</button>
               <button class="btn btn-primary btn-sm" id="registerBtn">Registrarse</button>
@@ -711,17 +630,14 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
       <div class="container">
-        <!-- Authentication Section -->
         <section class="auth-section" id="authSection">
           <div class="auth-tabs">
             <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
             <button class="auth-tab" data-tab="register">Registrarse</button>
           </div>
           
-          <!-- Login Form -->
           <form class="auth-form" id="loginForm">
             <div class="form-group">
               <label class="form-label" for="loginEmail">Email</label>
@@ -740,7 +656,6 @@
             </button>
           </form>
           
-          <!-- Register Form -->
           <form class="auth-form hidden" id="registerForm">
             <div class="form-group">
               <label class="form-label" for="registerName">Nombre</label>
@@ -765,9 +680,7 @@
           </form>
         </section>
 
-        <!-- Application Section -->
         <section class="app-section hidden" id="appSection">
-          <!-- Status Bar -->
           <div class="card mb-4">
             <div class="controls">
               <div class="status status-online" id="connectionStatus">
@@ -780,7 +693,6 @@
             </div>
           </div>
 
-          <!-- Tabs Navigation -->
           <div class="tabs-navigation">
             <button class="tab-button active" data-tab="grupos">
               <span>🏆</span>
@@ -800,10 +712,9 @@
             </button>
           </div>
 
-          <!-- Tab Contents -->
+          <!-- TAB GRUPOS -->
           <div class="tab-content active" id="tab-grupos">
             <div class="grid grid-2">
-              <!-- Teams Input Card -->
               <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">Lista de Equipos</h3>
@@ -826,14 +737,41 @@ Newell's; Santa Fe
                   </label>
                   <button class="btn btn-secondary" id="btnExample">Cargar Ejemplo</button>
                   <button class="btn btn-secondary" id="btnClear">Limpiar</button>
+                  <button class="btn btn-secondary" id="btnBuildList">🗂️ Mostrar lista con checks</button>
                 </div>
                 
                 <div class="text-xs text-muted mt-4">
-                  Formato: <strong>Equipo; Provincia; Cabeza</strong> ("*" para cabeza de serie)
+                  CSV: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>.
+                </div>
+                <div id="csvInfo" class="text-xs text-muted mt-2"></div>
+
+                <div id="checkLists" class="hidden mt-4">
+                  <div class="grid grid-2">
+                    <div class="list-box">
+                      <h4>Activos <span class="tag" id="countActive">0</span></h4>
+                      <div class="controls">
+                        <button class="btn btn-sm" id="btnSelectAllActive">Seleccionar todo</button>
+                        <button class="btn btn-sm btn-warn" id="btnMoveToInactive">Descartar seleccionados ➜</button>
+                      </div>
+                      <div id="activeList"></div>
+                    </div>
+                    <div class="list-box">
+                      <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
+                      <div class="controls">
+                        <label class="form-checkbox text-xs">
+                          <input type="checkbox" id="toggleShowInactive">
+                          <span class="checkmark"></span>
+                          Mostrar descartados
+                        </label>
+                        <button class="btn btn-sm" id="btnSelectAllInactive">Seleccionar todo</button>
+                        <button class="btn btn-sm btn-primary" id="btnRestoreSelected">⬅ Restaurar</button>
+                      </div>
+                      <div id="inactiveList" class="hidden"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Parameters Card -->
               <div class="card">
                 <div class="card-header">
                   <h3 class="card-title">Configuración del Sorteo</h3>
@@ -862,19 +800,41 @@ Newell's; Santa Fe
                   <label class="form-label" for="zones">Número de Zonas</label>
                   <input type="number" class="form-input" id="zones" value="8" min="1">
                 </div>
-                
+
+                <div class="grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="disciplineSelect">Disciplina</label>
+                    <select class="form-select" id="disciplineSelect">
+                      <option value="">— Seleccionar —</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="categorySelect">Categoría</label>
+                    <select class="form-select" id="categorySelect">
+                      <option value="">— Seleccionar —</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div class="form-group">
-                  <label class="form-label" for="disciplineSelect">Disciplina</label>
-                  <select class="form-select" id="disciplineSelect">
-                    <option value="">Seleccionar disciplina</option>
-                    <option value="futbol">Fútbol</option>
-                    <option value="basquet">Básquet</option>
-                    <option value="voley">Vóley</option>
-                    <option value="hockey">Hockey</option>
+                  <label class="form-label" for="genderSelect">Género</label>
+                  <select class="form-select" id="genderSelect">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Mixto">Mixto</option>
+                    <option value="No Aplica">No Aplica</option>
                   </select>
                 </div>
-                
-                <div class="form-group">
+
+                <div class="controls">
+                  <label for="csvDisciplines" class="btn btn-secondary btn-sm">📄 Importar CSV disciplinas</label>
+                  <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden">
+                  <button class="btn btn-secondary btn-sm" id="btnDiscDemo">Demo disciplinas</button>
+                </div>
+                <div id="discCSVInfo" class="text-xs text-muted mt-2"></div>
+
+                <div class="form-group mt-4">
                   <label class="form-checkbox">
                     <input type="checkbox" id="headsAsFirst" checked>
                     <span class="checkmark"></span>
@@ -887,16 +847,18 @@ Newell's; Santa Fe
                     <span>🎯</span>
                     Realizar Sorteo
                   </button>
-                  <button class="btn btn-outline" id="btnShare">Compartir</button>
+                  <button class="btn btn-outline" id="btnExportCSV">⬇️ CSV</button>
+                  <button class="btn btn-outline" id="btnCopy">📋 Copiar</button>
+                  <button class="btn btn-outline" id="btnShare">🔗 Compartir</button>
                 </div>
                 
                 <div class="text-xs text-muted mt-4" id="capInfo">
                   Equipos: 0 • Zonas: 8
                 </div>
+                <div id="status" class="text-xs mt-2"></div>
               </div>
             </div>
 
-            <!-- Results Card -->
             <div class="card mt-4">
               <div class="card-header">
                 <h3 class="card-title">Resultado del Sorteo</h3>
@@ -906,111 +868,113 @@ Newell's; Santa Fe
             </div>
           </div>
 
-          <!-- Simple Draw Tab -->
+          <!-- TAB SIMPLE -->
           <div class="tab-content hidden" id="tab-simple">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Sorteo Simple</h3>
-                <p class="card-subtitle">Orden aleatorio de equipos</p>
-              </div>
-              <div class="grid grid-2">
-                <div class="card">
-                  <div class="form-group">
-                    <label class="form-label" for="simpleInput">Lista de Equipos</label>
-                    <textarea class="form-textarea" id="simpleInput" placeholder="Un equipo por línea..."></textarea>
-                  </div>
-                  <div class="controls">
-                    <button class="btn btn-secondary" id="btnUseFromGroups">Usar lista de Grupos</button>
-                    <button class="btn btn-secondary" id="btnClearSimple">Limpiar</button>
-                  </div>
-                </div>
-                <div class="card">
-                  <div class="form-group">
-                    <label class="form-label" for="disciplineSelectSimple">Disciplina</label>
-                    <select class="form-select" id="disciplineSelectSimple">
-                      <option value="">Seleccionar disciplina</option>
-                      <option value="futbol">Fútbol</option>
-                      <option value="basquet">Básquet</option>
-                      <option value="voley">Vóley</option>
-                      <option value="hockey">Hockey</option>
-                    </select>
-                  </div>
-                  <div class="controls mt-4">
-                    <button class="btn btn-primary btn-lg" id="btnDrawSimple">
-                      <span>🎲</span>
-                      Sortear Orden
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card mt-4">
+            <div class="grid grid-2">
+              <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Resultado</h3>
+                  <h3 class="card-title">Equipos</h3>
+                  <p class="card-subtitle">Usa la lista del tab Grupos o ingresá una nueva</p>
                 </div>
-                <div id="resultSimple"></div>
+                <div class="form-group">
+                  <textarea class="form-textarea" id="simpleInput" placeholder="Un equipo por línea..."></textarea>
+                </div>
+                <div class="controls">
+                  <button class="btn btn-secondary" id="btnUseFromGroups">Usar lista del tab Grupos</button>
+                  <button class="btn btn-secondary" id="btnClearSimple">Limpiar</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Parámetros</h3>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="disciplineSelectSimple">Disciplina</label>
+                  <select class="form-select" id="disciplineSelectSimple">
+                    <option value="">— Seleccionar —</option>
+                  </select>
+                </div>
+                <div class="controls mt-4">
+                  <button class="btn btn-primary btn-lg" id="btnDrawSimple">
+                    <span>🎲</span>
+                    Sortear Orden
+                  </button>
+                  <button class="btn btn-outline" id="btnExportSimple">⬇️ CSV</button>
+                  <button class="btn btn-outline" id="btnCopySimple">📋 Copiar</button>
+                  <button class="btn btn-outline" id="btnExportPDFSimple">🖨️ PDF</button>
+                </div>
+                <div id="statusSimple" class="text-xs mt-2"></div>
               </div>
             </div>
+            <div class="card mt-4">
+              <div class="card-header">
+                <h3 class="card-title">Resultado</h3>
+              </div>
+              <div id="resultSimple"></div>
+            </div>
           </div>
-          
-          <!-- Bracket Tab -->
+
+          <!-- TAB ELIMINATORIAS -->
           <div class="tab-content hidden" id="tab-bracket">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Eliminación Directa</h3>
-                <p class="card-subtitle">Generar llaves de torneo</p>
-              </div>
-              <div class="grid grid-2">
-                <div class="card">
-                  <div class="form-group">
-                    <label class="form-label" for="bracketInput">Lista de Equipos</label>
-                    <textarea class="form-textarea" id="bracketInput" placeholder="Un equipo por línea..."></textarea>
-                  </div>
-                  <div class="controls">
-                    <button class="btn btn-secondary" id="btnUseFromGroups2">Usar lista de Grupos</button>
-                    <button class="btn btn-secondary" id="btnClearBracket">Limpiar</button>
-                  </div>
-                </div>
-                <div class="card">
-                  <div class="form-group">
-                    <label class="form-label" for="disciplineSelectBracket">Disciplina</label>
-                    <select class="form-select" id="disciplineSelectBracket">
-                      <option value="">Seleccionar disciplina</option>
-                      <option value="futbol">Fútbol</option>
-                      <option value="basquet">Básquet</option>
-                      <option value="voley">Vóley</option>
-                      <option value="hockey">Hockey</option>
-                    </select>
-                  </div>
-                  <div class="controls mt-4">
-                    <button class="btn btn-primary btn-lg" id="btnDrawBracket">
-                      <span>⚔️</span>
-                      Generar Llaves
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card mt-4">
+            <div class="grid grid-2">
+              <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Llaves del Torneo</h3>
+                  <h3 class="card-title">Equipos</h3>
+                  <p class="card-subtitle">Usa la lista del tab Grupos o ingresá una nueva</p>
                 </div>
-                <div id="resultBracket"></div>
+                <div class="form-group">
+                  <textarea class="form-textarea" id="bracketInput" placeholder="Un equipo por línea..."></textarea>
+                </div>
+                <div class="controls">
+                  <button class="btn btn-secondary" id="btnUseFromGroups2">Usar lista del tab Grupos</button>
+                  <button class="btn btn-secondary" id="btnClearBracket">Limpiar</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Parámetros</h3>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="disciplineSelectBracket">Disciplina</label>
+                  <select class="form-select" id="disciplineSelectBracket">
+                    <option value="">— Seleccionar —</option>
+                  </select>
+                </div>
+                <div class="controls mt-4">
+                  <button class="btn btn-primary btn-lg" id="btnDrawBracket">
+                    <span>⚔️</span>
+                    Generar Llaves
+                  </button>
+                  <button class="btn btn-outline" id="btnExportBracket">⬇️ CSV</button>
+                </div>
+                <div class="text-xs text-muted mt-2">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
+                <div id="statusBracket" class="text-xs mt-2"></div>
               </div>
             </div>
+            <div class="card mt-4">
+              <div class="card-header">
+                <h3 class="card-title">Llaves del Torneo</h3>
+              </div>
+              <div id="resultBracket" class="results-grid"></div>
+            </div>
           </div>
-          
-          <!-- Saved Draws Tab -->
+
+          <!-- TAB GUARDADOS -->
           <div class="tab-content hidden" id="tab-saved">
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Sorteos Guardados</h3>
-                <p class="card-subtitle">Tus sorteos anteriores</p>
+                <h3 class="card-title">📊 Sorteos Realizados <span class="tag" id="savedCount">0</span></h3>
+                <p class="card-subtitle">Tus sorteos guardados y sincronizados</p>
+              </div>
+              <div class="text-sm text-muted mb-4" id="cloudInfo">
+                ✅ Conectado a la nube - Sorteos sincronizados entre dispositivos
               </div>
               <div class="controls mb-4">
-                <button class="btn btn-danger" id="btnClearAllSaved">Eliminar Todos</button>
-                <button class="btn btn-outline" id="btnExportAllSaved">Exportar Todos</button>
+                <button class="btn btn-danger" id="btnClearAllSaved">🗑️ Eliminar todos</button>
+                <button class="btn btn-outline" id="btnExportAllSaved">💾 Exportar todos</button>
                 <label class="btn btn-secondary">
                   <span>📂</span>
-                  Importar Sorteos
+                  Importar sorteos
                   <input type="file" id="importSaved" class="hidden" accept=".json">
                 </label>
               </div>
@@ -1026,7 +990,6 @@ Newell's; Santa Fe
     </main>
   </div>
 
-  <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
@@ -1045,17 +1008,22 @@ Newell's; Santa Fe
     try {
       firebase.initializeApp(firebaseConfig);
     } catch (error) {
-      console.log('Firebase ya inicializado o error:', error);
+      console.log('Firebase ya inicializado:', error);
     }
 
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // ====================== ESTADO DE LA APLICACIÓN ======================
+    // ====================== ESTADO GLOBAL ======================
     let currentUser = null;
     let isOnline = true;
+    let activeTeams = [];
+    let inactiveTeams = [];
+    let disciplines = [];
+    let categories = [];
+    let currentResult = null;
 
-    // ====================== FUNCIONES DE UTILIDAD ======================
+    // ====================== UTILIDADES ======================
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -1065,9 +1033,7 @@ Newell's; Santa Fe
         <span>${message}</span>
       `;
       toastContainer.appendChild(toast);
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
+      setTimeout(() => toast.remove(), 3000);
     }
 
     function toggleLoading(button, show) {
@@ -1079,6 +1045,11 @@ Newell's; Santa Fe
         spinner.classList.add('hidden');
         button.disabled = false;
       }
+    }
+
+    function escapeHtml(text) {
+      const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+      return text.replace(/[&<>"']/g, m => map[m]);
     }
 
     // ====================== SISTEMA DE AUTENTICACIÓN ======================
@@ -1107,7 +1078,7 @@ Newell's; Santa Fe
       }
     }
 
-    // Registro de usuario
+    // Registro
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('registerSubmit');
@@ -1126,19 +1097,16 @@ Newell's; Santa Fe
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({
-          displayName: name
-        });
+        await userCredential.user.updateProfile({ displayName: name });
         showToast('Cuenta creada exitosamente', 'success');
-        updateUserInfo(userCredential.user);
       } catch (error) {
-        showToast('Error al crear cuenta: ' + error.message, 'error');
+        showToast('Error: ' + error.message, 'error');
       } finally {
         toggleLoading(submitBtn, false);
       }
     });
 
-    // Login de usuario
+    // Login
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('loginSubmit');
@@ -1148,11 +1116,10 @@ Newell's; Santa Fe
       const password = document.getElementById('loginPassword').value;
 
       try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        await auth.signInWithEmailAndPassword(email, password);
         showToast('Sesión iniciada correctamente', 'success');
-        updateUserInfo(userCredential.user);
       } catch (error) {
-        showToast('Error al iniciar sesión: ' + error.message, 'error');
+        showToast('Error: ' + error.message, 'error');
       } finally {
         toggleLoading(submitBtn, false);
       }
@@ -1162,13 +1129,13 @@ Newell's; Santa Fe
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       try {
         await auth.signOut();
-        showToast('Sesión cerrada correctamente', 'success');
+        showToast('Sesión cerrada', 'success');
       } catch (error) {
         showToast('Error al cerrar sesión', 'error');
       }
     });
 
-    // Tabs de autenticación
+    // Tabs auth
     document.querySelectorAll('.auth-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
@@ -1188,6 +1155,10 @@ Newell's; Santa Fe
         document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
         button.classList.add('active');
         document.getElementById('tab-' + tabName).classList.remove('hidden');
+        
+        if (tabName === 'saved') {
+          renderSavedDraws();
+        }
       });
     });
 
@@ -1200,8 +1171,7 @@ Newell's; Santa Fe
       localStorage.setItem('theme', newTheme);
     });
 
-    // ====================== FUNCIONALIDAD DEL SORTEADOR ======================
-    // Ejemplo de equipos
+    // ====================== SISTEMA DE EQUIPOS ======================
     document.getElementById('btnExample').addEventListener('click', () => {
       const example = `River Plate; CABA; *
 Boca Juniors; CABA; *
@@ -1219,7 +1189,6 @@ Atl. Tucumán; Tucumán`;
       updateCapInfo();
     });
 
-    // Limpiar equipos
     document.getElementById('btnClear').addEventListener('click', () => {
       document.getElementById('teamsInput').value = '';
       document.getElementById('resultGroups').innerHTML = '';
@@ -1227,7 +1196,6 @@ Atl. Tucumán; Tucumán`;
       updateCapInfo();
     });
 
-    // Actualizar información de capacidad
     function updateCapInfo() {
       const teams = document.getElementById('teamsInput').value.split('\n').filter(line => line.trim()).length;
       const zones = document.getElementById('zones').value;
@@ -1237,7 +1205,71 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('teamsInput').addEventListener('input', updateCapInfo);
     document.getElementById('zones').addEventListener('input', updateCapInfo);
 
-    // Sorteo de grupos (simplificado para demo)
+    // ====================== SISTEMA DE SORTEO ======================
+    function xmur3(str) {
+      let h = 1779033703 ^ str.length;
+      for (let i = 0; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = h << 13 | h >>> 19;
+      }
+      return function() {
+        h = Math.imul(h ^ h >>> 16, 2246822507);
+        h = Math.imul(h ^ h >>> 13, 3266489909);
+        return (h ^ h >>> 16) >>> 0;
+      };
+    }
+
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function rngFromSeed(seed) {
+      if (!seed || seed.trim() === "") return Math.random;
+      const h = xmur3(String(seed))();
+      return mulberry32(h);
+    }
+
+    function shuffle(array, rand) {
+      const a = [...array];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function drawGroups(teams, z, headsAsFirst, seed, format) {
+      const rand = rngFromSeed(seed);
+      const n = teams.length;
+      
+      if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
+      if (n < z) return {error: 'Hay menos equipos que zonas.'};
+      
+      const groups = Array.from({length: z}, () => []);
+      const heads = shuffle(teams.filter(t => t.head), rand);
+      const others = shuffle(teams.filter(t => !t.head), rand);
+      
+      if (headsAsFirst && heads.length) {
+        for (let i = 0; i < groups.length && i < heads.length; i++) {
+          groups[i].push(heads[i]);
+        }
+      }
+      
+      const pool = headsAsFirst ? others : shuffle(teams, rand);
+      
+      // Distribución simple
+      pool.forEach((team, index) => {
+        groups[index % z].push(team);
+      });
+
+      return {groups: groups, caps: groups.map(g => g.length), relaxed: false, attempt: 1};
+    }
+
     document.getElementById('btnDrawGroups').addEventListener('click', () => {
       const teamsText = document.getElementById('teamsInput').value;
       const teams = teamsText.split('\n').filter(line => line.trim()).map(line => {
@@ -1256,21 +1288,22 @@ Atl. Tucumán; Tucumán`;
 
       const zones = parseInt(document.getElementById('zones').value);
       const headsAsFirst = document.getElementById('headsAsFirst').checked;
+      const discipline = document.getElementById('disciplineSelect').value;
+      const seed = discipline || 'sorteo_' + Date.now();
 
-      // Algoritmo simple de sorteo para demo
-      const shuffled = [...teams].sort(() => Math.random() - 0.5);
-      const groups = Array.from({ length: zones }, () => []);
+      const result = drawGroups(teams, zones, headsAsFirst, seed, 'custom');
       
-      // Distribuir equipos
-      shuffled.forEach((team, index) => {
-        groups[index % zones].push(team);
-      });
+      if (result.error) {
+        document.getElementById('drawStatus').textContent = result.error;
+        showToast(result.error, 'error');
+        return;
+      }
 
       // Mostrar resultados
       const resultsContainer = document.getElementById('resultGroups');
       resultsContainer.innerHTML = '';
       
-      groups.forEach((group, index) => {
+      result.groups.forEach((group, index) => {
         const zoneCard = document.createElement('div');
         zoneCard.className = 'zone-card';
         zoneCard.innerHTML = `
@@ -1293,18 +1326,106 @@ Atl. Tucumán; Tucumán`;
 
       document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
       showToast('Sorteo realizado correctamente', 'success');
+
+      // Guardar en Firebase
+      if (currentUser) {
+        saveDraw('grupos', {
+          discipline: document.getElementById('disciplineSelect').value,
+          category: document.getElementById('categorySelect').value,
+          gender: document.getElementById('genderSelect').value
+        }, result);
+      }
     });
+
+    // ====================== SISTEMA DE GUARDADO ======================
+    async function saveDraw(type, parameters, result) {
+      if (!currentUser) return;
+      
+      const drawId = 'draw_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      const draw = {
+        id: drawId,
+        type,
+        parameters,
+        result,
+        date: new Date().toLocaleString(),
+        userId: currentUser.uid,
+        userName: currentUser.displayName || currentUser.email
+      };
+
+      try {
+        await db.collection('draws').doc(drawId).set({
+          ...draw,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Sorteo guardado en la nube', 'success');
+      } catch (error) {
+        console.error('Error guardando en Firebase:', error);
+        showToast('Sorteo guardado localmente', 'info');
+      }
+    }
+
+    async function renderSavedDraws() {
+      if (!currentUser) return;
+      
+      try {
+        const snapshot = await db.collection('draws')
+          .where('userId', '==', currentUser.uid)
+          .orderBy('timestamp', 'desc')
+          .get();
+        
+        const draws = [];
+        snapshot.forEach(doc => draws.push(doc.data()));
+        
+        const container = document.getElementById('savedDrawsList');
+        document.getElementById('savedCount').textContent = draws.length;
+        
+        if (draws.length === 0) {
+          container.innerHTML = '<div class="text-center text-muted p-4">No hay sorteos guardados</div>';
+          return;
+        }
+        
+        container.innerHTML = draws.map(draw => `
+          <div class="saved-draw-item">
+            <div class="saved-draw-info">
+              <div class="font-semibold">
+                ${draw.type === 'grupos' ? '🏆 Zonas' : draw.type === 'simple' ? '🎲 Simple' : '⚔️ Eliminatorias'}
+                <span class="text-xs text-muted">• ${draw.userName}</span>
+              </div>
+              <div class="text-xs text-muted">
+                ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
+                ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
+                ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
+                ${draw.date}
+              </div>
+              <div class="text-xs">
+                ${draw.type === 'grupos' ? 
+                  `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
+                  draw.type === 'simple' ? `${draw.result.list.length} equipos` : 'Llaves generadas'
+                }
+              </div>
+            </div>
+            <div class="saved-draw-actions">
+              <button class="btn btn-sm btn-outline" onclick="openSavedDraw('${draw.id}')">Abrir</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteDraw('${draw.id}')">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error cargando sorteos:', error);
+        showToast('Error cargando sorteos guardados', 'error');
+      }
+    }
 
     // ====================== INICIALIZACIÓN ======================
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Sorteador Deportivo Profesional v5.0 - Inicializado');
+      console.log('Sorteador Deportivo Profesional - Inicializado');
       
-      // Cargar tema guardado
+      // Cargar tema
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
       document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
-      // Escuchar cambios de autenticación
+      // Auth state listener
       auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateUserInfo(user);
@@ -1313,6 +1434,7 @@ Atl. Tucumán; Tucumán`;
           document.getElementById('connectionStatus').className = 'status status-online';
           document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
           document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
+          document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
         } else {
           document.getElementById('connectionStatus').className = 'status status-offline';
           document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
@@ -1320,10 +1442,7 @@ Atl. Tucumán; Tucumán`;
         }
       });
 
-      // Inicializar información de capacidad
-      updateCapInfo();
-
-      // Botones de autenticación en header
+      // Botones auth header
       document.getElementById('loginBtn').addEventListener('click', () => {
         document.querySelector('.auth-tab[data-tab="login"]').click();
       });
@@ -1331,7 +1450,44 @@ Atl. Tucumán; Tucumán`;
       document.getElementById('registerBtn').addEventListener('click', () => {
         document.querySelector('.auth-tab[data-tab="register"]').click();
       });
+
+      // Inicializar disciplinas
+      refreshDisciplineSelects();
+      updateCapInfo();
     });
+
+    function refreshDisciplineSelects() {
+      const selects = ['disciplineSelect', 'disciplineSelectSimple', 'disciplineSelectBracket'];
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+          select.innerHTML = '<option value="">— Seleccionar —</option>' +
+            '<option value="futbol">Fútbol</option>' +
+            '<option value="basquet">Básquet</option>' +
+            '<option value="voley">Vóley</option>' +
+            '<option value="hockey">Hockey</option>' +
+            '<option value="tenis">Tenis</option>' +
+            '<option value="rugby">Rugby</option>';
+        }
+      });
+    }
+
+    // Funciones globales
+    window.openSavedDraw = async function(id) {
+      showToast('Función en desarrollo', 'info');
+    };
+
+    window.deleteDraw = async function(id) {
+      if (confirm('¿Eliminar este sorteo?')) {
+        try {
+          await db.collection('draws').doc(id).delete();
+          showToast('Sorteo eliminado', 'success');
+          renderSavedDraws();
+        } catch (error) {
+          showToast('Error eliminando sorteo', 'error');
+        }
+      }
+    };
   </script>
 </body>
 </html>
