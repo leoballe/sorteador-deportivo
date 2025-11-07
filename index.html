@@ -62,6 +62,9 @@
     .cloud-status{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;margin-left:8px}
     .cloud-online{background:#0a3622;color:#22c55e;border:1px solid #1b5e3b}
     .cloud-offline{background:#450a0a;color:#ef4444;border:1px solid #7f1d1d}
+    .cloud-connecting{background:#78350f;color:#f59e0b;border:1px solid#92400e}
+    .loading-spinner{display:inline-block;width:12px;height:12px;border:2px solid transparent;border-top:2px solid currentColor;border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -69,9 +72,9 @@
     <header>
       <div>
         <h1>🎲 Sorteador Deportivo</h1>
-        <div class="tiny">Funciona 100% en tu navegador • <span id="cloudStatus" class="cloud-status cloud-offline">⏳ Conectando...</span></div>
+        <div class="tiny">Funciona 100% en tu navegador • <span id="cloudStatus" class="cloud-status cloud-connecting"><span class="loading-spinner"></span> Conectando...</span></div>
       </div>
-      <span class="badge">v4.1</span>
+      <span class="badge">v4.2</span>
     </header>
 
     <div class="panel">
@@ -265,7 +268,7 @@ Newell's; Santa Fe
         <div class="card">
           <h3>📊 Sorteos Realizados <span id="savedCount" class="tag">0</span></h3>
           <div class="tiny" style="margin-bottom:12px">
-            <span id="cloudInfo">✅ Conectado a la nube - Tus sorteos se sincronizan entre dispositivos</span>
+            <span id="cloudInfo">⏳ Conectando a la nube...</span>
           </div>
           <div class="controls" style="margin-bottom:12px">
             <button class="btn danger" id="btnClearAllSaved" type="button">🗑️ Eliminar todos los sorteos</button>
@@ -313,83 +316,99 @@ let categories = [];
 let currentResult = null;
 let currentUser = null;
 let isOnline = false;
+let firebaseInitialized = false;
 
 // ====================== SISTEMA DE ALMACENAMIENTO EN LA NUBE ======================
-const STORAGE_KEY = 'savedDraws_v3';
+const STORAGE_KEY = 'savedDraws_v4';
 
-// Sistema híbrido: nube + localStorage como fallback
-function updateCloudStatus(online) {
-  isOnline = online;
+// Sistema mejorado de estado de conexión
+function updateCloudStatus(status, message = '') {
+  isOnline = status === 'online';
   const statusElement = document.getElementById('cloudStatus');
   const cloudInfo = document.getElementById('cloudInfo');
   
   if (!statusElement) return;
   
-  if (online) {
-    statusElement.className = 'cloud-status cloud-online';
-    statusElement.innerHTML = '✅ Conectado';
-    if (cloudInfo) {
-      cloudInfo.innerHTML = '✅ Conectado a la nube - Tus sorteos se sincronizan entre dispositivos';
-    }
-  } else {
-    statusElement.className = 'cloud-status cloud-offline';
-    statusElement.innerHTML = '❌ Sin conexión';
-    if (cloudInfo) {
-      cloudInfo.innerHTML = '⚠️ Modo offline - Los sorteos se guardan localmente';
-    }
+  switch(status) {
+    case 'online':
+      statusElement.className = 'cloud-status cloud-online';
+      statusElement.innerHTML = '✅ Conectado';
+      if (cloudInfo) {
+        cloudInfo.innerHTML = '✅ Conectado a la nube - Tus sorteos se sincronizan entre dispositivos';
+      }
+      break;
+    case 'offline':
+      statusElement.className = 'cloud-status cloud-offline';
+      statusElement.innerHTML = '❌ Sin conexión';
+      if (cloudInfo) {
+        cloudInfo.innerHTML = '⚠️ Modo offline - Los sorteos se guardan localmente';
+      }
+      break;
+    case 'connecting':
+      statusElement.className = 'cloud-status cloud-connecting';
+      statusElement.innerHTML = '<span class="loading-spinner"></span> Conectando...';
+      if (cloudInfo) {
+        cloudInfo.innerHTML = '⏳ Conectando a la nube...';
+      }
+      break;
+    case 'error':
+      statusElement.className = 'cloud-status cloud-offline';
+      statusElement.innerHTML = '❌ Error de conexión';
+      if (cloudInfo) {
+        cloudInfo.innerHTML = '❌ Error de conexión - Usando almacenamiento local';
+      }
+      break;
   }
 }
 
-// Inicializar autenticación - VERSIÓN ROBUSTA
-function initAuth() {
-  return new Promise((resolve, reject) => {
-    // Verificar si ya estamos autenticados
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      console.log('Usuario actual encontrado:', currentUser.uid);
-      updateCloudStatus(true);
-      resolve(currentUser);
-      return;
+// Inicialización robusta de Firebase
+async function initializeFirebase() {
+  if (firebaseInitialized) return true;
+  
+  try {
+    updateCloudStatus('connecting');
+    
+    // Verificar si Firebase ya está inicializado
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
     }
-
+    
     // Esperar a que Firebase esté listo
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      unsubscribe(); // Dejar de escuchar después del primer evento
-      
-      if (user) {
-        console.log('AuthStateChanged - Usuario:', user.uid);
-        updateCloudStatus(true);
-        resolve(user);
-      } else {
-        console.log('No hay usuario, creando uno anónimo...');
-        // Crear usuario anónimo
-        auth.signInAnonymously()
-          .then((userCredential) => {
-            console.log('Usuario anónimo creado:', userCredential.user.uid);
-            updateCloudStatus(true);
-            resolve(userCredential.user);
-          })
-          .catch((error) => {
-            console.error('Error creando usuario anónimo:', error);
-            // Crear un usuario offline como fallback
-            const offlineUser = { uid: 'offline_' + Date.now().toString() };
-            updateCloudStatus(false);
-            resolve(offlineUser);
-          });
-      }
-    });
-
-    // Timeout de seguridad
-    setTimeout(() => {
-      console.log('Timeout de autenticación, usando modo offline');
-      const offlineUser = { uid: 'offline_timeout' };
-      updateCloudStatus(false);
-      resolve(offlineUser);
-    }, 5000);
-  });
+    await Promise.race([
+      auth.authStateReady(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+    ]);
+    
+    // Intentar autenticación anónima si no hay usuario
+    if (!auth.currentUser) {
+      await auth.signInAnonymously();
+    }
+    
+    // Verificar conexión a Firestore
+    await db.collection('test').limit(1).get();
+    
+    firebaseInitialized = true;
+    updateCloudStatus('online');
+    console.log('✅ Firebase inicializado correctamente');
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error inicializando Firebase:', error);
+    firebaseInitialized = false;
+    
+    // Crear usuario offline como fallback
+    currentUser = { uid: 'offline_' + Date.now().toString() };
+    updateCloudStatus('offline');
+    return false;
+  }
 }
-// Guardar sorteo en Firebase - SIN AUTENTICACIÓN
+
+// Guardar sorteo en Firebase - VERSIÓN MEJORADA
 async function saveDrawToCloud(type, parameters, result) {
+  if (!firebaseInitialized) {
+    throw new Error('Firebase no inicializado');
+  }
+  
   try {
     // ID ÚNICO
     const uniqueId = 'shared_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
@@ -418,7 +437,7 @@ async function saveDrawToCloud(type, parameters, result) {
       result: processedResult,
       date: new Date().toLocaleString(),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: 'public_user'
+      userId: auth.currentUser ? auth.currentUser.uid : 'public_user'
     };
     
     await db.collection('draws').doc(uniqueId).set(draw);
@@ -429,29 +448,46 @@ async function saveDrawToCloud(type, parameters, result) {
     throw error;
   }
 }
-  
-// Cargar sorteos desde Firebase - SIN AUTENTICACIÓN
+
+// Cargar sorteos desde Firebase - VERSIÓN MEJORADA
 async function loadDrawsFromCloud() {
+  if (!firebaseInitialized) {
+    throw new Error('Firebase no inicializado');
+  }
+  
   try {
     const snapshot = await db.collection('draws')
+      .where('userId', '==', auth.currentUser ? auth.currentUser.uid : 'public_user')
       .orderBy('timestamp', 'desc')
       .get();
     
     const draws = [];
     snapshot.forEach(doc => {
-      draws.push(doc.data());
+      const data = doc.data();
+      // Convertir de vuelta a formato interno si es necesario
+      if (data.type === 'grupos' && data.result.groups && Array.isArray(data.result.groups) && data.result.groups[0] && data.result.groups[0].teams) {
+        data.result = {
+          ...data.result,
+          groups: data.result.groups.map(zone => zone.teams)
+        };
+      }
+      draws.push(data);
     });
     
     console.log('Sorteos cargados desde Firebase:', draws.length);
     return draws;
   } catch (error) {
     console.error('Error cargando desde Firebase:', error);
-    return [];
+    throw error;
   }
 }
 
 // Eliminar sorteo de Firebase
 async function deleteDrawFromCloud(drawId) {
+  if (!firebaseInitialized) {
+    throw new Error('Firebase no inicializado');
+  }
+  
   try {
     await db.collection('draws').doc(drawId).delete();
     console.log('Sorteo eliminado de Firebase:', drawId);
@@ -486,7 +522,6 @@ function getSavedDrawsFromLocalStorage() {
   return [];
 }
 
-// Sistema híbrido mejorado
 // Sistema híbrido mejorado - CON MEJOR MANEJO DE ERRORES
 async function saveDraw(type, parameters, result) {
   // ID consistente entre localStorage y cloud
@@ -497,56 +532,51 @@ async function saveDraw(type, parameters, result) {
     type,
     parameters,
     result,
-    date: new Date().toLocaleString()
+    date: new Date().toLocaleString(),
+    userId: auth.currentUser ? auth.currentUser.uid : 'offline_user'
   };
   
   console.log('Intentando guardar sorteo:', type, drawId);
   
   // 1. Primero intentar guardar en la nube
-  try {
-    const cloudDraw = await saveDrawToCloud(type, parameters, result);
-    console.log('✅ Sorteo guardado en la nube:', type, cloudDraw.id);
-    
-    // 2. Luego guardar en localStorage como backup
-    if (isLocalStorageAvailable()) {
-      try {
-        const savedDraws = getSavedDrawsFromLocalStorage();
-        // Remover duplicados por si acaso
-        const filteredDraws = savedDraws.filter(d => d.id !== drawId);
-        filteredDraws.unshift(cloudDraw);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredDraws));
-        console.log('✅ Sorteo guardado en localStorage');
-      } catch (localError) {
-        console.error('Error guardando en localStorage:', localError);
+  if (firebaseInitialized && isOnline) {
+    try {
+      const cloudDraw = await saveDrawToCloud(type, parameters, result);
+      console.log('✅ Sorteo guardado en la nube:', type, cloudDraw.id);
+      
+      // 2. Luego guardar en localStorage como backup
+      if (isLocalStorageAvailable()) {
+        try {
+          const savedDraws = getSavedDrawsFromLocalStorage();
+          // Remover duplicados por si acaso
+          const filteredDraws = savedDraws.filter(d => d.id !== drawId);
+          filteredDraws.unshift(cloudDraw);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredDraws));
+          console.log('✅ Sorteo guardado en localStorage');
+        } catch (localError) {
+          console.error('Error guardando en localStorage:', localError);
+        }
       }
+      
+      return cloudDraw;
+      
+    } catch (cloudError) {
+      console.error('❌ Error guardando en la nube:', cloudError);
+      updateCloudStatus('offline');
     }
-    
-    return cloudDraw;
-    
-  } catch (cloudError) {
-    console.error('❌ Error guardando en la nube:', cloudError);
-    
-    // Fallback: guardar solo en localStorage
-    if (isLocalStorageAvailable()) {
-      try {
-        const savedDraws = getSavedDrawsFromLocalStorage();
-        savedDraws.unshift(draw);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
-        console.log('✅ Sorteo guardado solo en localStorage (fallback)');
-      } catch (localError) {
-        console.error('Error guardando en localStorage (fallback):', localError);
-      }
-    }
-    
-    return draw;
   }
-}
   
-  // Intentar guardar en la nube
-  try {
-    await saveDrawToCloud(type, parameters, result);
-  } catch (error) {
-    console.warn('No se pudo guardar en la nube, usando localStorage:', error);
+  // Fallback: guardar solo en localStorage
+  if (isLocalStorageAvailable()) {
+    try {
+      const savedDraws = getSavedDrawsFromLocalStorage();
+      savedDraws.unshift(draw);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
+      console.log('✅ Sorteo guardado solo en localStorage (fallback)');
+    } catch (localError) {
+      console.error('Error guardando en localStorage (fallback):', localError);
+      throw new Error('No se pudo guardar el sorteo');
+    }
   }
   
   return draw;
@@ -554,13 +584,20 @@ async function saveDraw(type, parameters, result) {
 
 async function getSavedDraws() {
   // Primero intentar cargar de la nube
-  try {
-    const cloudDraws = await loadDrawsFromCloud();
-    if (cloudDraws.length > 0) {
-      return cloudDraws;
+  if (firebaseInitialized && isOnline) {
+    try {
+      const cloudDraws = await loadDrawsFromCloud();
+      if (cloudDraws.length > 0) {
+        // Sincronizar con localStorage
+        if (isLocalStorageAvailable()) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudDraws));
+        }
+        return cloudDraws;
+      }
+    } catch (error) {
+      console.warn('No se pudieron cargar de la nube:', error);
+      updateCloudStatus('offline');
     }
-  } catch (error) {
-    console.warn('No se pudieron cargar de la nube:', error);
   }
   
   // Fallback a localStorage
@@ -579,10 +616,12 @@ async function deleteDraw(id) {
   }
   
   // Eliminar de la nube
-  try {
-    await deleteDrawFromCloud(id);
-  } catch (error) {
-    console.warn('No se pudo eliminar de la nube:', error);
+  if (firebaseInitialized && isOnline) {
+    try {
+      await deleteDrawFromCloud(id);
+    } catch (error) {
+      console.warn('No se pudo eliminar de la nube:', error);
+    }
   }
   
   await renderSavedDraws();
@@ -601,13 +640,15 @@ async function clearAllSavedDraws() {
     }
     
     // Limpiar la nube - necesitamos eliminar uno por uno
-    try {
-      const draws = await loadDrawsFromCloud();
-      for (const draw of draws) {
-        await deleteDrawFromCloud(draw.id);
+    if (firebaseInitialized && isOnline) {
+      try {
+        const draws = await loadDrawsFromCloud();
+        for (const draw of draws) {
+          await deleteDrawFromCloud(draw.id);
+        }
+      } catch (error) {
+        console.warn('No se pudieron eliminar de la nube:', error);
       }
-    } catch (error) {
-      console.warn('No se pudieron eliminar de la nube:', error);
     }
     
     await renderSavedDraws();
@@ -637,7 +678,8 @@ async function renderSavedDraws() {
           ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
           ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
           ${draw.date}
-                <div class="tiny">
+        </div>
+        <div class="tiny">
           ${draw.type === 'grupos' ? 
             `${draw.result.groups?.length || 0} zonas • ${(draw.result.groups && Array.isArray(draw.result.groups[0]?.teams) ? 
               draw.result.groups.reduce((total, zone) => total + (zone.teams?.length || 0), 0) : 
@@ -747,21 +789,6 @@ function clearResults() {
   document.getElementById('resultSimple').innerHTML = '';
   document.getElementById('statusSimple').innerHTML = '';
   currentResult = null; // ← Limpiar el resultado actual
-}
-
-// Función mejorada para verificar si los parámetros cambiaron
-function haveParametersChanged() {
-  // Si no hay resultado actual, entonces no hay cambios
-  if (!currentResult) return true;
-  
-  const currentDiscipline = document.getElementById('disciplineSelect').value;
-  const currentCategory = document.getElementById('categorySelect').value;
-  const currentGender = document.getElementById('genderSelect').value;
-  
-  // Comparar con los parámetros del resultado actual
-  return currentDiscipline !== currentResult.parameters.discipline ||
-         currentCategory !== currentResult.parameters.category ||
-         currentGender !== currentResult.parameters.gender;
 }
 
 // ====================== UTILIDADES BÁSICAS ======================
@@ -1717,15 +1744,20 @@ function updateCapInfo() {
 
 // ====================== INICIALIZACIÓN MEJORADA ======================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v4.0 con Firebase cargado');
+  console.log('Sorteador v4.2 con Firebase cargado');
   
   // Inicializar Firebase de forma no bloqueante
   setTimeout(() => {
-    initAuth().then(() => {
-      console.log('Firebase inicializado correctamente');
-      
-      // Cargar sorteos existentes
-      return getSavedDraws();
+    initializeFirebase().then(success => {
+      if (success) {
+        console.log('Firebase inicializado correctamente');
+        
+        // Cargar sorteos existentes
+        return getSavedDraws();
+      } else {
+        console.log('Firebase no disponible, usando modo offline');
+        return getSavedDrawsFromLocalStorage();
+      }
     }).then(savedDraws => {
       console.log('Sorteos cargados:', savedDraws.length);
     }).catch(error => {
@@ -2133,6 +2165,8 @@ Atl. Tucumán; Tucumán`;
   window.testFirebase = function() {
     console.log('=== TEST FIREBASE ===');
     console.log('Current User:', auth.currentUser);
+    console.log('Firebase Initialized:', firebaseInitialized);
+    console.log('Online Status:', isOnline);
     
     auth.authStateReady().then(() => {
       console.log('Auth State Ready');
