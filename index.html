@@ -381,12 +381,13 @@ function initAuth() {
   });
 }
 // Guardar sorteo en Firebase - VERSIÓN COMPARTIDA
+// Guardar sorteo en Firebase - VERSIÓN CORREGIDA
 async function saveDrawToCloud(type, parameters, result) {
   try {
     await initAuth();
     
-    // ID único basado solo en timestamp para que sea compartido
-    const uniqueId = 'shared_' + Date.now().toString();
+    // ID VERDADERAMENTE ÚNICO - combinar timestamp y número random
+    const uniqueId = 'shared_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
     
     const draw = {
       id: uniqueId,
@@ -395,11 +396,11 @@ async function saveDrawToCloud(type, parameters, result) {
       result,
       date: new Date().toLocaleString(),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: 'shared_user' // ← MISMO USUARIO PARA TODOS
+      userId: 'shared_user'
     };
     
     await db.collection('draws').doc(uniqueId).set(draw);
-    console.log('Sorteo guardado en Firebase (compartido):', uniqueId);
+    console.log('Sorteo guardado en Firebase:', type, uniqueId);
     return draw;
   } catch (error) {
     console.error('Error guardando en Firebase:', error);
@@ -467,25 +468,60 @@ function getSavedDrawsFromLocalStorage() {
 }
 
 // Sistema híbrido mejorado
+// Sistema híbrido mejorado - CON MEJOR MANEJO DE ERRORES
 async function saveDraw(type, parameters, result) {
+  // ID consistente entre localStorage y cloud
+  const drawId = 'shared_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
+  
   const draw = {
-    id: Date.now().toString(),
+    id: drawId,
     type,
     parameters,
     result,
     date: new Date().toLocaleString()
   };
   
-  // Guardar en localStorage como backup
-  if (isLocalStorageAvailable()) {
-    try {
-      const savedDraws = getSavedDrawsFromLocalStorage();
-      savedDraws.unshift(draw);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
-    } catch (error) {
-      console.error('Error guardando en localStorage:', error);
+  console.log('Intentando guardar sorteo:', type, drawId);
+  
+  // 1. Primero intentar guardar en la nube
+  try {
+    const cloudDraw = await saveDrawToCloud(type, parameters, result);
+    console.log('✅ Sorteo guardado en la nube:', type, cloudDraw.id);
+    
+    // 2. Luego guardar en localStorage como backup
+    if (isLocalStorageAvailable()) {
+      try {
+        const savedDraws = getSavedDrawsFromLocalStorage();
+        // Remover duplicados por si acaso
+        const filteredDraws = savedDraws.filter(d => d.id !== drawId);
+        filteredDraws.unshift(cloudDraw);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredDraws));
+        console.log('✅ Sorteo guardado en localStorage');
+      } catch (localError) {
+        console.error('Error guardando en localStorage:', localError);
+      }
     }
+    
+    return cloudDraw;
+    
+  } catch (cloudError) {
+    console.error('❌ Error guardando en la nube:', cloudError);
+    
+    // Fallback: guardar solo en localStorage
+    if (isLocalStorageAvailable()) {
+      try {
+        const savedDraws = getSavedDrawsFromLocalStorage();
+        savedDraws.unshift(draw);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
+        console.log('✅ Sorteo guardado solo en localStorage (fallback)');
+      } catch (localError) {
+        console.error('Error guardando en localStorage (fallback):', localError);
+      }
+    }
+    
+    return draw;
   }
+}
   
   // Intentar guardar en la nube
   try {
@@ -1674,6 +1710,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderSavedDraws();
       }
     });
+      // DEBUG: Verificar qué se está guardando
+  window.debugSorteos = async function() {
+    console.log('=== DEBUG SORTEOS ===');
+    const savedDraws = await getSavedDraws();
+    console.log('Sorteos en la nube:', savedDraws);
+    console.log('Sorteos en localStorage:', getSavedDrawsFromLocalStorage());
+    
+    savedDraws.forEach((draw, index) => {
+      console.log(`${index + 1}. Tipo: ${draw.type}, ID: ${draw.id}, Fecha: ${draw.date}`);
+    });
+  };
+  
+  // Ejecutar debug automáticamente cada 5 segundos (opcional)
+  // setInterval(debugSorteos, 5000);
   });
   
   // Botón para eliminar todos los sorteos
