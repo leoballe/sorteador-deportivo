@@ -338,46 +338,31 @@ function updateCloudStatus(online) {
   }
 }
 
-// Inicializar autenticación con usuario compartido
+// Inicializar autenticación anónima - VERSIÓN SIMPLIFICADA
 function initAuth() {
   return new Promise((resolve, reject) => {
-    // CREAR UN USUARIO COMPARTIDO para todos los navegadores
-    const sharedUserId = "sorteador_deportivo_user";
-    
-    // Intentar iniciar sesión con el usuario compartido
-    auth.signInWithCustomToken(sharedUserId)
-      .then((userCredential) => {
-        currentUser = userCredential.user;
-        console.log('Usuario compartido autenticado:', currentUser.uid);
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        console.log('Usuario anónimo existente:', user.uid);
         updateCloudStatus(true);
-        resolve(currentUser);
-      })
-      .catch((error) => {
-        console.log('No se pudo usar autenticación custom, usando anónima:', error);
-        
-        // Fallback a autenticación anónima normal
-        auth.onAuthStateChanged((user) => {
-          if (user) {
-            currentUser = user;
-            console.log('Usuario anónimo existente:', user.uid);
+        resolve(user);
+      } else {
+        // Crear usuario anónimo
+        auth.signInAnonymously()
+          .then((userCredential) => {
+            currentUser = userCredential.user;
+            console.log('Nuevo usuario anónimo creado:', currentUser.uid);
             updateCloudStatus(true);
-            resolve(user);
-          } else {
-            auth.signInAnonymously()
-              .then((userCredential) => {
-                currentUser = userCredential.user;
-                console.log('Nuevo usuario anónimo creado:', currentUser.uid);
-                updateCloudStatus(true);
-                resolve(currentUser);
-              })
-              .catch((error) => {
-                console.error('Error en autenticación:', error);
-                updateCloudStatus(false);
-                reject(error);
-              });
-          }
-        });
-      });
+            resolve(currentUser);
+          })
+          .catch((error) => {
+            console.error('Error en autenticación anónima:', error);
+            updateCloudStatus(false);
+            reject(error);
+          });
+      }
+    });
   });
 }
 // Guardar sorteo en Firebase - VERSIÓN CORREGIDA PARA ARRAYS ANIDADOS
