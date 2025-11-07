@@ -616,6 +616,42 @@
       padding: 1rem;
     }
 
+    /* Form Checkbox */
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .form-checkbox input {
+      display: none;
+    }
+
+    .checkmark {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-medium);
+      border-radius: 4px;
+      position: relative;
+      transition: var(--transition);
+    }
+
+    .form-checkbox input:checked + .checkmark {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .form-checkbox input:checked + .checkmark::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 12px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
     /* Responsive */
     @media (max-width: 640px) {
       .container {
@@ -679,7 +715,7 @@
     <main class="main-content">
       <div class="container">
         <!-- Authentication Section -->
-        <section class="auth-section hidden" id="authSection">
+        <section class="auth-section" id="authSection">
           <div class="auth-tabs">
             <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
             <button class="auth-tab" data-tab="register">Registrarse</button>
@@ -730,16 +766,16 @@
         </section>
 
         <!-- Application Section -->
-        <section class="app-section" id="appSection">
+        <section class="app-section hidden" id="appSection">
           <!-- Status Bar -->
           <div class="card mb-4">
             <div class="controls">
-              <div class="status" id="connectionStatus">
-                <span class="spinner"></span>
-                Conectando...
+              <div class="status status-online" id="connectionStatus">
+                <span class="spinner hidden"></span>
+                ✅ Conectado
               </div>
               <div class="text-sm text-muted" id="userStatus">
-                Inicia sesión para sincronizar tus sorteos
+                Sesión iniciada - Sorteos sincronizados
               </div>
             </div>
           </div>
@@ -831,6 +867,10 @@ Newell's; Santa Fe
                   <label class="form-label" for="disciplineSelect">Disciplina</label>
                   <select class="form-select" id="disciplineSelect">
                     <option value="">Seleccionar disciplina</option>
+                    <option value="futbol">Fútbol</option>
+                    <option value="basquet">Básquet</option>
+                    <option value="voley">Vóley</option>
+                    <option value="hockey">Hockey</option>
                   </select>
                 </div>
                 
@@ -866,17 +906,120 @@ Newell's; Santa Fe
             </div>
           </div>
 
-          <!-- Other tabs would go here with similar structure -->
+          <!-- Simple Draw Tab -->
           <div class="tab-content hidden" id="tab-simple">
-            <!-- Simple draw content -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Sorteo Simple</h3>
+                <p class="card-subtitle">Orden aleatorio de equipos</p>
+              </div>
+              <div class="grid grid-2">
+                <div class="card">
+                  <div class="form-group">
+                    <label class="form-label" for="simpleInput">Lista de Equipos</label>
+                    <textarea class="form-textarea" id="simpleInput" placeholder="Un equipo por línea..."></textarea>
+                  </div>
+                  <div class="controls">
+                    <button class="btn btn-secondary" id="btnUseFromGroups">Usar lista de Grupos</button>
+                    <button class="btn btn-secondary" id="btnClearSimple">Limpiar</button>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="form-group">
+                    <label class="form-label" for="disciplineSelectSimple">Disciplina</label>
+                    <select class="form-select" id="disciplineSelectSimple">
+                      <option value="">Seleccionar disciplina</option>
+                      <option value="futbol">Fútbol</option>
+                      <option value="basquet">Básquet</option>
+                      <option value="voley">Vóley</option>
+                      <option value="hockey">Hockey</option>
+                    </select>
+                  </div>
+                  <div class="controls mt-4">
+                    <button class="btn btn-primary btn-lg" id="btnDrawSimple">
+                      <span>🎲</span>
+                      Sortear Orden
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="card mt-4">
+                <div class="card-header">
+                  <h3 class="card-title">Resultado</h3>
+                </div>
+                <div id="resultSimple"></div>
+              </div>
+            </div>
           </div>
           
+          <!-- Bracket Tab -->
           <div class="tab-content hidden" id="tab-bracket">
-            <!-- Bracket content -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Eliminación Directa</h3>
+                <p class="card-subtitle">Generar llaves de torneo</p>
+              </div>
+              <div class="grid grid-2">
+                <div class="card">
+                  <div class="form-group">
+                    <label class="form-label" for="bracketInput">Lista de Equipos</label>
+                    <textarea class="form-textarea" id="bracketInput" placeholder="Un equipo por línea..."></textarea>
+                  </div>
+                  <div class="controls">
+                    <button class="btn btn-secondary" id="btnUseFromGroups2">Usar lista de Grupos</button>
+                    <button class="btn btn-secondary" id="btnClearBracket">Limpiar</button>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="form-group">
+                    <label class="form-label" for="disciplineSelectBracket">Disciplina</label>
+                    <select class="form-select" id="disciplineSelectBracket">
+                      <option value="">Seleccionar disciplina</option>
+                      <option value="futbol">Fútbol</option>
+                      <option value="basquet">Básquet</option>
+                      <option value="voley">Vóley</option>
+                      <option value="hockey">Hockey</option>
+                    </select>
+                  </div>
+                  <div class="controls mt-4">
+                    <button class="btn btn-primary btn-lg" id="btnDrawBracket">
+                      <span>⚔️</span>
+                      Generar Llaves
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="card mt-4">
+                <div class="card-header">
+                  <h3 class="card-title">Llaves del Torneo</h3>
+                </div>
+                <div id="resultBracket"></div>
+              </div>
+            </div>
           </div>
           
+          <!-- Saved Draws Tab -->
           <div class="tab-content hidden" id="tab-saved">
-            <!-- Saved draws content -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Sorteos Guardados</h3>
+                <p class="card-subtitle">Tus sorteos anteriores</p>
+              </div>
+              <div class="controls mb-4">
+                <button class="btn btn-danger" id="btnClearAllSaved">Eliminar Todos</button>
+                <button class="btn btn-outline" id="btnExportAllSaved">Exportar Todos</button>
+                <label class="btn btn-secondary">
+                  <span>📂</span>
+                  Importar Sorteos
+                  <input type="file" id="importSaved" class="hidden" accept=".json">
+                </label>
+              </div>
+              <div id="savedDrawsList">
+                <div class="text-center text-muted p-4">
+                  No hay sorteos guardados
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -887,13 +1030,168 @@ Newell's; Santa Fe
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
-    // Firebase configuration and application logic would go here
-    // This is a simplified version - the complete implementation
-    // would include all the authentication, drawing, and sharing features
-    
-    console.log('Sorteador Deportivo Profesional v5.0 - Cargado');
-    
-    // Theme toggle functionality
+    // ====================== CONFIGURACIÓN FIREBASE ======================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
+      authDomain: "sorteador-53cb5.firebaseapp.com",
+      projectId: "sorteador-53cb5",
+      storageBucket: "sorteador-53cb5.firebasestorage.app",
+      messagingSenderId: "583913752340",
+      appId: "1:583913752340:web:347f8b2866fcbb216e6401",
+      measurementId: "G-LTZSJSEZJM"
+    };
+
+    // Inicializar Firebase
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (error) {
+      console.log('Firebase ya inicializado o error:', error);
+    }
+
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // ====================== ESTADO DE LA APLICACIÓN ======================
+    let currentUser = null;
+    let isOnline = true;
+
+    // ====================== FUNCIONES DE UTILIDAD ======================
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+        <span>${message}</span>
+      `;
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function toggleLoading(button, show) {
+      const spinner = button.querySelector('.spinner');
+      if (show) {
+        spinner.classList.remove('hidden');
+        button.disabled = true;
+      } else {
+        spinner.classList.add('hidden');
+        button.disabled = false;
+      }
+    }
+
+    // ====================== SISTEMA DE AUTENTICACIÓN ======================
+    function showAuthSection() {
+      document.getElementById('authSection').classList.remove('hidden');
+      document.getElementById('appSection').classList.add('hidden');
+      document.getElementById('authButtons').classList.remove('hidden');
+      document.getElementById('userMenu').classList.add('hidden');
+    }
+
+    function showAppSection() {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('appSection').classList.remove('hidden');
+      document.getElementById('authButtons').classList.add('hidden');
+      document.getElementById('userMenu').classList.remove('hidden');
+    }
+
+    function updateUserInfo(user) {
+      if (user) {
+        document.getElementById('userName').textContent = user.displayName || 'Usuario';
+        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+        showAppSection();
+      } else {
+        showAuthSection();
+      }
+    }
+
+    // Registro de usuario
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('registerSubmit');
+      toggleLoading(submitBtn, true);
+
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+      if (password !== confirmPassword) {
+        showToast('Las contraseñas no coinciden', 'error');
+        toggleLoading(submitBtn, false);
+        return;
+      }
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({
+          displayName: name
+        });
+        showToast('Cuenta creada exitosamente', 'success');
+        updateUserInfo(userCredential.user);
+      } catch (error) {
+        showToast('Error al crear cuenta: ' + error.message, 'error');
+      } finally {
+        toggleLoading(submitBtn, false);
+      }
+    });
+
+    // Login de usuario
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('loginSubmit');
+      toggleLoading(submitBtn, true);
+
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        showToast('Sesión iniciada correctamente', 'success');
+        updateUserInfo(userCredential.user);
+      } catch (error) {
+        showToast('Error al iniciar sesión: ' + error.message, 'error');
+      } finally {
+        toggleLoading(submitBtn, false);
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+        showToast('Sesión cerrada correctamente', 'success');
+      } catch (error) {
+        showToast('Error al cerrar sesión', 'error');
+      }
+    });
+
+    // Tabs de autenticación
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
+        tab.classList.add('active');
+        document.getElementById(tabName + 'Form').classList.remove('hidden');
+      });
+    });
+
+    // ====================== SISTEMA DE INTERFAZ ======================
+    // Tabs principales
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        button.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.remove('hidden');
+      });
+    });
+
+    // Theme toggle
     document.getElementById('themeToggle').addEventListener('click', function() {
       const currentTheme = document.documentElement.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -902,10 +1200,138 @@ Newell's; Santa Fe
       localStorage.setItem('theme', newTheme);
     });
 
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    // ====================== FUNCIONALIDAD DEL SORTEADOR ======================
+    // Ejemplo de equipos
+    document.getElementById('btnExample').addEventListener('click', () => {
+      const example = `River Plate; CABA; *
+Boca Juniors; CABA; *
+Newell's; Santa Fe
+Rosario Central; Santa Fe
+San Lorenzo; CABA
+Racing; Buenos Aires
+Independiente; Buenos Aires
+Estudiantes; Buenos Aires
+Talleres; Córdoba
+Belgrano; Córdoba
+Godoy Cruz; Mendoza
+Atl. Tucumán; Tucumán`;
+      document.getElementById('teamsInput').value = example;
+      updateCapInfo();
+    });
+
+    // Limpiar equipos
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('teamsInput').value = '';
+      document.getElementById('resultGroups').innerHTML = '';
+      document.getElementById('drawStatus').textContent = 'Listo para realizar el sorteo';
+      updateCapInfo();
+    });
+
+    // Actualizar información de capacidad
+    function updateCapInfo() {
+      const teams = document.getElementById('teamsInput').value.split('\n').filter(line => line.trim()).length;
+      const zones = document.getElementById('zones').value;
+      document.getElementById('capInfo').textContent = `Equipos: ${teams} • Zonas: ${zones}`;
+    }
+
+    document.getElementById('teamsInput').addEventListener('input', updateCapInfo);
+    document.getElementById('zones').addEventListener('input', updateCapInfo);
+
+    // Sorteo de grupos (simplificado para demo)
+    document.getElementById('btnDrawGroups').addEventListener('click', () => {
+      const teamsText = document.getElementById('teamsInput').value;
+      const teams = teamsText.split('\n').filter(line => line.trim()).map(line => {
+        const parts = line.split(';').map(part => part.trim());
+        return {
+          name: parts[0],
+          province: parts[1] || '',
+          head: parts[2] === '*' || parts[0].includes('*')
+        };
+      });
+
+      if (teams.length === 0) {
+        showToast('Ingresa al menos un equipo', 'error');
+        return;
+      }
+
+      const zones = parseInt(document.getElementById('zones').value);
+      const headsAsFirst = document.getElementById('headsAsFirst').checked;
+
+      // Algoritmo simple de sorteo para demo
+      const shuffled = [...teams].sort(() => Math.random() - 0.5);
+      const groups = Array.from({ length: zones }, () => []);
+      
+      // Distribuir equipos
+      shuffled.forEach((team, index) => {
+        groups[index % zones].push(team);
+      });
+
+      // Mostrar resultados
+      const resultsContainer = document.getElementById('resultGroups');
+      resultsContainer.innerHTML = '';
+      
+      groups.forEach((group, index) => {
+        const zoneCard = document.createElement('div');
+        zoneCard.className = 'zone-card';
+        zoneCard.innerHTML = `
+          <div class="zone-header">
+            <h4 class="zone-title">Zona ${index + 1}</h4>
+          </div>
+          <ol class="team-list">
+            ${group.map((team, pos) => `
+              <li class="team-item">
+                <span class="team-position">${pos + 1}.</span>
+                <span class="team-name">${team.name}</span>
+                ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
+                ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+              </li>
+            `).join('')}
+          </ol>
+        `;
+        resultsContainer.appendChild(zoneCard);
+      });
+
+      document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
+      showToast('Sorteo realizado correctamente', 'success');
+    });
+
+    // ====================== INICIALIZACIÓN ======================
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Sorteador Deportivo Profesional v5.0 - Inicializado');
+      
+      // Cargar tema guardado
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+      // Escuchar cambios de autenticación
+      auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        updateUserInfo(user);
+        
+        if (user) {
+          document.getElementById('connectionStatus').className = 'status status-online';
+          document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
+          document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
+        } else {
+          document.getElementById('connectionStatus').className = 'status status-offline';
+          document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
+          document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
+        }
+      });
+
+      // Inicializar información de capacidad
+      updateCapInfo();
+
+      // Botones de autenticación en header
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        document.querySelector('.auth-tab[data-tab="login"]').click();
+      });
+
+      document.getElementById('registerBtn').addEventListener('click', () => {
+        document.querySelector('.auth-tab[data-tab="register"]').click();
+      });
+    });
   </script>
 </body>
 </html>
