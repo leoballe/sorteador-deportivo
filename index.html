@@ -64,7 +64,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v3.2</span>
+      <span class="badge">v3.3</span>
     </header>
 
     <div class="panel">
@@ -257,9 +257,15 @@ Newell's; Santa Fe
       <div id="tab-saved" class="tabcontent hidden">
         <div class="card">
           <h3>📊 Sorteos Realizados</h3>
-          <div class="tiny" style="margin-bottom:12px">Todos los sorteos se guardan automáticamente en tu navegador.</div>
+          <div class="tiny" style="margin-bottom:12px">
+            Los sorteos se guardan automáticamente en tu navegador actual. 
+            <span class="warnText">No se comparten entre diferentes navegadores.</span>
+          </div>
           <div class="controls" style="margin-bottom:12px">
             <button class="btn danger" id="btnClearAllSaved" type="button">🗑️ Eliminar todos los sorteos</button>
+            <button class="btn" id="btnExportAllSaved" type="button">💾 Exportar todos</button>
+            <label for="importSaved" class="btn ghost">📂 Importar sorteos</label>
+            <input id="importSaved" type="file" accept=".json" class="hidden" />
           </div>
           <div id="savedDrawsList"></div>
         </div>
@@ -277,6 +283,7 @@ let activeTeams = [];
 let inactiveTeams = [];
 let disciplines = [];
 let categories = [];
+let currentResult = null; // ← NUEVO: Para controlar el resultado actual
 
 // ====================== SISTEMA DE ALMACENAMIENTO MEJORADO ======================
 const STORAGE_KEY = 'savedDraws_v3';
@@ -375,6 +382,60 @@ function clearAllSavedDraws() {
   }
 }
 
+function exportAllSavedDraws() {
+  const savedDraws = getSavedDraws();
+  if (savedDraws.length === 0) {
+    toast('No hay sorteos para exportar');
+    return;
+  }
+  
+  const dataStr = JSON.stringify(savedDraws, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sorteos_guardados_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Sorteos exportados correctamente');
+}
+
+function importSavedDraws(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedDraws = JSON.parse(e.target.result);
+      if (!Array.isArray(importedDraws)) {
+        throw new Error('Formato de archivo inválido');
+      }
+      
+      const savedDraws = getSavedDraws();
+      const existingIds = new Set(savedDraws.map(d => d.id));
+      
+      let importedCount = 0;
+      importedDraws.forEach(draw => {
+        if (!existingIds.has(draw.id)) {
+          savedDraws.push(draw);
+          if (memoryStorage) memoryStorage[draw.id] = draw;
+          importedCount++;
+        }
+      });
+      
+      if (isLocalStorageAvailable()) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
+      }
+      
+      renderSavedDraws();
+      toast(`${importedCount} sorteos importados correctamente`);
+      
+    } catch (error) {
+      console.error('Error importando sorteos:', error);
+      alert('Error al importar sorteos: ' + error.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
 function renderSavedDraws() {
   const container = document.getElementById('savedDrawsList');
   const savedDraws = getSavedDraws();
@@ -432,6 +493,32 @@ function openSavedDraw(id) {
   } else if (draw.type === 'simple') {
     openSimpleResultInNewTab(draw.result, draw.parameters);
   }
+}
+
+// ====================== CORRECCIÓN DEFINITIVA DEL PROBLEMA DE ACTUALIZACIÓN ======================
+
+// Función para limpiar resultados cuando cambian los parámetros
+function clearResults() {
+  document.getElementById('resultGroups').innerHTML = '';
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('resultSimple').innerHTML = '';
+  document.getElementById('statusSimple').innerHTML = '';
+  currentResult = null; // ← Limpiar el resultado actual
+}
+
+// Función mejorada para verificar si los parámetros cambiaron
+function haveParametersChanged() {
+  // Si no hay resultado actual, entonces no hay cambios
+  if (!currentResult) return true;
+  
+  const currentDiscipline = document.getElementById('disciplineSelect').value;
+  const currentCategory = document.getElementById('categorySelect').value;
+  const currentGender = document.getElementById('genderSelect').value;
+  
+  // Comparar con los parámetros del resultado actual
+  return currentDiscipline !== currentResult.parameters.discipline ||
+         currentCategory !== currentResult.parameters.category ||
+         currentGender !== currentResult.parameters.gender;
 }
 
 // ====================== UTILIDADES BÁSICAS ======================
@@ -1385,18 +1472,9 @@ function updateCapInfo() {
   document.getElementById('capInfo').innerHTML = msg;
 }
 
-// ====================== CORRECCIÓN DEL PROBLEMA DE ACTUALIZACIÓN ======================
-// Función para limpiar resultados cuando cambian los parámetros
-function clearResults() {
-  document.getElementById('resultGroups').innerHTML = '';
-  document.getElementById('status').innerHTML = '';
-  document.getElementById('resultSimple').innerHTML = '';
-  document.getElementById('statusSimple').innerHTML = '';
-}
-
 // ====================== INICIALIZACIÓN MEJORADA ======================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v3.2 cargado');
+  console.log('Sorteador v3.3 cargado');
   
   // Cargar sorteos guardados al iniciar
   console.log('Sorteos guardados:', getSavedDraws());
@@ -1419,6 +1497,17 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Botón para eliminar todos los sorteos
   document.getElementById('btnClearAllSaved').addEventListener('click', clearAllSavedDraws);
+  
+  // Botón para exportar todos los sorteos
+  document.getElementById('btnExportAllSaved').addEventListener('click', exportAllSavedDraws);
+  
+  // Importar sorteos
+  document.getElementById('importSaved').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    importSavedDraws(file);
+    e.target.value = ''; // Resetear input
+  });
   
   // Limpiar resultados cuando cambian parámetros importantes
   document.getElementById('disciplineSelect').addEventListener('change', clearResults);
@@ -1590,7 +1679,7 @@ Atl. Tucumán; Tucumán`;
     updateCapInfo();
   });
   
-  // Sorteo de zonas
+  // Sorteo de zonas - CORREGIDO
   document.getElementById('btnDrawGroups').addEventListener('click', () => {
     const teams = getActiveTeamsLive();
     if (teams.length === 0) {
@@ -1608,6 +1697,17 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('status').innerHTML = 'Generando sorteo...';
     
     const result = drawGroups(teams, z, headsAsFirst, seed, format);
+    
+    // Actualizar el resultado actual
+    currentResult = {
+      result: result,
+      parameters: {
+        discipline: document.getElementById('disciplineSelect').value,
+        category: document.getElementById('categorySelect').value,
+        gender: document.getElementById('genderSelect').value
+      }
+    };
+    
     renderGroups(document.getElementById('resultGroups'), result);
     
     if (!result.error) {
@@ -1679,7 +1779,7 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('statusSimple').innerHTML = '';
   });
 
-  // Sorteo simple - Sortear
+  // Sorteo simple - Sortear CORREGIDO
   document.getElementById('btnDrawSimple').addEventListener('click', () => {
     const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
     const names = document.getElementById('simpleInput').value.split('\n')
