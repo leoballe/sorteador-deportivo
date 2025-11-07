@@ -363,20 +363,56 @@ function importTeamsCSV(text) {
     
     const {headers, rows, delimiter} = parseCSV(text);
     
-    // Detectar índices de columnas
-    let nameIdx = 0, provinceIdx = 1, headIdx = 2;
+    console.log('=== DEBUG CSV PARSING ===');
+    console.log('Headers:', headers);
+    console.log('First row:', rows[0]);
+    
+    // DETECCIÓN INTELIGENTE de columnas
+    let nameIdx = -1, provinceIdx = -1, headIdx = -1;
     
     if (headers.length > 0) {
       headers.forEach((header, idx) => {
-        const h = header.toLowerCase();
-        if (h.includes('equipo') || h.includes('team') || h.includes('nombre')) nameIdx = idx;
-        if (h.includes('provincia') || h.includes('province') || h.includes('región')) provinceIdx = idx;
-        if (h.includes('cabeza') || h.includes('head') || h.includes('seed')) headIdx = idx;
+        const h = header.toLowerCase().trim();
+        
+        // Buscar columna de NOMBRE (la más importante)
+        if (nameIdx === -1 && (
+          h.includes('equipo') || h.includes('team') || h.includes('nombre') || 
+          h.includes('club') || h.includes('institución') || h === 'nombre'
+        )) {
+          nameIdx = idx;
+          console.log('Columna NOMBRE detectada:', idx, header);
+        }
+        
+        // Buscar columna de PROVINCIA
+        if (provinceIdx === -1 && (
+          h.includes('provincia') || h.includes('province') || h.includes('región') ||
+          h.includes('region') || h.includes('localidad') || h === 'provincia'
+        )) {
+          provinceIdx = idx;
+          console.log('Columna PROVINCIA detectada:', idx, header);
+        }
+        
+        // Buscar columna de CABEZA
+        if (headIdx === -1 && (
+          h.includes('cabeza') || h.includes('head') || h.includes('seed') ||
+          h.includes('semilla') || h.includes('cabezas') || h === 'cabeza'
+        )) {
+          headIdx = idx;
+          console.log('Columna CABEZA detectada:', idx, header);
+        }
       });
     }
     
+    // FALLBACK: Si no detectó columnas, usar las primeras 3
+    if (nameIdx === -1) {
+      nameIdx = 0;
+      provinceIdx = headers.length > 1 ? 1 : -1;
+      headIdx = headers.length > 2 ? 2 : -1;
+      console.log('Usando columnas por defecto:', {nameIdx, provinceIdx, headIdx});
+    }
+    
     const teams = [];
-    const uniqueNames = new Set(); // ← NUEVO: Para evitar duplicados
+    const uniqueNames = new Set();
     
     for (const row of rows) {
       if (row.length <= nameIdx) continue;
@@ -384,25 +420,34 @@ function importTeamsCSV(text) {
       const name = (row[nameIdx] || '').replace(/\*+$/, '').trim();
       if (!name) continue;
       
-      // ← CRÍTICO: Verificar si ya procesamos este equipo
-      if (uniqueNames.has(name.toLowerCase())) continue;
+      // Verificar duplicados
+      if (uniqueNames.has(name.toLowerCase())) {
+        console.log('Duplicado ignorado:', name);
+        continue;
+      }
       uniqueNames.add(name.toLowerCase());
       
-      const province = (row[provinceIdx] || '').replace(/\*+$/, '').trim();
-      const headValue = (row[headIdx] || '').toLowerCase().trim();
+      const province = (provinceIdx !== -1 && row[provinceIdx]) ? 
+                      row[provinceIdx].replace(/\*+$/, '').trim() : '';
+      
+      const headValue = (headIdx !== -1 && row[headIdx]) ? 
+                       row[headIdx].toLowerCase().trim() : '';
+      
       const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/.test(headValue) || 
                   (row[nameIdx] || '').includes('*');
       
       teams.push({name, province, head});
+      console.log('Equipo procesado:', {name, province, head});
     }
     
+    console.log('Total equipos únicos:', teams.length);
     return {teams, delimiter, hasHeaders: headers.length > 0};
+    
   } catch (error) {
     console.error('Error importando equipos:', error);
-    throw new Error('No se pudo leer el CSV de equipos');
+    throw new Error('No se pudo leer el CSV de equipos: ' + error.message);
   }
 }
-
 // ====================== IMPORTACIÓN DE DISCIPLINAS ======================
 function importDisciplinesCSV(text) {
   try {
