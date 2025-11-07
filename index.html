@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sorteador Deportivo</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
@@ -53,18 +59,19 @@
     .savedDrawItem{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0b1220;border:1px solid #223046;border-radius:10px;margin-bottom:8px}
     .savedDrawInfo{flex:1}
     .savedDrawActions{display:flex;gap:6px}
+    .cloud-status{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;margin-left:8px}
+    .cloud-online{background:#0a3622;color:#22c55e;border:1px solid #1b5e3b}
+    .cloud-offline{background:#450a0a;color:#ef4444;border:1px solid #7f1d1d}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 </head>
 <body>
   <div class="container">
     <header>
       <div>
         <h1>🎲 Sorteador Deportivo</h1>
-        <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
+        <div class="tiny">Funciona 100% en tu navegador • <span id="cloudStatus" class="cloud-status cloud-offline">⏳ Conectando...</span></div>
       </div>
-      <span class="badge">v3.3</span>
+      <span class="badge">v4.0</span>
     </header>
 
     <div class="panel">
@@ -256,10 +263,9 @@ Newell's; Santa Fe
 
       <div id="tab-saved" class="tabcontent hidden">
         <div class="card">
-          <h3>📊 Sorteos Realizados</h3>
+          <h3>📊 Sorteos Realizados <span id="savedCount" class="tag">0</span></h3>
           <div class="tiny" style="margin-bottom:12px">
-            Los sorteos se guardan automáticamente en tu navegador actual. 
-            <span class="warnText">No se comparten entre diferentes navegadores.</span>
+            <span id="cloudInfo">✅ Conectado a la nube - Tus sorteos se sincronizan entre dispositivos</span>
           </div>
           <div class="controls" style="margin-bottom:12px">
             <button class="btn danger" id="btnClearAllSaved" type="button">🗑️ Eliminar todos los sorteos</button>
@@ -272,23 +278,153 @@ Newell's; Santa Fe
       </div>
     </div>
 
-    <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente (no se sube nada). Podés guardar y compartir con "🔗 Compartir".</div>
+    <div class="tiny" style="margin-top:12px">Hecho con ❤️. Sorteos sincronizados en la nube. Podés acceder desde cualquier dispositivo.</div>
   </div>
 
 <script>
 'use strict';
+
+// ====================== CONFIGURACIÓN FIREBASE ======================
+const firebaseConfig = {
+  apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
+  authDomain: "sorteador-53cb5.firebaseapp.com",
+  projectId: "sorteador-53cb5",
+  storageBucket: "sorteador-53cb5.firebasestorage.app",
+  messagingSenderId: "583913752340",
+  appId: "1:583913752340:web:347f8b2866fcbb216e6401",
+  measurementId: "G-LTZSJSEZJM"
+};
+
+// Inicializar Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch (error) {
+  console.log('Firebase ya inicializado o error:', error);
+}
+
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 // ====================== CONFIGURACIÓN INICIAL ======================
 let activeTeams = [];
 let inactiveTeams = [];
 let disciplines = [];
 let categories = [];
-let currentResult = null; // ← NUEVO: Para controlar el resultado actual
+let currentResult = null;
+let currentUser = null;
+let isOnline = false;
 
-// ====================== SISTEMA DE ALMACENAMIENTO MEJORADO ======================
+// ====================== SISTEMA DE ALMACENAMIENTO EN LA NUBE ======================
 const STORAGE_KEY = 'savedDraws_v3';
 
-// Verificar si localStorage está disponible de forma más robusta
+// Sistema híbrido: nube + localStorage como fallback
+function updateCloudStatus(online) {
+  isOnline = online;
+  const statusElement = document.getElementById('cloudStatus');
+  const cloudInfo = document.getElementById('cloudInfo');
+  
+  if (online) {
+    statusElement.className = 'cloud-status cloud-online';
+    statusElement.innerHTML = '✅ Conectado';
+    if (cloudInfo) {
+      cloudInfo.innerHTML = '✅ Conectado a la nube - Tus sorteos se sincronizan entre dispositivos';
+    }
+  } else {
+    statusElement.className = 'cloud-status cloud-offline';
+    statusElement.innerHTML = '❌ Sin conexión';
+    if (cloudInfo) {
+      cloudInfo.innerHTML = '⚠️ Modo offline - Los sorteos se guardan localmente';
+    }
+  }
+}
+
+// Inicializar autenticación anónima
+function initAuth() {
+  return new Promise((resolve, reject) => {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        console.log('Usuario autenticado:', user.uid);
+        updateCloudStatus(true);
+        resolve(user);
+      } else {
+        // Crear usuario anónimo
+        auth.signInAnonymously()
+          .then((userCredential) => {
+            currentUser = userCredential.user;
+            console.log('Usuario anónimo creado:', currentUser.uid);
+            updateCloudStatus(true);
+            resolve(currentUser);
+          })
+          .catch((error) => {
+            console.error('Error en autenticación anónima:', error);
+            updateCloudStatus(false);
+            reject(error);
+          });
+      }
+    });
+  });
+}
+
+// Guardar sorteo en Firebase
+async function saveDrawToCloud(type, parameters, result) {
+  try {
+    await initAuth();
+    
+    const draw = {
+      id: Date.now().toString(),
+      type,
+      parameters,
+      result,
+      date: new Date().toLocaleString(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: currentUser.uid
+    };
+    
+    await db.collection('draws').doc(draw.id).set(draw);
+    console.log('Sorteo guardado en Firebase:', draw.id);
+    return draw;
+  } catch (error) {
+    console.error('Error guardando en Firebase:', error);
+    throw error;
+  }
+}
+
+// Cargar sorteos desde Firebase
+async function loadDrawsFromCloud() {
+  try {
+    await initAuth();
+    
+    const snapshot = await db.collection('draws')
+      .where('userId', '==', currentUser.uid)
+      .orderBy('timestamp', 'desc')
+      .get();
+    
+    const draws = [];
+    snapshot.forEach(doc => {
+      draws.push(doc.data());
+    });
+    
+    console.log('Sorteos cargados desde Firebase:', draws.length);
+    return draws;
+  } catch (error) {
+    console.error('Error cargando desde Firebase:', error);
+    return [];
+  }
+}
+
+// Eliminar sorteo de Firebase
+async function deleteDrawFromCloud(drawId) {
+  try {
+    await db.collection('draws').doc(drawId).delete();
+    console.log('Sorteo eliminado de Firebase:', drawId);
+  } catch (error) {
+    console.error('Error eliminando de Firebase:', error);
+    throw error;
+  }
+}
+
+// Verificar si localStorage está disponible
 function isLocalStorageAvailable() {
   try {
     const test = 'test';
@@ -301,72 +437,89 @@ function isLocalStorageAvailable() {
   }
 }
 
-// Sistema de fallback para cuando localStorage no está disponible
-let memoryStorage = {};
+function getSavedDrawsFromLocalStorage() {
+  if (isLocalStorageAvailable()) {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error cargando de localStorage:', error);
+    }
+  }
+  return [];
+}
 
-function saveDraw(type, parameters, result) {
+// Sistema híbrido mejorado
+async function saveDraw(type, parameters, result) {
   const draw = {
-    id: Date.now(),
+    id: Date.now().toString(),
     type,
     parameters,
     result,
     date: new Date().toLocaleString()
   };
   
+  // Guardar en localStorage como backup
   if (isLocalStorageAvailable()) {
     try {
-      const savedDraws = getSavedDraws();
+      const savedDraws = getSavedDrawsFromLocalStorage();
       savedDraws.unshift(draw);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
-      console.log('Sorteo guardado en localStorage:', draw);
-      return draw;
     } catch (error) {
-      console.error('Error guardando en localStorage, usando memoria:', error);
-      // Fallback a memoria
-      memoryStorage[draw.id] = draw;
-      return draw;
+      console.error('Error guardando en localStorage:', error);
     }
-  } else {
-    // Fallback a memoria
-    console.log('Sorteo guardado en memoria:', draw);
-    memoryStorage[draw.id] = draw;
-    return draw;
   }
+  
+  // Intentar guardar en la nube
+  try {
+    await saveDrawToCloud(type, parameters, result);
+  } catch (error) {
+    console.warn('No se pudo guardar en la nube, usando localStorage:', error);
+  }
+  
+  return draw;
 }
 
-function getSavedDraws() {
-  if (isLocalStorageAvailable()) {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-      console.error('Error cargando de localStorage, usando memoria:', error);
-      return Object.values(memoryStorage).sort((a, b) => b.id - a.id);
+async function getSavedDraws() {
+  // Primero intentar cargar de la nube
+  try {
+    const cloudDraws = await loadDrawsFromCloud();
+    if (cloudDraws.length > 0) {
+      return cloudDraws;
     }
-  } else {
-    return Object.values(memoryStorage).sort((a, b) => b.id - a.id);
+  } catch (error) {
+    console.warn('No se pudieron cargar de la nube:', error);
   }
+  
+  // Fallback a localStorage
+  return getSavedDrawsFromLocalStorage();
 }
 
-function deleteDraw(id) {
+async function deleteDraw(id) {
+  // Eliminar de localStorage
   if (isLocalStorageAvailable()) {
     try {
-      const savedDraws = getSavedDraws();
-      const filtered = savedDraws.filter(draw => draw.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      const savedDraws = getSavedDrawsFromLocalStorage().filter(draw => draw.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
     } catch (error) {
       console.error('Error eliminando de localStorage:', error);
     }
   }
   
-  // Siempre eliminar de memoria también
-  delete memoryStorage[id];
-  renderSavedDraws();
+  // Eliminar de la nube
+  try {
+    await deleteDrawFromCloud(id);
+  } catch (error) {
+    console.warn('No se pudo eliminar de la nube:', error);
+  }
+  
+  await renderSavedDraws();
   toast('Sorteo eliminado');
 }
 
-function clearAllSavedDraws() {
+async function clearAllSavedDraws() {
   if (confirm('¿Estás seguro de que querés eliminar todos los sorteos guardados? Esta acción no se puede deshacer.')) {
+    // Limpiar localStorage
     if (isLocalStorageAvailable()) {
       try {
         localStorage.removeItem(STORAGE_KEY);
@@ -375,80 +528,28 @@ function clearAllSavedDraws() {
       }
     }
     
-    // Limpiar memoria también
-    memoryStorage = {};
-    renderSavedDraws();
+    // Limpiar la nube - necesitamos eliminar uno por uno
+    try {
+      const draws = await loadDrawsFromCloud();
+      for (const draw of draws) {
+        await deleteDrawFromCloud(draw.id);
+      }
+    } catch (error) {
+      console.warn('No se pudieron eliminar de la nube:', error);
+    }
+    
+    await renderSavedDraws();
     toast('Todos los sorteos han sido eliminados');
   }
 }
 
-function exportAllSavedDraws() {
-  const savedDraws = getSavedDraws();
-  if (savedDraws.length === 0) {
-    toast('No hay sorteos para exportar');
-    return;
-  }
-  
-  const dataStr = JSON.stringify(savedDraws, null, 2);
-  const blob = new Blob([dataStr], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sorteos_guardados_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Sorteos exportados correctamente');
-}
-
-function importSavedDraws(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const importedDraws = JSON.parse(e.target.result);
-      if (!Array.isArray(importedDraws)) {
-        throw new Error('Formato de archivo inválido');
-      }
-      
-      const savedDraws = getSavedDraws();
-      const existingIds = new Set(savedDraws.map(d => d.id));
-      
-      let importedCount = 0;
-      importedDraws.forEach(draw => {
-        if (!existingIds.has(draw.id)) {
-          savedDraws.push(draw);
-          if (memoryStorage) memoryStorage[draw.id] = draw;
-          importedCount++;
-        }
-      });
-      
-      if (isLocalStorageAvailable()) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
-      }
-      
-      renderSavedDraws();
-      toast(`${importedCount} sorteos importados correctamente`);
-      
-    } catch (error) {
-      console.error('Error importando sorteos:', error);
-      alert('Error al importar sorteos: ' + error.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-function renderSavedDraws() {
+// Modificar renderSavedDraws para ser async
+async function renderSavedDraws() {
   const container = document.getElementById('savedDrawsList');
-  const savedDraws = getSavedDraws();
+  const savedDraws = await getSavedDraws();
   
-  if (!isLocalStorageAvailable()) {
-    const warning = document.createElement('div');
-    warning.className = 'warnText';
-    warning.style.marginBottom = '12px';
-    warning.innerHTML = '⚠️ El almacenamiento local no está disponible. Los sorteos se guardarán solo en esta sesión.';
-    if (!container.previousElementSibling || !container.previousElementSibling.classList.contains('warnText')) {
-      container.parentNode.insertBefore(warning, container);
-    }
-  }
+  // Actualizar contador
+  document.getElementById('savedCount').textContent = savedDraws.length;
   
   if (savedDraws.length === 0) {
     container.innerHTML = '<div class="muted">No hay sorteos guardados aún.</div>';
@@ -458,7 +559,7 @@ function renderSavedDraws() {
   container.innerHTML = savedDraws.map(draw => `
     <div class="savedDrawItem">
       <div class="savedDrawInfo">
-        <div><b>${draw.type === 'grupos' ? '🏆 Sorteo de Zonas' : '🎲 Sorteo Simple'}</b></div>
+        <div><b>${draw.type === 'grupos' ? '🏆 Sorteo de Zonas' : draw.type === 'simple' ? '🎲 Sorteo Simple' : '🥊 Eliminación Directa'}</b></div>
         <div class="tiny">
           ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
           ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
@@ -467,21 +568,24 @@ function renderSavedDraws() {
         </div>
         <div class="tiny">
           ${draw.type === 'grupos' ? 
-            `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
-            `${draw.result.list.length} equipos`
+            `${draw.result.groups?.length || 0} zonas • ${draw.result.groups?.flat().length || 0} equipos` : 
+            draw.type === 'simple' ?
+            `${draw.result.list?.length || 0} equipos` :
+            `${draw.result.brackets?.length || 0} llaves`
           }
         </div>
       </div>
       <div class="savedDrawActions">
-        <button class="btn tiny" onclick="openSavedDraw(${draw.id})">Abrir</button>
-        <button class="btn danger tiny" onclick="deleteDraw(${draw.id})">Eliminar</button>
+        <button class="btn tiny" onclick="openSavedDraw('${draw.id}')">Abrir</button>
+        <button class="btn danger tiny" onclick="deleteDraw('${draw.id}')">Eliminar</button>
       </div>
     </div>
   `).join('');
 }
 
-function openSavedDraw(id) {
-  const savedDraws = getSavedDraws();
+// Modificar openSavedDraw para ser async
+async function openSavedDraw(id) {
+  const savedDraws = await getSavedDraws();
   const draw = savedDraws.find(d => d.id === id);
   if (!draw) {
     toast('Sorteo no encontrado');
@@ -493,6 +597,61 @@ function openSavedDraw(id) {
   } else if (draw.type === 'simple') {
     openSimpleResultInNewTab(draw.result, draw.parameters);
   }
+}
+
+function exportAllSavedDraws() {
+  getSavedDraws().then(savedDraws => {
+    if (savedDraws.length === 0) {
+      toast('No hay sorteos para exportar');
+      return;
+    }
+    
+    const dataStr = JSON.stringify(savedDraws, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sorteos_guardados_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Sorteos exportados correctamente');
+  });
+}
+
+function importSavedDraws(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedDraws = JSON.parse(e.target.result);
+      if (!Array.isArray(importedDraws)) {
+        throw new Error('Formato de archivo inválido');
+      }
+      
+      // Guardar en localStorage
+      if (isLocalStorageAvailable()) {
+        const savedDraws = getSavedDrawsFromLocalStorage();
+        const existingIds = new Set(savedDraws.map(d => d.id));
+        
+        let importedCount = 0;
+        importedDraws.forEach(draw => {
+          if (!existingIds.has(draw.id)) {
+            savedDraws.push(draw);
+            importedCount++;
+          }
+        });
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
+      }
+      
+      renderSavedDraws();
+      toast(`${importedDraws.length} sorteos importados correctamente`);
+      
+    } catch (error) {
+      console.error('Error importando sorteos:', error);
+      alert('Error al importar sorteos: ' + error.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ====================== CORRECCIÓN DEFINITIVA DEL PROBLEMA DE ACTUALIZACIÓN ======================
@@ -1473,11 +1632,16 @@ function updateCapInfo() {
 }
 
 // ====================== INICIALIZACIÓN MEJORADA ======================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v3.3 cargado');
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('Sorteador v4.0 con Firebase cargado');
   
-  // Cargar sorteos guardados al iniciar
-  console.log('Sorteos guardados:', getSavedDraws());
+  // Inicializar Firebase
+  try {
+    await initAuth();
+    console.log('Firebase inicializado correctamente');
+  } catch (error) {
+    console.error('Error inicializando Firebase:', error);
+  }
   
   // Tabs
   document.querySelectorAll('.tab').forEach(btn => {
