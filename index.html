@@ -376,11 +376,17 @@ function importTeamsCSV(text) {
     }
     
     const teams = [];
+    const uniqueNames = new Set(); // ← NUEVO: Para evitar duplicados
+    
     for (const row of rows) {
       if (row.length <= nameIdx) continue;
       
       const name = (row[nameIdx] || '').replace(/\*+$/, '').trim();
       if (!name) continue;
+      
+      // ← CRÍTICO: Verificar si ya procesamos este equipo
+      if (uniqueNames.has(name.toLowerCase())) continue;
+      uniqueNames.add(name.toLowerCase());
       
       const province = (row[provinceIdx] || '').replace(/\*+$/, '').trim();
       const headValue = (row[headIdx] || '').toLowerCase().trim();
@@ -525,9 +531,11 @@ function buildListsFromTextarea() {
   const text = document.getElementById('teamsInput').value;
   const lines = text.split(/\r?\n/).filter(line => line.trim());
   
-  // LIMPIAR las listas existentes primero
+  // LIMPIAR COMPLETAMENTE antes de empezar
   activeTeams = [];
   inactiveTeams = [];
+  
+  const uniqueNames = new Set(); // ← Para controlar duplicados
   
   lines.forEach(line => {
     if (!line.trim()) return;
@@ -535,23 +543,26 @@ function buildListsFromTextarea() {
     const parts = line.split(';').map(p => p.trim());
     const name = parts[0].replace(/\*+$/, '').trim();
     
-    // VERIFICACIÓN CRÍTICA: Solo agregar si el nombre no está vacío
     if (!name) return;
+    
+    // ← CRÍTICO: Verificar duplicado
+    if (uniqueNames.has(name.toLowerCase())) {
+      console.log('Duplicado ignorado:', name);
+      return;
+    }
+    uniqueNames.add(name.toLowerCase());
     
     const province = (parts[1] || '').replace(/\*+$/, '').trim();
     const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : 
                 parts[0].includes('*');
     
-    // VERIFICACIÓN: No duplicar equipos
-    const isDuplicate = activeTeams.some(team => team.name === name);
-    if (!isDuplicate) {
-      activeTeams.push({name, province, head});
-    }
+    activeTeams.push({name, province, head});
   });
   
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists();
   updateCapInfo();
+  toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
 }
 
 function renderLists() {
@@ -631,6 +642,7 @@ function getActiveTeamsLive() {
     const text = document.getElementById('teamsInput').value;
     const lines = text.split(/\r?\n/).filter(line => line.trim());
     const teams = [];
+    const uniqueNames = new Set(); // ← Para controlar duplicados
     
     lines.forEach(line => {
       const parts = line.split(';').map(p => p.trim());
@@ -638,22 +650,31 @@ function getActiveTeamsLive() {
       
       if (!name) return;
       
-      // VERIFICACIÓN: Evitar duplicados
-      const isDuplicate = teams.some(team => team.name === name);
-      if (!isDuplicate) {
-        teams.push({
-          name: name,
-          province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
-          head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
-        });
-      }
+      // ← CRÍTICO: Verificar duplicado
+      if (uniqueNames.has(name.toLowerCase())) return;
+      uniqueNames.add(name.toLowerCase());
+      
+      teams.push({
+        name: name,
+        province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
+        head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
+      });
     });
     
     return teams;
   }
   return [...activeTeams];
 }
-
+// Función temporal para diagnosticar duplicados - después la podés borrar
+function debugTeams() {
+  console.log('=== DEBUG EQUIPOS ===');
+  console.log('Active teams:', activeTeams);
+  console.log('Unique names:', [...new Set(activeTeams.map(t => t.name.toLowerCase()))]);
+  const duplicates = activeTeams.filter((team, index, array) => 
+    array.findIndex(t => t.name.toLowerCase() === team.name.toLowerCase()) !== index
+  );
+  console.log('Duplicados encontrados:', duplicates);
+}
 // ====================== SISTEMA DE SORTEO ======================
 function xmur3(str) {
   let h = 1779033703 ^ str.length;
