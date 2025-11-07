@@ -525,17 +525,30 @@ function buildListsFromTextarea() {
   const text = document.getElementById('teamsInput').value;
   const lines = text.split(/\r?\n/).filter(line => line.trim());
   
-  activeTeams = lines.map(line => {
+  // LIMPIAR las listas existentes primero
+  activeTeams = [];
+  inactiveTeams = [];
+  
+  lines.forEach(line => {
+    if (!line.trim()) return;
+    
     const parts = line.split(';').map(p => p.trim());
     const name = parts[0].replace(/\*+$/, '').trim();
-    const province = parts[1] ? parts[1].replace(/\*+$/, '').trim() : '';
+    
+    // VERIFICACIÓN CRÍTICA: Solo agregar si el nombre no está vacío
+    if (!name) return;
+    
+    const province = (parts[1] || '').replace(/\*+$/, '').trim();
     const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : 
                 parts[0].includes('*');
     
-    return {name, province, head};
-  }).filter(team => team.name);
+    // VERIFICACIÓN: No duplicar equipos
+    const isDuplicate = activeTeams.some(team => team.name === name);
+    if (!isDuplicate) {
+      activeTeams.push({name, province, head});
+    }
+  });
   
-  inactiveTeams = [];
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists();
   updateCapInfo();
@@ -617,14 +630,26 @@ function getActiveTeamsLive() {
   if (document.getElementById('checkLists').classList.contains('hidden')) {
     const text = document.getElementById('teamsInput').value;
     const lines = text.split(/\r?\n/).filter(line => line.trim());
-    return lines.map(line => {
+    const teams = [];
+    
+    lines.forEach(line => {
       const parts = line.split(';').map(p => p.trim());
-      return {
-        name: parts[0].replace(/\*+$/, '').trim(),
-        province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
-        head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
-      };
-    }).filter(team => team.name);
+      const name = parts[0].replace(/\*+$/, '').trim();
+      
+      if (!name) return;
+      
+      // VERIFICACIÓN: Evitar duplicados
+      const isDuplicate = teams.some(team => team.name === name);
+      if (!isDuplicate) {
+        teams.push({
+          name: name,
+          province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
+          head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
+        });
+      }
+    });
+    
+    return teams;
   }
   return [...activeTeams];
 }
