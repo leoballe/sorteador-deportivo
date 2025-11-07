@@ -1716,22 +1716,21 @@ function updateCapInfo() {
 }
 
 // ====================== INICIALIZACIÓN MEJORADA ======================
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
   console.log('Sorteador v4.0 con Firebase cargado');
   
   // Inicializar Firebase de forma no bloqueante
-  setTimeout(async () => {
-    try {
-      await initAuth();
+  setTimeout(() => {
+    initAuth().then(() => {
       console.log('Firebase inicializado correctamente');
       
       // Cargar sorteos existentes
-      const savedDraws = await getSavedDraws();
+      return getSavedDraws();
+    }).then(savedDraws => {
       console.log('Sorteos cargados:', savedDraws.length);
-      
-    } catch (error) {
+    }).catch(error => {
       console.error('Error en inicialización:', error);
-    }
+    });
   }, 100);
   
   // Tabs
@@ -1748,39 +1747,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderSavedDraws();
       }
     });
-      // DEBUG: Verificar qué se está guardando
-  window.debugSorteos = async function() {
-    console.log('=== DEBUG SORTEOS ===');
-    const savedDraws = await getSavedDraws();
-    console.log('Sorteos en la nube:', savedDraws);
-    console.log('Sorteos en localStorage:', getSavedDrawsFromLocalStorage());
-    
-    savedDraws.forEach((draw, index) => {
-      console.log(`${index + 1}. Tipo: ${draw.type}, ID: ${draw.id}, Fecha: ${draw.date}`);
-    });
-  };
-  
-  // Ejecutar debug automáticamente cada 5 segundos (opcional)
-  // setInterval(debugSorteos, 5000);
   });
-  // Debug: test de Firebase
-  window.testFirebase = async function() {
-    console.log('=== TEST FIREBASE ===');
-    console.log('Current User:', auth.currentUser);
-    console.log('Auth State:', await auth.authStateReady());
-    
-    try {
-      const testDoc = await db.collection('draws').limit(1).get();
-      console.log('Conexión a Firestore: OK', testDoc.size, 'documentos');
-    } catch (error) {
-      console.log('Conexión a Firestore: ERROR', error);
-    }
-  };
   
-  // Ejecutar test después de 2 segundos
-  setTimeout(() => {
-    testFirebase();
-  }, 2000);
   // Botón para eliminar todos los sorteos
   document.getElementById('btnClearAllSaved').addEventListener('click', clearAllSavedDraws);
   
@@ -1965,7 +1933,7 @@ Atl. Tucumán; Tucumán`;
     updateCapInfo();
   });
   
-    // Sorteo de zonas - VERSIÓN MEJORADA
+  // Sorteo de zonas - VERSIÓN MEJORADA
   document.getElementById('btnDrawGroups').addEventListener('click', () => {
     const teams = getActiveTeamsLive();
     if (teams.length === 0) {
@@ -2072,7 +2040,7 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('statusSimple').innerHTML = '';
   });
 
-    // Sorteo simple - VERSIÓN MEJORADA
+  // Sorteo simple - VERSIÓN MEJORADA
   document.getElementById('btnDrawSimple').addEventListener('click', () => {
     const baseSeed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
     const uniqueSeed = baseSeed + '_' + Date.now().toString();
@@ -2160,6 +2128,22 @@ Atl. Tucumán; Tucumán`;
   
   // Inicialización
   updateCapInfo();
+  
+  // Debug: test de Firebase
+  window.testFirebase = function() {
+    console.log('=== TEST FIREBASE ===');
+    console.log('Current User:', auth.currentUser);
+    
+    auth.authStateReady().then(() => {
+      console.log('Auth State Ready');
+      
+      db.collection('draws').limit(1).get().then(testDoc => {
+        console.log('Conexión a Firestore: OK', testDoc.size, 'documentos');
+      }).catch(error => {
+        console.log('Conexión a Firestore: ERROR', error);
+      });
+    });
+  };
 });
 </script>
 </body>
