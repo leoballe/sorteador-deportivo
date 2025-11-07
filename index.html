@@ -380,40 +380,40 @@ function initAuth() {
       });
   });
 }
-// Guardar sorteo en Firebase - VERSIÓN CORREGIDA
+// Guardar sorteo en Firebase - VERSIÓN COMPARTIDA
 async function saveDrawToCloud(type, parameters, result) {
   try {
     await initAuth();
     
-    // CREAR UN ID ÚNICO que no dependa del timestamp
-    const uniqueId = currentUser.uid + '_' + Date.now().toString();
+    // ID único basado solo en timestamp para que sea compartido
+    const uniqueId = 'shared_' + Date.now().toString();
     
     const draw = {
-      id: uniqueId, // ← ID ÚNICO POR USUARIO
+      id: uniqueId,
       type,
       parameters,
       result,
       date: new Date().toLocaleString(),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: currentUser.uid
+      userId: 'shared_user' // ← MISMO USUARIO PARA TODOS
     };
     
     await db.collection('draws').doc(uniqueId).set(draw);
-    console.log('Sorteo guardado en Firebase:', uniqueId);
+    console.log('Sorteo guardado en Firebase (compartido):', uniqueId);
     return draw;
   } catch (error) {
     console.error('Error guardando en Firebase:', error);
     throw error;
   }
 }
-
-// Cargar sorteos desde Firebase
+  
+// Cargar sorteos desde Firebase - CARGA TODOS
 async function loadDrawsFromCloud() {
   try {
     await initAuth();
     
+    // CARGAR TODOS los sorteos sin filtrar por usuario
     const snapshot = await db.collection('draws')
-      .where('userId', '==', currentUser.uid)
       .orderBy('timestamp', 'desc')
       .get();
     
