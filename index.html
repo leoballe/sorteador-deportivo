@@ -64,7 +64,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
       </div>
-      <span class="badge">v3.0</span>
+      <span class="badge">v3.1</span>
     </header>
 
     <div class="panel">
@@ -76,6 +76,7 @@
       </div>
 
       <div id="tab-grupos" class="tabcontent">
+        <!-- Contenido de grupos (igual que antes) -->
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
@@ -184,6 +185,7 @@ Newell's; Santa Fe
       </div>
 
       <div id="tab-simple" class="tabcontent hidden">
+        <!-- Contenido de sorteo simple (igual que antes) -->
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
@@ -220,6 +222,7 @@ Newell's; Santa Fe
       </div>
 
       <div id="tab-bracket" class="tabcontent hidden">
+        <!-- Contenido de eliminación directa (igual que antes) -->
         <div class="row">
           <div class="card">
             <h3>Equipos</h3>
@@ -258,6 +261,9 @@ Newell's; Santa Fe
         <div class="card">
           <h3>📊 Sorteos Realizados</h3>
           <div class="tiny" style="margin-bottom:12px">Todos los sorteos se guardan automáticamente en tu navegador.</div>
+          <div class="controls" style="margin-bottom:12px">
+            <button class="btn danger" id="btnClearAllSaved" type="button">🗑️ Eliminar todos los sorteos</button>
+          </div>
           <div id="savedDrawsList"></div>
         </div>
       </div>
@@ -275,36 +281,97 @@ let inactiveTeams = [];
 let disciplines = [];
 let categories = [];
 
-// ====================== SISTEMA DE ALMACENAMIENTO ======================
-const STORAGE_KEY = 'savedDraws';
+// ====================== SISTEMA DE ALMACENAMIENTO MEJORADO ======================
+const STORAGE_KEY = 'savedDraws_v3';
+
+// Verificar si localStorage está disponible
+function isLocalStorageAvailable() {
+  try {
+    const test = 'test';
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 function saveDraw(type, parameters, result) {
-  const savedDraws = getSavedDraws();
-  const draw = {
-    id: Date.now(),
-    type,
-    parameters,
-    result,
-    date: new Date().toLocaleString()
-  };
-  savedDraws.unshift(draw);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
-  return draw;
+  if (!isLocalStorageAvailable()) {
+    console.warn('localStorage no disponible');
+    return null;
+  }
+  
+  try {
+    const savedDraws = getSavedDraws();
+    const draw = {
+      id: Date.now(),
+      type,
+      parameters,
+      result,
+      date: new Date().toLocaleString()
+    };
+    savedDraws.unshift(draw);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDraws));
+    console.log('Sorteo guardado:', draw);
+    return draw;
+  } catch (error) {
+    console.error('Error guardando sorteo:', error);
+    return null;
+  }
 }
 
 function getSavedDraws() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  if (!isLocalStorageAvailable()) {
+    console.warn('localStorage no disponible');
+    return [];
+  }
+  
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error('Error cargando sorteos:', error);
+    return [];
+  }
 }
 
 function deleteDraw(id) {
-  const savedDraws = getSavedDraws();
-  const filtered = savedDraws.filter(draw => draw.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-  renderSavedDraws();
+  if (!isLocalStorageAvailable()) return;
+  
+  try {
+    const savedDraws = getSavedDraws();
+    const filtered = savedDraws.filter(draw => draw.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    renderSavedDraws();
+    toast('Sorteo eliminado');
+  } catch (error) {
+    console.error('Error eliminando sorteo:', error);
+  }
+}
+
+function clearAllSavedDraws() {
+  if (!isLocalStorageAvailable()) return;
+  
+  if (confirm('¿Estás seguro de que querés eliminar todos los sorteos guardados? Esta acción no se puede deshacer.')) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      renderSavedDraws();
+      toast('Todos los sorteos han sido eliminados');
+    } catch (error) {
+      console.error('Error eliminando todos los sorteos:', error);
+    }
+  }
 }
 
 function renderSavedDraws() {
   const container = document.getElementById('savedDrawsList');
+  
+  if (!isLocalStorageAvailable()) {
+    container.innerHTML = '<div class="errorText">El almacenamiento local no está disponible en este navegador. Los sorteos no se guardarán.</div>';
+    return;
+  }
+  
   const savedDraws = getSavedDraws();
   
   if (savedDraws.length === 0) {
@@ -352,6 +419,489 @@ function openSavedDraw(id) {
   }
 }
 
+// ====================== FUNCIONES DE PDF PARA SORTEO SIMPLE ======================
+function openSimpleResultInNewTab(result, parameters = {}) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado en nueva pestaña');
+    return;
+  }
+  
+  const { discipline = '', category = '', gender = '' } = parameters;
+  const { list } = result;
+  
+  const listHTML = list.map((name, index) => 
+    `<div style="margin: 8px 0; padding: 6px 0; border-bottom: 1px solid #eee;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+  ).join('');
+  
+  const chipsHTML = [
+    discipline ? `<span class="chip">Disciplina: ${escapeHtml(discipline)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    `<span class="chip">${list.length} equipos</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resultado del Sorteo Simple</title>
+  <style>
+    body { font-family: system-ui; background: #ffffff; color: #000000; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { margin-bottom: 16px; color: #0f172a; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; color: #475569; }
+    .btn { background: #ffffff; color: #000000; border: 1px solid #223046; padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+    .btn:hover { border-color: #3b82f6; }
+    .btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); border: 0; color: #ffffff; }
+    .result { margin: 20px 0; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 Resultado del Sorteo Simple</h1>
+    <div class="chips">${chipsHTML}</div>
+    <div class="result">${listHTML}</div>
+    <div class="controls">
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+  </div>
+  <script>
+    function exportPDF() {
+      try {
+        if (!window.jspdf || !window.html2canvas) {
+          alert('Librerías de PDF no cargadas. Intenta recargar la página.');
+          return;
+        }
+
+        const sheet = document.createElement('div');
+        sheet.style.width = '794px';
+        sheet.style.height = '1123px';
+        sheet.style.background = '#ffffff';
+        sheet.style.color = '#0f172a';
+        sheet.style.position = 'fixed';
+        sheet.style.left = '-9999px';
+        sheet.style.top = '0';
+        sheet.style.display = 'flex';
+        sheet.style.flexDirection = 'column';
+        sheet.style.fontFamily = 'system-ui, sans-serif';
+        sheet.style.padding = '20px';
+
+        // Header
+        const header = document.createElement('div');
+        header.innerHTML = '<h1 style="margin: 0 0 16px 0; font-size: 24px;">Resultado del Sorteo Simple</h1>';
+        sheet.appendChild(header);
+
+        // Chips
+        const chips = document.createElement('div');
+        chips.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;';
+        chips.innerHTML = '${chipsHTML.replace(/'/g, "\\'")}';
+        sheet.appendChild(chips);
+
+        // Result list
+        const resultDiv = document.createElement('div');
+        resultDiv.style.cssText = 'flex: 1;';
+        resultDiv.innerHTML = '${listHTML.replace(/'/g, "\\'")}';
+        sheet.appendChild(resultDiv);
+
+        document.body.appendChild(sheet);
+
+        html2canvas(sheet, { 
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true 
+        }).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          document.body.removeChild(sheet);
+
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+          });
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save('sorteo_simple_${new Date().toISOString().slice(0,10)}.pdf');
+        });
+
+      } catch (error) {
+        console.error('Error generando PDF:', error);
+        alert('Error al generar PDF: ' + error.message);
+      }
+    }
+  <\/script>
+</body>
+</html>`;
+  
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// ====================== INICIALIZACIÓN MEJORADA ======================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Sorteador v3.1 cargado');
+  
+  // Cargar sorteos guardados al iniciar
+  console.log('Sorteos guardados:', getSavedDraws());
+  
+  // Tabs
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
+      btn.classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      
+      // Si es la pestaña de guardados, renderizar
+      if (tabName === 'saved') {
+        renderSavedDraws();
+      }
+    });
+  });
+  
+  // Botón para eliminar todos los sorteos
+  document.getElementById('btnClearAllSaved').addEventListener('click', clearAllSavedDraws);
+  
+  // ... (el resto del código de inicialización se mantiene igual)
+  // Formato de zonas
+  document.querySelectorAll('input[name="format"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const zonesInput = document.getElementById('zones');
+      if (radio.value === '8x3') {
+        zonesInput.value = '8';
+        zonesInput.disabled = true;
+      } else if (radio.value === '4x6') {
+        zonesInput.value = '4';
+        zonesInput.disabled = true;
+      } else {
+        zonesInput.disabled = false;
+      }
+      updateCapInfo();
+    });
+  });
+  
+  // Lista de checks
+  document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
+  document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
+  document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
+  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
+  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
+  document.getElementById('btnSelectAllInactive').addEventListener('click', () => selectAll('.chkInactive'));
+  
+  // Importación de equipos CSV
+  document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importTeamsCSV(reader.result);
+        
+        if (result.teams.length === 0) {
+          toast('CSV vacío o no se detectaron equipos');
+          return;
+        }
+        
+        // Actualizar textarea
+        document.getElementById('teamsInput').value = result.teams
+          .map(t => `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`)
+          .join('\n');
+        
+        buildListsFromTextarea();
+        
+        // Mostrar info
+        const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('csvInfo').innerHTML = info;
+        toast('CSV de equipos cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // Importación de disciplinas CSV
+  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importDisciplinesCSV(reader.result);
+        disciplines = result.items;
+        refreshDisciplineSelects();
+        
+        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('discCSVInfo').innerHTML = info;
+        toast('CSV de disciplinas cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // Importación de categorías CSV
+  document.getElementById('csvCategories').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importCategoriesCSV(reader.result);
+        categories = result.items;
+        refreshCategorySelects();
+        
+        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('catCSVInfo').innerHTML = info;
+        toast('CSV de categorías cargado correctamente');
+        
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // Demo disciplinas
+  document.getElementById('btnDiscDemo').addEventListener('click', () => {
+    disciplines = [
+      {name: 'Fútbol', seed: 'futbol'},
+      {name: 'Básquet', seed: 'basquet'},
+      {name: 'Vóley', seed: 'voley'},
+      {name: 'Hockey', seed: 'hockey'}
+    ];
+    refreshDisciplineSelects();
+    document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
+    toast('Disciplinas demo cargadas');
+  });
+
+  // Demo categorías
+  document.getElementById('btnCatDemo').addEventListener('click', () => {
+    categories = [
+      {name: 'Sub-15', seed: 'sub15'},
+      {name: 'Sub-17', seed: 'sub17'},
+      {name: 'Senior', seed: 'senior'},
+      {name: 'Libre', seed: 'libre'}
+    ];
+    refreshCategorySelects();
+    document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
+    toast('Categorías demo cargadas');
+  });
+  
+  // Ejemplo y limpiar
+  document.getElementById('btnExample').addEventListener('click', () => {
+    const example = `River Plate; CABA; *
+Boca Juniors; CABA; *
+Newell's; Santa Fe
+Rosario Central; Santa Fe
+San Lorenzo; CABA
+Racing; Buenos Aires
+Independiente; Buenos Aires
+Estudiantes; Buenos Aires
+Talleres; Córdoba
+Belgrano; Córdoba
+Godoy Cruz; Mendoza
+Atl. Tucumán; Tucumán`;
+    document.getElementById('teamsInput').value = example;
+    updateCapInfo();
+  });
+  
+  document.getElementById('btnClear').addEventListener('click', () => {
+    document.getElementById('teamsInput').value = '';
+    document.getElementById('resultGroups').innerHTML = '';
+    document.getElementById('status').innerHTML = '';
+    activeTeams = [];
+    inactiveTeams = [];
+    document.getElementById('checkLists').classList.add('hidden');
+    updateCapInfo();
+  });
+  
+  // Sorteo de zonas
+  document.getElementById('btnDrawGroups').addEventListener('click', () => {
+    const teams = getActiveTeamsLive();
+    if (teams.length === 0) {
+      document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
+      return;
+    }
+    
+    const z = currentZones();
+    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
+    const headsAsFirst = document.getElementById('headsAsFirst').checked;
+    const format = getFormat();
+    
+    const result = drawGroups(teams, z, headsAsFirst, seed, format);
+    renderGroups(document.getElementById('resultGroups'), result);
+    
+    if (!result.error) {
+      // Abrir en nueva pestaña
+      const parameters = {
+        discipline: document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '',
+        category: document.getElementById('categorySelect').value || '',
+        gender: document.getElementById('genderSelect').value || ''
+      };
+      openResultInNewTab(result, parameters);
+      
+      // Guardar en el historial
+      saveDraw('grupos', parameters, result);
+      
+      if (format === '8x3' && teams.length < 16) {
+        document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
+      }
+    }
+  });
+  
+  // Exportar y compartir
+  document.getElementById('btnExportCSV').addEventListener('click', () => {
+    const teams = getActiveTeamsLive();
+    const z = currentZones();
+    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
+    const headsAsFirst = document.getElementById('headsAsFirst').checked;
+    const format = getFormat();
+    
+    const result = drawGroups(teams, z, headsAsFirst, seed, format);
+    if (result.error) {
+      toast('Generá el sorteo primero');
+      return;
+    }
+    
+    exportGroupsCSV(result.groups);
+  });
+  
+  document.getElementById('btnCopy').addEventListener('click', () => {
+    const zones = document.querySelectorAll('#resultGroups .zone');
+    if (zones.length === 0) {
+      toast('No hay resultado para copiar');
+      return;
+    }
+    
+    let text = '';
+    zones.forEach((zone, i) => {
+      text += `Zona ${i + 1}\n`;
+      zone.querySelectorAll('li').forEach((li, j) => {
+        text += `${j + 1}. ${li.textContent}\n`;
+      });
+      text += '\n';
+    });
+    
+    copyText(text);
+  });
+
+  // Sorteo simple - Usar lista del tab Grupos
+  document.getElementById('btnUseFromGroups').addEventListener('click', () => {
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    document.getElementById('simpleInput').value = teamNames.join('\n');
+    toast('Lista copiada al tab Sorteo simple');
+  });
+
+  // Sorteo simple - Limpiar
+  document.getElementById('btnClearSimple').addEventListener('click', () => {
+    document.getElementById('simpleInput').value = '';
+    document.getElementById('resultSimple').innerHTML = '';
+  });
+
+  // Sorteo simple - Sortear
+  document.getElementById('btnDrawSimple').addEventListener('click', () => {
+    const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
+    const names = document.getElementById('simpleInput').value.split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
+      return;
+    }
+    
+    const rand = rngFromSeed(seed);
+    const shuffled = shuffle(names, rand);
+    
+    const resultHTML = shuffled.map((name, index) => 
+      `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
+    ).join('');
+    
+    document.getElementById('resultSimple').innerHTML = resultHTML;
+    document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
+    
+    // Guardar en el historial
+    const parameters = {
+      discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
+      category: '',
+      gender: ''
+    };
+    saveDraw('simple', parameters, { list: shuffled });
+  });
+
+  // Sorteo simple - Exportar CSV
+  document.getElementById('btnExportSimple').addEventListener('click', () => {
+    const names = document.getElementById('resultSimple').textContent
+      .split('\n')
+      .map(line => line.replace(/^\d+\.\s*/, '').trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      toast('No hay resultado para exportar');
+      return;
+    }
+    
+    exportSimpleCSV(names);
+  });
+
+  // Sorteo simple - Copiar
+  document.getElementById('btnCopySimple').addEventListener('click', () => {
+    const text = document.getElementById('resultSimple').textContent;
+    if (!text.trim()) {
+      toast('No hay resultado para copiar');
+      return;
+    }
+    
+    copyText(text);
+  });
+  
+  // Sorteo simple - Exportar PDF
+  document.getElementById('btnExportPDFSimple').addEventListener('click', () => {
+    const names = document.getElementById('resultSimple').textContent
+      .split('\n')
+      .map(line => line.replace(/^\d+\.\s*/, '').trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      toast('No hay resultado para exportar');
+      return;
+    }
+    
+    const parameters = {
+      discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
+      category: '',
+      gender: ''
+    };
+    
+    openSimpleResultInNewTab({ list: names }, parameters);
+  });
+  
+  // Inicialización
+  updateCapInfo();
+});
+
+// ... (TODAS LAS DEMÁS FUNCIONES SE MANTIENEN IGUAL QUE EN LA VERSIÓN 3.0)
 // ====================== UTILIDADES BÁSICAS ======================
 function escapeHtml(text) {
   const map = {
@@ -1112,133 +1662,6 @@ function openResultInNewTab(result, parameters = {}) {
   w.document.close();
 }
 
-// ====================== FUNCIONES DE PDF PARA SORTEO SIMPLE ======================
-function openSimpleResultInNewTab(result, parameters = {}) {
-  const w = window.open('', '_blank');
-  if (!w) {
-    toast('Permití pop-ups para ver el resultado en nueva pestaña');
-    return;
-  }
-  
-  const { discipline = '', category = '', gender = '' } = parameters;
-  const { list } = result;
-  
-  const listHTML = list.map((name, index) => 
-    `<div style="margin: 8px 0; padding: 6px 0; border-bottom: 1px solid #eee;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
-  ).join('');
-  
-  const chipsHTML = [
-    discipline ? `<span class="chip">Disciplina: ${escapeHtml(discipline)}</span>` : '',
-    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
-    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
-    `<span class="chip">${list.length} equipos</span>`,
-    `<span class="chip">${new Date().toLocaleString()}</span>`
-  ].filter(Boolean).join('');
-  
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Resultado del Sorteo Simple</title>
-  <style>
-    body { font-family: system-ui; background: #ffffff; color: #000000; margin: 0; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { margin-bottom: 16px; color: #0f172a; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    .chip { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; color: #475569; }
-    .btn { background: #ffffff; color: #000000; border: 1px solid #223046; padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-    .btn:hover { border-color: #3b82f6; }
-    .btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); border: 0; color: #ffffff; }
-    .result { margin: 20px 0; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-</head>
-<body>
-  <div class="container">
-    <h1>🎲 Resultado del Sorteo Simple</h1>
-    <div class="chips">${chipsHTML}</div>
-    <div class="result">${listHTML}</div>
-    <div class="controls">
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-    </div>
-  </div>
-  <script>
-    function exportPDF() {
-      try {
-        if (!window.jspdf || !window.html2canvas) {
-          alert('Librerías de PDF no cargadas. Intenta recargar la página.');
-          return;
-        }
-
-        const sheet = document.createElement('div');
-        sheet.style.width = '794px';
-        sheet.style.height = '1123px';
-        sheet.style.background = '#ffffff';
-        sheet.style.color = '#0f172a';
-        sheet.style.position = 'fixed';
-        sheet.style.left = '-9999px';
-        sheet.style.top = '0';
-        sheet.style.display = 'flex';
-        sheet.style.flexDirection = 'column';
-        sheet.style.fontFamily = 'system-ui, sans-serif';
-        sheet.style.padding = '20px';
-
-        // Header
-        const header = document.createElement('div');
-        header.innerHTML = '<h1 style="margin: 0 0 16px 0; font-size: 24px;">Resultado del Sorteo Simple</h1>';
-        sheet.appendChild(header);
-
-        // Chips
-        const chips = document.createElement('div');
-        chips.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;';
-        chips.innerHTML = '${chipsHTML.replace(/'/g, "\\'")}';
-        sheet.appendChild(chips);
-
-        // Result list
-        const resultDiv = document.createElement('div');
-        resultDiv.style.cssText = 'flex: 1;';
-        resultDiv.innerHTML = '${listHTML.replace(/'/g, "\\'")}';
-        sheet.appendChild(resultDiv);
-
-        document.body.appendChild(sheet);
-
-        html2canvas(sheet, { 
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true 
-        }).then(canvas => {
-          const imgData = canvas.toDataURL('image/png');
-          document.body.removeChild(sheet);
-
-          const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'pt',
-            format: 'a4'
-          });
-
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          pdf.save('sorteo_simple_${new Date().toISOString().slice(0,10)}.pdf');
-        });
-
-      } catch (error) {
-        console.error('Error generando PDF:', error);
-        alert('Error al generar PDF: ' + error.message);
-      }
-    }
-  <\/script>
-</body>
-</html>`;
-  
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}
-
 // ====================== EXPORTACIÓN ======================
 function exportGroupsCSV(groups) {
   let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
@@ -1302,354 +1725,6 @@ function updateCapInfo() {
   
   document.getElementById('capInfo').innerHTML = msg;
 }
-
-// ====================== INICIALIZACIÓN ======================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v3.0 cargado');
-  
-  // Tabs
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabName = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      
-      // Si es la pestaña de guardados, renderizar
-      if (tabName === 'saved') {
-        renderSavedDraws();
-      }
-    });
-  });
-  
-  // Formato de zonas
-  document.querySelectorAll('input[name="format"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const zonesInput = document.getElementById('zones');
-      if (radio.value === '8x3') {
-        zonesInput.value = '8';
-        zonesInput.disabled = true;
-      } else if (radio.value === '4x6') {
-        zonesInput.value = '4';
-        zonesInput.disabled = true;
-      } else {
-        zonesInput.disabled = false;
-      }
-      updateCapInfo();
-    });
-  });
-  
-  // Lista de checks
-  document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
-  document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
-  document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
-  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', () => selectAll('.chkInactive'));
-  
-  // Importación de equipos CSV
-  document.getElementById('csvFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importTeamsCSV(reader.result);
-        
-        if (result.teams.length === 0) {
-          toast('CSV vacío o no se detectaron equipos');
-          return;
-        }
-        
-        // Actualizar textarea
-        document.getElementById('teamsInput').value = result.teams
-          .map(t => `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`)
-          .join('\n');
-        
-        buildListsFromTextarea();
-        
-        // Mostrar info
-        const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('csvInfo').innerHTML = info;
-        toast('CSV de equipos cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
-    };
-    reader.readAsText(file, 'UTF-8');
-  });
-
-  // Importación de disciplinas CSV
-  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importDisciplinesCSV(reader.result);
-        disciplines = result.items;
-        refreshDisciplineSelects();
-        
-        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('discCSVInfo').innerHTML = info;
-        toast('CSV de disciplinas cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
-    };
-    reader.readAsText(file, 'UTF-8');
-  });
-
-  // Importación de categorías CSV
-  document.getElementById('csvCategories').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importCategoriesCSV(reader.result);
-        categories = result.items;
-        refreshCategorySelects();
-        
-        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('catCSVInfo').innerHTML = info;
-        toast('CSV de categorías cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
-    };
-    reader.readAsText(file, 'UTF-8');
-  });
-
-  // Demo disciplinas
-  document.getElementById('btnDiscDemo').addEventListener('click', () => {
-    disciplines = [
-      {name: 'Fútbol', seed: 'futbol'},
-      {name: 'Básquet', seed: 'basquet'},
-      {name: 'Vóley', seed: 'voley'},
-      {name: 'Hockey', seed: 'hockey'}
-    ];
-    refreshDisciplineSelects();
-    document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
-    toast('Disciplinas demo cargadas');
-  });
-
-  // Demo categorías
-  document.getElementById('btnCatDemo').addEventListener('click', () => {
-    categories = [
-      {name: 'Sub-15', seed: 'sub15'},
-      {name: 'Sub-17', seed: 'sub17'},
-      {name: 'Senior', seed: 'senior'},
-      {name: 'Libre', seed: 'libre'}
-    ];
-    refreshCategorySelects();
-    document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
-    toast('Categorías demo cargadas');
-  });
-  
-  // Ejemplo y limpiar
-  document.getElementById('btnExample').addEventListener('click', () => {
-    const example = `River Plate; CABA; *
-Boca Juniors; CABA; *
-Newell's; Santa Fe
-Rosario Central; Santa Fe
-San Lorenzo; CABA
-Racing; Buenos Aires
-Independiente; Buenos Aires
-Estudiantes; Buenos Aires
-Talleres; Córdoba
-Belgrano; Córdoba
-Godoy Cruz; Mendoza
-Atl. Tucumán; Tucumán`;
-    document.getElementById('teamsInput').value = example;
-    updateCapInfo();
-  });
-  
-  document.getElementById('btnClear').addEventListener('click', () => {
-    document.getElementById('teamsInput').value = '';
-    document.getElementById('resultGroups').innerHTML = '';
-    document.getElementById('status').innerHTML = '';
-    activeTeams = [];
-    inactiveTeams = [];
-    document.getElementById('checkLists').classList.add('hidden');
-    updateCapInfo();
-  });
-  
-  // Sorteo de zonas
-  document.getElementById('btnDrawGroups').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    if (teams.length === 0) {
-      document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
-      return;
-    }
-    
-    const z = currentZones();
-    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
-    const headsAsFirst = document.getElementById('headsAsFirst').checked;
-    const format = getFormat();
-    
-    const result = drawGroups(teams, z, headsAsFirst, seed, format);
-    renderGroups(document.getElementById('resultGroups'), result);
-    
-    if (!result.error) {
-      // Abrir en nueva pestaña
-      const parameters = {
-        discipline: document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '',
-        category: document.getElementById('categorySelect').value || '',
-        gender: document.getElementById('genderSelect').value || ''
-      };
-      openResultInNewTab(result, parameters);
-      
-      // Guardar en el historial
-      saveDraw('grupos', parameters, result);
-      
-      if (format === '8x3' && teams.length < 16) {
-        document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
-      }
-    }
-  });
-  
-  // Exportar y compartir
-  document.getElementById('btnExportCSV').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    const z = currentZones();
-    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
-    const headsAsFirst = document.getElementById('headsAsFirst').checked;
-    const format = getFormat();
-    
-    const result = drawGroups(teams, z, headsAsFirst, seed, format);
-    if (result.error) {
-      toast('Generá el sorteo primero');
-      return;
-    }
-    
-    exportGroupsCSV(result.groups);
-  });
-  
-  document.getElementById('btnCopy').addEventListener('click', () => {
-    const zones = document.querySelectorAll('#resultGroups .zone');
-    if (zones.length === 0) {
-      toast('No hay resultado para copiar');
-      return;
-    }
-    
-    let text = '';
-    zones.forEach((zone, i) => {
-      text += `Zona ${i + 1}\n`;
-      zone.querySelectorAll('li').forEach((li, j) => {
-        text += `${j + 1}. ${li.textContent}\n`;
-      });
-      text += '\n';
-    });
-    
-    copyText(text);
-  });
-
-  // Sorteo simple - Usar lista del tab Grupos
-  document.getElementById('btnUseFromGroups').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    const teamNames = teams.map(t => t.name);
-    document.getElementById('simpleInput').value = teamNames.join('\n');
-    toast('Lista copiada al tab Sorteo simple');
-  });
-
-  // Sorteo simple - Limpiar
-  document.getElementById('btnClearSimple').addEventListener('click', () => {
-    document.getElementById('simpleInput').value = '';
-    document.getElementById('resultSimple').innerHTML = '';
-  });
-
-  // Sorteo simple - Sortear
-  document.getElementById('btnDrawSimple').addEventListener('click', () => {
-    const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
-    const names = document.getElementById('simpleInput').value.split('\n')
-      .map(name => name.trim())
-      .filter(name => name.length > 0);
-    
-    if (names.length === 0) {
-      document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
-      return;
-    }
-    
-    const rand = rngFromSeed(seed);
-    const shuffled = shuffle(names, rand);
-    
-    const resultHTML = shuffled.map((name, index) => 
-      `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
-    ).join('');
-    
-    document.getElementById('resultSimple').innerHTML = resultHTML;
-    document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
-    
-    // Guardar en el historial
-    const parameters = {
-      discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
-      category: '',
-      gender: ''
-    };
-    saveDraw('simple', parameters, { list: shuffled });
-  });
-
-  // Sorteo simple - Exportar CSV
-  document.getElementById('btnExportSimple').addEventListener('click', () => {
-    const names = document.getElementById('resultSimple').textContent
-      .split('\n')
-      .map(line => line.replace(/^\d+\.\s*/, '').trim())
-      .filter(name => name.length > 0);
-    
-    if (names.length === 0) {
-      toast('No hay resultado para exportar');
-      return;
-    }
-    
-    exportSimpleCSV(names);
-  });
-
-  // Sorteo simple - Copiar
-  document.getElementById('btnCopySimple').addEventListener('click', () => {
-    const text = document.getElementById('resultSimple').textContent;
-    if (!text.trim()) {
-      toast('No hay resultado para copiar');
-      return;
-    }
-    
-    copyText(text);
-  });
-  
-  // Sorteo simple - Exportar PDF
-  document.getElementById('btnExportPDFSimple').addEventListener('click', () => {
-    const names = document.getElementById('resultSimple').textContent
-      .split('\n')
-      .map(line => line.replace(/^\d+\.\s*/, '').trim())
-      .filter(name => name.length > 0);
-    
-    if (names.length === 0) {
-      toast('No hay resultado para exportar');
-      return;
-    }
-    
-    const parameters = {
-      discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
-      category: '',
-      gender: ''
-    };
-    
-    openSimpleResultInNewTab({ list: names }, parameters);
-  });
-  
-  // Inicialización
-  updateCapInfo();
-});
 </script>
 </body>
 </html>
