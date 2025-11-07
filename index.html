@@ -71,7 +71,7 @@
         <h1>🎲 Sorteador Deportivo</h1>
         <div class="tiny">Funciona 100% en tu navegador • <span id="cloudStatus" class="cloud-status cloud-offline">⏳ Conectando...</span></div>
       </div>
-      <span class="badge">v4.0</span>
+      <span class="badge">v4.1</span>
     </header>
 
     <div class="panel">
@@ -366,13 +366,16 @@ function initAuth() {
   });
 }
 
-// Guardar sorteo en Firebase
+// Guardar sorteo en Firebase - VERSIÓN CORREGIDA
 async function saveDrawToCloud(type, parameters, result) {
   try {
     await initAuth();
     
+    // CREAR UN ID ÚNICO que no dependa del timestamp
+    const uniqueId = currentUser.uid + '_' + Date.now().toString();
+    
     const draw = {
-      id: Date.now().toString(),
+      id: uniqueId, // ← ID ÚNICO POR USUARIO
       type,
       parameters,
       result,
@@ -381,8 +384,8 @@ async function saveDrawToCloud(type, parameters, result) {
       userId: currentUser.uid
     };
     
-    await db.collection('draws').doc(draw.id).set(draw);
-    console.log('Sorteo guardado en Firebase:', draw.id);
+    await db.collection('draws').doc(uniqueId).set(draw);
+    console.log('Sorteo guardado en Firebase:', uniqueId);
     return draw;
   } catch (error) {
     console.error('Error guardando en Firebase:', error);
@@ -1843,7 +1846,7 @@ Atl. Tucumán; Tucumán`;
     updateCapInfo();
   });
   
-  // Sorteo de zonas - CORREGIDO
+    // Sorteo de zonas - VERSIÓN MEJORADA
   document.getElementById('btnDrawGroups').addEventListener('click', () => {
     const teams = getActiveTeamsLive();
     if (teams.length === 0) {
@@ -1852,44 +1855,51 @@ Atl. Tucumán; Tucumán`;
     }
     
     const z = currentZones();
-    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
+    
+    // SEMILLA ÚNICA CADA VEZ - combinar disciplina + timestamp
+    const baseSeed = document.getElementById('disciplineSelect').value || 'sorteo';
+    const uniqueSeed = baseSeed + '_' + Date.now().toString();
+    
     const headsAsFirst = document.getElementById('headsAsFirst').checked;
     const format = getFormat();
     
-    // Limpiar resultado anterior antes de generar nuevo
+    // LIMPIAR COMPLETAMENTE antes de generar nuevo
     document.getElementById('resultGroups').innerHTML = '';
-    document.getElementById('status').innerHTML = 'Generando sorteo...';
+    document.getElementById('status').innerHTML = 'Generando nuevo sorteo...';
     
-    const result = drawGroups(teams, z, headsAsFirst, seed, format);
-    
-    // Actualizar el resultado actual
-    currentResult = {
-      result: result,
-      parameters: {
-        discipline: document.getElementById('disciplineSelect').value,
-        category: document.getElementById('categorySelect').value,
-        gender: document.getElementById('genderSelect').value
-      }
-    };
-    
-    renderGroups(document.getElementById('resultGroups'), result);
-    
-    if (!result.error) {
-      // Abrir en nueva pestaña
-      const parameters = {
-        discipline: document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '',
-        category: document.getElementById('categorySelect').value || '',
-        gender: document.getElementById('genderSelect').value || ''
+    // Forzar un pequeño delay para que se vea el mensaje
+    setTimeout(() => {
+      const result = drawGroups(teams, z, headsAsFirst, uniqueSeed, format);
+      
+      // Actualizar el resultado actual
+      currentResult = {
+        result: result,
+        parameters: {
+          discipline: document.getElementById('disciplineSelect').value,
+          category: document.getElementById('categorySelect').value,
+          gender: document.getElementById('genderSelect').value
+        }
       };
-      openResultInNewTab(result, parameters);
       
-      // Guardar en el historial
-      saveDraw('grupos', parameters, result);
+      renderGroups(document.getElementById('resultGroups'), result);
       
-      if (format === '8x3' && teams.length < 16) {
-        document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
+      if (!result.error) {
+        // Abrir en nueva pestaña
+        const parameters = {
+          discipline: document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '',
+          category: document.getElementById('categorySelect').value || '',
+          gender: document.getElementById('genderSelect').value || ''
+        };
+        openResultInNewTab(result, parameters);
+        
+        // Guardar en el historial
+        saveDraw('grupos', parameters, result);
+        
+        if (format === '8x3' && teams.length < 16) {
+          document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
+        }
       }
-    }
+    }, 100);
   });
   
   // Exportar y compartir
@@ -1943,9 +1953,11 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('statusSimple').innerHTML = '';
   });
 
-  // Sorteo simple - Sortear CORREGIDO
+    // Sorteo simple - VERSIÓN MEJORADA
   document.getElementById('btnDrawSimple').addEventListener('click', () => {
-    const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
+    const baseSeed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
+    const uniqueSeed = baseSeed + '_' + Date.now().toString();
+    
     const names = document.getElementById('simpleInput').value.split('\n')
       .map(name => name.trim())
       .filter(name => name.length > 0);
@@ -1957,25 +1969,27 @@ Atl. Tucumán; Tucumán`;
     
     // Limpiar resultado anterior
     document.getElementById('resultSimple').innerHTML = '';
-    document.getElementById('statusSimple').innerHTML = 'Generando sorteo...';
+    document.getElementById('statusSimple').innerHTML = 'Generando nuevo sorteo...';
     
-    const rand = rngFromSeed(seed);
-    const shuffled = shuffle(names, rand);
-    
-    const resultHTML = shuffled.map((name, index) => 
-      `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
-    ).join('');
-    
-    document.getElementById('resultSimple').innerHTML = resultHTML;
-    document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
-    
-    // Guardar en el historial
-    const parameters = {
-      discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
-      category: '',
-      gender: ''
-    };
-    saveDraw('simple', parameters, { list: shuffled });
+    setTimeout(() => {
+      const rand = rngFromSeed(uniqueSeed);
+      const shuffled = shuffle(names, rand);
+      
+      const resultHTML = shuffled.map((name, index) => 
+        `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
+      ).join('');
+      
+      document.getElementById('resultSimple').innerHTML = resultHTML;
+      document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
+      
+      // Guardar en el historial
+      const parameters = {
+        discipline: document.getElementById('disciplineSelectSimple').options[document.getElementById('disciplineSelectSimple').selectedIndex]?.text || '',
+        category: '',
+        gender: ''
+      };
+      saveDraw('simple', parameters, { list: shuffled });
+    }, 100);
   });
 
   // Sorteo simple - Exportar CSV
