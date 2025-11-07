@@ -338,31 +338,34 @@ function updateCloudStatus(online) {
   }
 }
 
-// Inicializar autenticación anónima - VERSIÓN SIMPLIFICADA
+// Inicializar autenticación - VERSIÓN DE EMERGENCIA
 function initAuth() {
   return new Promise((resolve, reject) => {
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        currentUser = user;
-        console.log('Usuario anónimo existente:', user.uid);
+    // Intentar usar usuario existente primero
+    const currentAuth = auth.currentUser;
+    if (currentAuth) {
+      currentUser = currentAuth;
+      console.log('Usuario actual:', currentUser.uid);
+      updateCloudStatus(true);
+      resolve(currentUser);
+      return;
+    }
+    
+    // Si no hay usuario, crear uno anónimo
+    auth.signInAnonymously()
+      .then((userCredential) => {
+        currentUser = userCredential.user;
+        console.log('Nuevo usuario anónimo creado:', currentUser.uid);
         updateCloudStatus(true);
-        resolve(user);
-      } else {
-        // Crear usuario anónimo
-        auth.signInAnonymously()
-          .then((userCredential) => {
-            currentUser = userCredential.user;
-            console.log('Nuevo usuario anónimo creado:', currentUser.uid);
-            updateCloudStatus(true);
-            resolve(currentUser);
-          })
-          .catch((error) => {
-            console.error('Error en autenticación anónima:', error);
-            updateCloudStatus(false);
-            reject(error);
-          });
-      }
-    });
+        resolve(currentUser);
+      })
+      .catch((error) => {
+        console.error('Error en autenticación:', error);
+        // Si falla la autenticación, continuar en modo offline
+        currentUser = { uid: 'offline_user' };
+        updateCloudStatus(false);
+        resolve(currentUser); // Resolvemos igual para que no se trabe
+      });
   });
 }
 // Guardar sorteo en Firebase - VERSIÓN CORREGIDA PARA ARRAYS ANIDADOS
