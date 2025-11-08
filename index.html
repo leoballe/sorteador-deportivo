@@ -1205,6 +1205,53 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('teamsInput').addEventListener('input', updateCapInfo);
     document.getElementById('zones').addEventListener('input', updateCapInfo);
 
+    // ====================== IMPORTACIÓN CSV ======================
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(line => line.trim());
+          let teams = [];
+
+          // Detectar delimitador
+          const firstLine = lines[0];
+          const hasComma = firstLine.includes(',');
+          const hasSemicolon = firstLine.includes(';');
+          const delimiter = hasComma ? ',' : hasSemicolon ? ';' : '\t';
+
+          // Procesar líneas
+          lines.forEach((line, index) => {
+            const parts = line.split(delimiter).map(part => part.trim().replace(/^"|"$/g, ''));
+            if (parts[0] && parts[0] !== 'Equipo' && parts[0] !== 'Team') {
+              teams.push({
+                name: parts[0],
+                province: parts[1] || '',
+                head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : false
+              });
+            }
+          });
+
+          // Actualizar textarea
+          const teamsText = teams.map(t => 
+            `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`
+          ).join('\n');
+          
+          document.getElementById('teamsInput').value = teamsText;
+          document.getElementById('csvInfo').textContent = `CSV importado: ${teams.length} equipos`;
+          showToast(`CSV importado: ${teams.length} equipos`, 'success');
+          updateCapInfo();
+
+        } catch (error) {
+          showToast('Error importando CSV: ' + error.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
     // ====================== SISTEMA DE SORTEO ======================
     function xmur3(str) {
       let h = 1779033703 ^ str.length;
@@ -1314,8 +1361,8 @@ Atl. Tucumán; Tucumán`;
             ${group.map((team, pos) => `
               <li class="team-item">
                 <span class="team-position">${pos + 1}.</span>
-                <span class="team-name">${team.name}</span>
-                ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
+                <span class="team-name">${escapeHtml(team.name)}</span>
+                ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
                 ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
               </li>
             `).join('')}
@@ -1360,7 +1407,7 @@ Atl. Tucumán; Tucumán`;
         showToast('Sorteo guardado en la nube', 'success');
       } catch (error) {
         console.error('Error guardando en Firebase:', error);
-        showToast('Sorteo guardado localmente', 'info');
+        showToast('Error guardando en la nube', 'error');
       }
     }
 
@@ -1412,7 +1459,7 @@ Atl. Tucumán; Tucumán`;
         `).join('');
       } catch (error) {
         console.error('Error cargando sorteos:', error);
-        showToast('Error cargando sorteos guardados', 'error');
+        showToast('Error cargando sorteos guardados. Verifica las reglas de Firestore.', 'error');
       }
     }
 
