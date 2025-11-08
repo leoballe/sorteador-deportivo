@@ -1066,7 +1066,7 @@ Newell's; Santa Fe
     }
 
     // ====================== SISTEMA DE AUTENTICACIÓN ======================
-    function showAuthSection() {
+   /* function showAuthSection() {
       document.getElementById('authSection').classList.remove('hidden');
       document.getElementById('appSection').classList.add('hidden');
       document.getElementById('authButtons').classList.remove('hidden');
@@ -1090,53 +1090,61 @@ Newell's; Santa Fe
         showAuthSection();
       }
     }
+*/
+    // Registro - VERSIÓN CORREGIDA  
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('registerSubmit');
+  toggleLoading(submitBtn, true);
 
-    // Registro
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = document.getElementById('registerSubmit');
-      toggleLoading(submitBtn, true);
+  const name = document.getElementById('registerName').value;
+  const email = document.getElementById('registerEmail').value;
+  const password = document.getElementById('registerPassword').value;
+  const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
-      const name = document.getElementById('registerName').value;
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+  if (password !== confirmPassword) {
+    showToast('Las contraseñas no coinciden', 'error');
+    toggleLoading(submitBtn, false);
+    return;
+  }
 
-      if (password !== confirmPassword) {
-        showToast('Las contraseñas no coinciden', 'error');
-        toggleLoading(submitBtn, false);
-        return;
-      }
+  try {
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    await userCredential.user.updateProfile({ displayName: name });
+    console.log('Registration successful:', userCredential.user);
+    showToast('Cuenta creada exitosamente', 'success');
+    
+    // No llamar a updateUserInfo aquí - el listener onAuthStateChanged se encargará
+  } catch (error) {
+    console.error('Registration error:', error);
+    showToast('Error: ' + error.message, 'error');
+  } finally {
+    toggleLoading(submitBtn, false);
+  }
+});
 
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({ displayName: name });
-        showToast('Cuenta creada exitosamente', 'success');
-      } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-      } finally {
-        toggleLoading(submitBtn, false);
-      }
-    });
+    // Login - VERSIÓN CORREGIDA
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('loginSubmit');
+  toggleLoading(submitBtn, true);
 
-    // Login
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = document.getElementById('loginSubmit');
-      toggleLoading(submitBtn, true);
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
 
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        showToast('Sesión iniciada correctamente', 'success');
-      } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-      } finally {
-        toggleLoading(submitBtn, false);
-      }
-    });
+  try {
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    console.log('Login successful:', userCredential.user);
+    showToast('Sesión iniciada correctamente', 'success');
+    
+    // No llamar a updateUserInfo aquí - el listener onAuthStateChanged se encargará
+  } catch (error) {
+    console.error('Login error:', error);
+    showToast('Error: ' + error.message, 'error');
+  } finally {
+    toggleLoading(submitBtn, false);
+  }
+});
 
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -2051,23 +2059,42 @@ Atl. Tucumán; Tucumán`;
       document.querySelector('input[name="format"][value="8x3"]').checked = true;
       document.getElementById('zones').disabled = true;
 
-      // Auth state listener
-      auth.onAuthStateChanged((user) => {
-        currentUser = user;
-        updateUserInfo(user);
-        
-        if (user) {
-          document.getElementById('connectionStatus').className = 'status status-online';
-          document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
-          document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
-          document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
-        } else {
-          document.getElementById('connectionStatus').className = 'status status-offline';
-          document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
-          document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
-          document.getElementById('cloudInfo').textContent = '⚠️ Sin conexión - Sorteos guardados localmente';
-        }
-      });
+// Auth state listener - VERSIÓN CORREGIDA
+auth.onAuthStateChanged((user) => {
+  console.log('Auth state changed:', user);
+  currentUser = user;
+  
+  if (user) {
+    console.log('User signed in:', user.email);
+    document.getElementById('connectionStatus').className = 'status status-online';
+    document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
+    document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
+    document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
+    
+    // Actualizar información de usuario y mostrar sección app
+    document.getElementById('userName').textContent = user.displayName || 'Usuario';
+    document.getElementById('userEmail').textContent = user.email;
+    document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+    
+    // Mostrar sección de aplicación
+    document.getElementById('authSection').classList.add('hidden');
+    document.getElementById('appSection').classList.remove('hidden');
+    document.getElementById('authButtons').classList.add('hidden');
+    document.getElementById('userMenu').classList.remove('hidden');
+    
+  } else {
+    console.log('User signed out');
+    document.getElementById('connectionStatus').className = 'status status-offline';
+    document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
+    document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
+    
+    // Mostrar sección de autenticación
+    document.getElementById('authSection').classList.remove('hidden');
+    document.getElementById('appSection').classList.add('hidden');
+    document.getElementById('authButtons').classList.remove('hidden');
+    document.getElementById('userMenu').classList.add('hidden');
+  }
+});
 
       // Botones auth header
       document.getElementById('loginBtn').addEventListener('click', () => {
