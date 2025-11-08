@@ -587,6 +587,27 @@
     .saved-draw-info { flex: 1; }
     .saved-draw-actions { display: flex; gap: 0.5rem; }
 
+    .result-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: white;
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #eee;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
     @media (max-width: 640px) {
       .container { padding: 0 1rem; }
       .header-content { flex-direction: column; gap: 1rem; }
@@ -594,6 +615,7 @@
       .auth-section { margin: 1rem; padding: 1.5rem; }
       .saved-draw-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .saved-draw-actions { align-self: flex-end; }
+      .result-actions { flex-direction: column; }
     }
   </style>
 </head>
@@ -751,7 +773,7 @@ Newell's; Santa Fe
                       <h4>Activos <span class="tag" id="countActive">0</span></h4>
                       <div class="controls">
                         <button class="btn btn-sm" id="btnSelectAllActive">Seleccionar todo</button>
-                        <button class="btn btn-sm btn-warn" id="btnMoveToInactive">Descartar seleccionados ➜</button>
+                        <button class="btn btn-sm btn-danger" id="btnMoveToInactive">Descartar seleccionados ➜</button>
                       </div>
                       <div id="activeList"></div>
                     </div>
@@ -816,20 +838,11 @@ Newell's; Santa Fe
                   </div>
                 </div>
 
-                <div class="form-group">
-                  <label class="form-label" for="genderSelect">Género</label>
-                  <select class="form-select" id="genderSelect">
-                    <option value="">— Seleccionar —</option>
-                    <option value="Masculino">Masculino</option>
-                    <option value="Femenino">Femenino</option>
-                    <option value="Mixto">Mixto</option>
-                    <option value="No Aplica">No Aplica</option>
-                  </select>
-                </div>
-
                 <div class="controls">
                   <label for="csvDisciplines" class="btn btn-secondary btn-sm">📄 Importar CSV disciplinas</label>
                   <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden">
+                  <label for="csvCategories" class="btn btn-secondary btn-sm">📄 Importar CSV categorías</label>
+                  <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden">
                   <button class="btn btn-secondary btn-sm" id="btnDiscDemo">Demo disciplinas</button>
                 </div>
                 <div id="discCSVInfo" class="text-xs text-muted mt-2"></div>
@@ -1252,6 +1265,254 @@ Atl. Tucumán; Tucumán`;
       reader.readAsText(file);
     });
 
+    // ====================== IMPORTACIÓN DISCIPLINAS Y CATEGORÍAS ======================
+    document.getElementById('csvDisciplines').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          disciplines = lines.map(line => line.trim()).filter(line => line);
+          
+          const select = document.getElementById('disciplineSelect');
+          select.innerHTML = '<option value="">— Seleccionar —</option>';
+          disciplines.forEach(discipline => {
+            const option = document.createElement('option');
+            option.value = discipline;
+            option.textContent = discipline;
+            select.appendChild(option);
+          });
+          
+          // Actualizar otros selects de disciplinas
+          updateDisciplineSelects();
+          
+          document.getElementById('discCSVInfo').textContent = `CSV importado: ${disciplines.length} disciplinas`;
+          showToast(`CSV de disciplinas importado: ${disciplines.length} disciplinas`, 'success');
+        } catch (error) {
+          showToast('Error importando CSV de disciplinas: ' + error.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('csvCategories').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          categories = lines.map(line => line.trim()).filter(line => line);
+          
+          const select = document.getElementById('categorySelect');
+          select.innerHTML = '<option value="">— Seleccionar —</option>';
+          categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+          });
+          
+          showToast(`CSV de categorías importado: ${categories.length} categorías`, 'success');
+        } catch (error) {
+          showToast('Error importando CSV de categorías: ' + error.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btnDiscDemo').addEventListener('click', function() {
+      const demoDisciplines = ['Fútbol 11', 'Fútbol 7', 'Básquet', 'Vóley', 'Hockey', 'Rugby', 'Tenis', 'Padel'];
+      disciplines = demoDisciplines;
+      
+      const select = document.getElementById('disciplineSelect');
+      select.innerHTML = '<option value="">— Seleccionar —</option>';
+      demoDisciplines.forEach(discipline => {
+        const option = document.createElement('option');
+        option.value = discipline;
+        option.textContent = discipline;
+        select.appendChild(option);
+      });
+      
+      updateDisciplineSelects();
+      
+      showToast('Demo de disciplinas cargado', 'success');
+    });
+
+    function updateDisciplineSelects() {
+      const selects = ['disciplineSelectSimple', 'disciplineSelectBracket'];
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+          select.innerHTML = '<option value="">— Seleccionar —</option>';
+          disciplines.forEach(discipline => {
+            const option = document.createElement('option');
+            option.value = discipline;
+            option.textContent = discipline;
+            select.appendChild(option);
+          });
+        }
+      });
+    }
+
+    // ====================== SISTEMA DE FORMATO DE ZONAS ======================
+    document.querySelectorAll('input[name="format"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const format = this.value;
+        const zonesInput = document.getElementById('zones');
+        
+        if (format === '8x3') {
+          zonesInput.value = 8;
+          zonesInput.disabled = true;
+        } else if (format === '4x6') {
+          zonesInput.value = 4;
+          zonesInput.disabled = true;
+        } else {
+          zonesInput.disabled = false;
+        }
+        
+        updateCapInfo();
+      });
+    });
+
+    // ====================== SISTEMA DE LISTAS CON CHECKS ======================
+    document.getElementById('btnBuildList').addEventListener('click', function() {
+      const teamsText = document.getElementById('teamsInput').value;
+      const teams = teamsText.split('\n').filter(line => line.trim()).map((line, index) => {
+        const parts = line.split(';').map(part => part.trim());
+        return {
+          id: index,
+          name: parts[0],
+          province: parts[1] || '',
+          head: parts[2] === '*' || parts[0].includes('*'),
+          active: true
+        };
+      });
+      
+      activeTeams = teams;
+      inactiveTeams = [];
+      
+      renderCheckLists();
+      document.getElementById('checkLists').classList.remove('hidden');
+    });
+
+    function renderCheckLists() {
+      // Lista activa
+      const activeList = document.getElementById('activeList');
+      activeList.innerHTML = '';
+      
+      activeTeams.forEach(team => {
+        const item = document.createElement('div');
+        item.className = 'item-row';
+        item.innerHTML = `
+          <label class="form-checkbox">
+            <input type="checkbox" class="team-checkbox" data-id="${team.id}" data-type="active">
+            <span class="checkmark"></span>
+          </label>
+          <span class="team-name">${escapeHtml(team.name)}</span>
+          ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
+          ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+        `;
+        activeList.appendChild(item);
+      });
+      
+      document.getElementById('countActive').textContent = activeTeams.length;
+      
+      // Lista inactiva
+      const inactiveList = document.getElementById('inactiveList');
+      inactiveList.innerHTML = '';
+      
+      inactiveTeams.forEach(team => {
+        const item = document.createElement('div');
+        item.className = 'item-row';
+        item.innerHTML = `
+          <label class="form-checkbox">
+            <input type="checkbox" class="team-checkbox" data-id="${team.id}" data-type="inactive">
+            <span class="checkmark"></span>
+          </label>
+          <span class="team-name">${escapeHtml(team.name)}</span>
+          ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
+          ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+        `;
+        inactiveList.appendChild(item);
+      });
+      
+      document.getElementById('countInactive').textContent = inactiveTeams.length;
+    }
+
+    document.getElementById('toggleShowInactive').addEventListener('change', function() {
+      document.getElementById('inactiveList').classList.toggle('hidden', !this.checked);
+    });
+
+    document.getElementById('btnSelectAllActive').addEventListener('click', function() {
+      document.querySelectorAll('#activeList .team-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+    });
+
+    document.getElementById('btnSelectAllInactive').addEventListener('click', function() {
+      document.querySelectorAll('#inactiveList .team-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+    });
+
+    document.getElementById('btnMoveToInactive').addEventListener('click', function() {
+      const selected = document.querySelectorAll('#activeList .team-checkbox:checked');
+      
+      selected.forEach(checkbox => {
+        const id = parseInt(checkbox.dataset.id);
+        const teamIndex = activeTeams.findIndex(team => team.id === id);
+        
+        if (teamIndex !== -1) {
+          const team = activeTeams[teamIndex];
+          team.active = false;
+          inactiveTeams.push(team);
+          activeTeams.splice(teamIndex, 1);
+        }
+      });
+      
+      renderCheckLists();
+      updateTeamsInputFromLists();
+    });
+
+    document.getElementById('btnRestoreSelected').addEventListener('click', function() {
+      const selected = document.querySelectorAll('#inactiveList .team-checkbox:checked');
+      
+      selected.forEach(checkbox => {
+        const id = parseInt(checkbox.dataset.id);
+        const teamIndex = inactiveTeams.findIndex(team => team.id === id);
+        
+        if (teamIndex !== -1) {
+          const team = inactiveTeams[teamIndex];
+          team.active = true;
+          activeTeams.push(team);
+          inactiveTeams.splice(teamIndex, 1);
+        }
+      });
+      
+      renderCheckLists();
+      updateTeamsInputFromLists();
+    });
+
+    function updateTeamsInputFromLists() {
+      const allTeams = [...activeTeams, ...inactiveTeams];
+      allTeams.sort((a, b) => a.id - b.id);
+      
+      const teamsText = allTeams.map(team => 
+        `${team.name}${team.province ? `; ${team.province}` : ''}${team.head ? '; *' : ''}`
+      ).join('\n');
+      
+      document.getElementById('teamsInput').value = teamsText;
+      updateCapInfo();
+    }
+
     // ====================== SISTEMA DE SORTEO ======================
     function xmur3(str) {
       let h = 1779033703 ^ str.length;
@@ -1336,6 +1597,8 @@ Atl. Tucumán; Tucumán`;
       const zones = parseInt(document.getElementById('zones').value);
       const headsAsFirst = document.getElementById('headsAsFirst').checked;
       const discipline = document.getElementById('disciplineSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const gender = document.getElementById('genderSelect').value;
       const seed = discipline || 'sorteo_' + Date.now();
 
       const result = drawGroups(teams, zones, headsAsFirst, seed, 'custom');
@@ -1345,6 +1608,21 @@ Atl. Tucumán; Tucumán`;
         showToast(result.error, 'error');
         return;
       }
+
+      // Guardar resultado global para exportación
+      currentResult = {
+        type: 'grupos',
+        parameters: {
+          discipline: discipline,
+          category: category,
+          gender: gender,
+          zones: zones,
+          teams: teams.length,
+          headsAsFirst: headsAsFirst
+        },
+        result: result,
+        date: new Date().toLocaleString()
+      };
 
       // Mostrar resultados
       const resultsContainer = document.getElementById('resultGroups');
@@ -1377,10 +1655,255 @@ Atl. Tucumán; Tucumán`;
       // Guardar en Firebase
       if (currentUser) {
         saveDraw('grupos', {
-          discipline: document.getElementById('disciplineSelect').value,
-          category: document.getElementById('categorySelect').value,
-          gender: document.getElementById('genderSelect').value
+          discipline: discipline,
+          category: category,
+          gender: gender
         }, result);
+      }
+    });
+
+    // ====================== EXPORTACIÓN A PDF ======================
+    document.getElementById('btnExportPDFSimple').addEventListener('click', function() {
+      if (!currentResult) {
+        showToast('No hay resultado para exportar', 'error');
+        return;
+      }
+      
+      generatePDF(currentResult);
+    });
+
+    function generatePDF(resultData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(20);
+      doc.text('Resultado del Sorteo', 105, 15, { align: 'center' });
+      
+      // Información del sorteo
+      doc.setFontSize(12);
+      doc.text(`Fecha: ${resultData.date}`, 20, 25);
+      if (resultData.parameters.discipline) {
+        doc.text(`Disciplina: ${resultData.parameters.discipline}`, 20, 32);
+      }
+      if (resultData.parameters.category) {
+        doc.text(`Categoría: ${resultData.parameters.category}`, 20, 39);
+      }
+      if (resultData.parameters.gender) {
+        doc.text(`Género: ${resultData.parameters.gender}`, 20, 46);
+      }
+      
+      let yPos = 60;
+      
+      if (resultData.type === 'grupos') {
+        // Grupos
+        resultData.result.groups.forEach((group, index) => {
+          if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFontSize(14);
+          doc.text(`Zona ${index + 1}`, 20, yPos);
+          yPos += 10;
+          
+          doc.setFontSize(10);
+          group.forEach((team, pos) => {
+            const teamText = `${pos + 1}. ${team.name}${team.province ? ` (${team.province})` : ''}${team.head ? ' [Cabeza]' : ''}`;
+            doc.text(teamText, 25, yPos);
+            yPos += 6;
+          });
+          
+          yPos += 5;
+        });
+      } else if (resultData.type === 'simple') {
+        // Sorteo simple
+        doc.setFontSize(14);
+        doc.text('Orden del Sorteo', 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        resultData.result.list.forEach((team, index) => {
+          const teamText = `${index + 1}. ${team.name}${team.province ? ` (${team.province})` : ''}`;
+          doc.text(teamText, 25, yPos);
+          yPos += 6;
+        });
+      }
+      
+      doc.save(`sorteo_${resultData.date.replace(/[/:\\]/g, '_')}.pdf`);
+      showToast('PDF exportado correctamente', 'success');
+    }
+
+    // ====================== SISTEMA DE SORTEO SIMPLE ======================
+    document.getElementById('btnUseFromGroups').addEventListener('click', function() {
+      const teamsText = document.getElementById('teamsInput').value;
+      document.getElementById('simpleInput').value = teamsText;
+      showToast('Lista de equipos importada desde Grupos', 'success');
+    });
+
+    document.getElementById('btnDrawSimple').addEventListener('click', function() {
+      const teamsText = document.getElementById('simpleInput').value;
+      const teams = teamsText.split('\n').filter(line => line.trim()).map(line => {
+        const parts = line.split(';').map(part => part.trim());
+        return {
+          name: parts[0],
+          province: parts[1] || ''
+        };
+      });
+
+      if (teams.length === 0) {
+        showToast('Ingresa al menos un equipo', 'error');
+        return;
+      }
+
+      const discipline = document.getElementById('disciplineSelectSimple').value;
+      const seed = discipline || 'simple_' + Date.now();
+      const rand = rngFromSeed(seed);
+      
+      const shuffledTeams = shuffle(teams, rand);
+      
+      // Guardar resultado global
+      currentResult = {
+        type: 'simple',
+        parameters: {
+          discipline: discipline,
+          teams: teams.length
+        },
+        result: {
+          list: shuffledTeams
+        },
+        date: new Date().toLocaleString()
+      };
+
+      // Mostrar resultados
+      const resultContainer = document.getElementById('resultSimple');
+      resultContainer.innerHTML = `
+        <div class="zone-card">
+          <div class="zone-header">
+            <h4 class="zone-title">Orden del Sorteo</h4>
+          </div>
+          <ol class="team-list">
+            ${shuffledTeams.map((team, index) => `
+              <li class="team-item">
+                <span class="team-position">${index + 1}.</span>
+                <span class="team-name">${escapeHtml(team.name)}</span>
+                ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
+              </li>
+            `).join('')}
+          </ol>
+        </div>
+      `;
+
+      showToast('Sorteo simple realizado correctamente', 'success');
+
+      // Guardar en Firebase
+      if (currentUser) {
+        saveDraw('simple', {
+          discipline: discipline
+        }, { list: shuffledTeams });
+      }
+    });
+
+    // ====================== SISTEMA DE ELIMINATORIAS ======================
+    document.getElementById('btnUseFromGroups2').addEventListener('click', function() {
+      const teamsText = document.getElementById('teamsInput').value;
+      document.getElementById('bracketInput').value = teamsText;
+      showToast('Lista de equipos importada desde Grupos', 'success');
+    });
+
+    document.getElementById('btnDrawBracket').addEventListener('click', function() {
+      const teamsText = document.getElementById('bracketInput').value;
+      const teams = teamsText.split('\n').filter(line => line.trim()).map(line => {
+        const parts = line.split(';').map(part => part.trim());
+        return {
+          name: parts[0],
+          province: parts[1] || ''
+        };
+      });
+
+      if (teams.length === 0) {
+        showToast('Ingresa al menos un equipo', 'error');
+        return;
+      }
+
+      const discipline = document.getElementById('disciplineSelectBracket').value;
+      const seed = discipline || 'bracket_' + Date.now();
+      const rand = rngFromSeed(seed);
+      
+      const shuffledTeams = shuffle(teams, rand);
+      
+      // Calcular potencia de 2 más cercana
+      const bracketSize = Math.pow(2, Math.ceil(Math.log2(shuffledTeams.length)));
+      const byes = bracketSize - shuffledTeams.length;
+      
+      // Crear llaves
+      const bracket = [];
+      for (let i = 0; i < bracketSize / 2; i++) {
+        const team1 = i < shuffledTeams.length ? shuffledTeams[i] : { name: 'BYE', province: '' };
+        const team2 = (bracketSize - i - 1) < shuffledTeams.length ? shuffledTeams[bracketSize - i - 1] : { name: 'BYE', province: '' };
+        
+        bracket.push({
+          match: i + 1,
+          team1: team1,
+          team2: team2
+        });
+      }
+
+      // Guardar resultado global
+      currentResult = {
+        type: 'bracket',
+        parameters: {
+          discipline: discipline,
+          teams: teams.length,
+          bracketSize: bracketSize,
+          byes: byes
+        },
+        result: {
+          bracket: bracket
+        },
+        date: new Date().toLocaleString()
+      };
+
+      // Mostrar resultados
+      const resultContainer = document.getElementById('resultBracket');
+      resultContainer.innerHTML = '';
+      
+      bracket.forEach(match => {
+        const matchCard = document.createElement('div');
+        matchCard.className = 'zone-card';
+        matchCard.innerHTML = `
+          <div class="zone-header">
+            <h4 class="zone-title">Partido ${match.match}</h4>
+          </div>
+          <div class="team-list">
+            <div class="team-item">
+              <span class="team-position">1.</span>
+              <span class="team-name">${escapeHtml(match.team1.name)}</span>
+              ${match.team1.province ? `<span class="text-xs text-muted">${escapeHtml(match.team1.province)}</span>` : ''}
+            </div>
+            <div class="team-item">
+              <span class="team-position">2.</span>
+              <span class="team-name">${escapeHtml(match.team2.name)}</span>
+              ${match.team2.province ? `<span class="text-xs text-muted">${escapeHtml(match.team2.province)}</span>` : ''}
+            </div>
+          </div>
+        `;
+        resultContainer.appendChild(matchCard);
+      });
+
+      if (byes > 0) {
+        document.getElementById('statusBracket').textContent = `Se generaron ${bracket.length} partidos con ${byes} BYE(s)`;
+      } else {
+        document.getElementById('statusBracket').textContent = `Se generaron ${bracket.length} partidos`;
+      }
+
+      showToast('Llaves generadas correctamente', 'success');
+
+      // Guardar en Firebase
+      if (currentUser) {
+        saveDraw('bracket', {
+          discipline: discipline
+        }, { bracket: bracket });
       }
     });
 
@@ -1407,23 +1930,38 @@ Atl. Tucumán; Tucumán`;
         showToast('Sorteo guardado en la nube', 'success');
       } catch (error) {
         console.error('Error guardando en Firebase:', error);
-        showToast('Error guardando en la nube', 'error');
+        // Intentar guardar localmente
+        const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        savedDraws.push(draw);
+        localStorage.setItem('savedDraws', JSON.stringify(savedDraws));
+        showToast('Sorteo guardado localmente (sin conexión)', 'info');
       }
     }
 
     async function renderSavedDraws() {
-      if (!currentUser) return;
+      const container = document.getElementById('savedDrawsList');
       
       try {
-        const snapshot = await db.collection('draws')
-          .where('userId', '==', currentUser.uid)
-          .orderBy('timestamp', 'desc')
-          .get();
+        let draws = [];
         
-        const draws = [];
-        snapshot.forEach(doc => draws.push(doc.data()));
+        if (currentUser) {
+          // Intentar cargar desde Firebase
+          const snapshot = await db.collection('draws')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('timestamp', 'desc')
+            .get();
+          
+          snapshot.forEach(doc => draws.push(doc.data()));
+          
+          // Cargar también los locales si existen
+          const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          const userLocalDraws = localDraws.filter(draw => draw.userId === currentUser.uid);
+          draws = [...draws, ...userLocalDraws];
+        } else {
+          // Cargar solo locales
+          draws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        }
         
-        const container = document.getElementById('savedDrawsList');
         document.getElementById('savedCount').textContent = draws.length;
         
         if (draws.length === 0) {
@@ -1447,7 +1985,8 @@ Atl. Tucumán; Tucumán`;
               <div class="text-xs">
                 ${draw.type === 'grupos' ? 
                   `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
-                  draw.type === 'simple' ? `${draw.result.list.length} equipos` : 'Llaves generadas'
+                  draw.type === 'simple' ? `${draw.result.list.length} equipos` : 
+                  `${draw.result.bracket.length} partidos • ${draw.parameters.teams} equipos`
                 }
               </div>
             </div>
@@ -1459,7 +1998,43 @@ Atl. Tucumán; Tucumán`;
         `).join('');
       } catch (error) {
         console.error('Error cargando sorteos:', error);
-        showToast('Error cargando sorteos guardados. Verifica las reglas de Firestore.', 'error');
+        // Cargar desde localStorage como fallback
+        const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        document.getElementById('savedCount').textContent = localDraws.length;
+        
+        if (localDraws.length === 0) {
+          container.innerHTML = '<div class="text-center text-muted p-4">No hay sorteos guardados</div>';
+        } else {
+          container.innerHTML = localDraws.map(draw => `
+            <div class="saved-draw-item">
+              <div class="saved-draw-info">
+                <div class="font-semibold">
+                  ${draw.type === 'grupos' ? '🏆 Zonas' : draw.type === 'simple' ? '🎲 Simple' : '⚔️ Eliminatorias'}
+                  <span class="text-xs text-muted">• ${draw.userName}</span>
+                </div>
+                <div class="text-xs text-muted">
+                  ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
+                  ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
+                  ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
+                  ${draw.date}
+                </div>
+                <div class="text-xs">
+                  ${draw.type === 'grupos' ? 
+                    `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
+                    draw.type === 'simple' ? `${draw.result.list.length} equipos` : 
+                    `${draw.result.bracket.length} partidos • ${draw.parameters.teams} equipos`
+                  }
+                </div>
+              </div>
+              <div class="saved-draw-actions">
+                <button class="btn btn-sm btn-outline" onclick="openSavedDraw('${draw.id}')">Abrir</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteDraw('${draw.id}')">Eliminar</button>
+              </div>
+            </div>
+          `).join('');
+        }
+        
+        showToast('Sorteos cargados desde almacenamiento local', 'info');
       }
     }
 
@@ -1471,6 +2046,10 @@ Atl. Tucumán; Tucumán`;
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
       document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+      // Inicializar formato de zonas
+      document.querySelector('input[name="format"][value="8x3"]').checked = true;
+      document.getElementById('zones').disabled = true;
 
       // Auth state listener
       auth.onAuthStateChanged((user) => {
@@ -1486,6 +2065,7 @@ Atl. Tucumán; Tucumán`;
           document.getElementById('connectionStatus').className = 'status status-offline';
           document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
           document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
+          document.getElementById('cloudInfo').textContent = '⚠️ Sin conexión - Sorteos guardados localmente';
         }
       });
 
@@ -1521,13 +2101,170 @@ Atl. Tucumán; Tucumán`;
 
     // Funciones globales
     window.openSavedDraw = async function(id) {
-      showToast('Función en desarrollo', 'info');
+      try {
+        let draw = null;
+        
+        // Buscar en Firebase primero
+        if (currentUser) {
+          try {
+            const doc = await db.collection('draws').doc(id).get();
+            if (doc.exists) {
+              draw = doc.data();
+            }
+          } catch (error) {
+            console.log('No se pudo cargar desde Firebase, buscando localmente');
+          }
+        }
+        
+        // Si no se encontró en Firebase, buscar localmente
+        if (!draw) {
+          const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          draw = savedDraws.find(d => d.id === id);
+        }
+        
+        if (!draw) {
+          showToast('No se pudo encontrar el sorteo', 'error');
+          return;
+        }
+        
+        // Abrir en nueva pestaña
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Resultado del Sorteo</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+              .result-header { text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #eee; }
+              .result-actions { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; }
+              .zone-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+              .team-list { list-style: none; padding: 0; }
+              .team-item { display: flex; align-items: center; gap: 8px; padding: 0.5rem 0; border-bottom: 1px solid #dee2e6; }
+              .team-item:last-child { border-bottom: none; }
+              .team-position { font-weight: 600; color: #6c757d; min-width: 20px; }
+              .team-badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 12px; background: #28a745; color: white; }
+              button { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
+              .btn-primary { background: #007bff; color: white; }
+            </style>
+          </head>
+          <body>
+            <div class="result-header">
+              <h1>Resultado del Sorteo</h1>
+              <p>${draw.date}</p>
+              ${draw.parameters.discipline ? `<p><strong>Disciplina:</strong> ${draw.parameters.discipline}</p>` : ''}
+              ${draw.parameters.category ? `<p><strong>Categoría:</strong> ${draw.parameters.category}</p>` : ''}
+              ${draw.parameters.gender ? `<p><strong>Género:</strong> ${draw.parameters.gender}</p>` : ''}
+            </div>
+            
+            ${draw.type === 'grupos' ? `
+              <div class="results-grid">
+                ${draw.result.groups.map((group, index) => `
+                  <div class="zone-card">
+                    <div class="zone-header">
+                      <h3>Zona ${index + 1}</h3>
+                    </div>
+                    <ol class="team-list">
+                      ${group.map((team, pos) => `
+                        <li class="team-item">
+                          <span class="team-position">${pos + 1}.</span>
+                          <span class="team-name">${team.name}</span>
+                          ${team.province ? `<span class="text-muted">${team.province}</span>` : ''}
+                          ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+                        </li>
+                      `).join('')}
+                    </ol>
+                  </div>
+                `).join('')}
+              </div>
+            ` : draw.type === 'simple' ? `
+              <div class="zone-card">
+                <div class="zone-header">
+                  <h3>Orden del Sorteo</h3>
+                </div>
+                <ol class="team-list">
+                  ${draw.result.list.map((team, index) => `
+                    <li class="team-item">
+                      <span class="team-position">${index + 1}.</span>
+                      <span class="team-name">${team.name}</span>
+                      ${team.province ? `<span class="text-muted">${team.province}</span>` : ''}
+                    </li>
+                  `).join('')}
+                </ol>
+              </div>
+            ` : `
+              <div class="results-grid">
+                ${draw.result.bracket.map(match => `
+                  <div class="zone-card">
+                    <div class="zone-header">
+                      <h3>Partido ${match.match}</h3>
+                    </div>
+                    <div class="team-list">
+                      <div class="team-item">
+                        <span class="team-position">1.</span>
+                        <span class="team-name">${match.team1.name}</span>
+                        ${match.team1.province ? `<span class="text-muted">${match.team1.province}</span>` : ''}
+                      </div>
+                      <div class="team-item">
+                        <span class="team-position">2.</span>
+                        <span class="team-name">${match.team2.name}</span>
+                        ${match.team2.province ? `<span class="text-muted">${match.team2.province}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+            
+            <div class="result-actions">
+              <button class="btn-primary" onclick="window.print()">🖨️ Imprimir</button>
+              <button class="btn-primary" onclick="generatePDF()">📄 Exportar PDF</button>
+            </div>
+            
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+            <script>
+              function generatePDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const element = document.body;
+                
+                doc.html(element, {
+                  callback: function(doc) {
+                    doc.save('sorteo.pdf');
+                  },
+                  x: 10,
+                  y: 10,
+                  width: 190,
+                  windowWidth: 1000
+                });
+              }
+            </script>
+          </body>
+          </html>
+        `);
+      } catch (error) {
+        console.error('Error abriendo sorteo:', error);
+        showToast('Error al abrir el sorteo', 'error');
+      }
     };
 
     window.deleteDraw = async function(id) {
       if (confirm('¿Eliminar este sorteo?')) {
         try {
-          await db.collection('draws').doc(id).delete();
+          // Intentar eliminar de Firebase
+          if (currentUser) {
+            try {
+              await db.collection('draws').doc(id).delete();
+            } catch (error) {
+              console.log('No se pudo eliminar de Firebase, eliminando localmente');
+            }
+          }
+          
+          // Eliminar localmente
+          const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          const filteredDraws = savedDraws.filter(draw => draw.id !== id);
+          localStorage.setItem('savedDraws', JSON.stringify(filteredDraws));
+          
           showToast('Sorteo eliminado', 'success');
           renderSavedDraws();
         } catch (error) {
