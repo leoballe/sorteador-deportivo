@@ -1091,7 +1091,7 @@ Newell's; Santa Fe
       }
     }
 */
-    // Registro - VERSIÓN CORREGIDA  
+  // Registro - VERSIÓN CORREGIDA  
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const submitBtn = document.getElementById('registerSubmit');
@@ -1111,19 +1111,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     await userCredential.user.updateProfile({ displayName: name });
-    console.log('Registration successful:', userCredential.user);
-    showToast('Cuenta creada exitosamente', 'success');
-    
-    // No llamar a updateUserInfo aquí - el listener onAuthStateChanged se encargará
+    // El listener onAuthStateChanged manejará la transición de UI
   } catch (error) {
     console.error('Registration error:', error);
     showToast('Error: ' + error.message, 'error');
-  } finally {
     toggleLoading(submitBtn, false);
   }
 });
 
-    // Login - VERSIÓN CORREGIDA
+// Login - VERSIÓN CORREGIDA
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const submitBtn = document.getElementById('loginSubmit');
@@ -1133,9 +1129,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const password = document.getElementById('loginPassword').value;
 
   try {
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-    console.log('Login successful:', userCredential.user);
-    showToast('Sesión iniciada correctamente', 'success');
+    await auth.signInWithEmailAndPassword(email, password);
+    // El listener onAuthStateChanged manejará la transición de UI
+  } catch (error) {
+    console.error('Login error:', error);
+    showToast('Error: ' + error.message, 'error');
+    toggleLoading(submitBtn, false);
+  }
+});
     
     // No llamar a updateUserInfo aquí - el listener onAuthStateChanged se encargará
   } catch (error) {
@@ -2256,13 +2257,9 @@ auth.onAuthStateChanged((user) => {
   
   if (user) {
     console.log('User signed in:', user.email);
-    document.getElementById('connectionStatus').className = 'status status-online';
-    document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
-    document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
-    document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
     
-    // Actualizar información de usuario y mostrar sección app
-    document.getElementById('userName').textContent = user.displayName || 'Usuario';
+    // Actualizar UI para usuario autenticado
+    document.getElementById('userName').textContent = user.displayName || user.email;
     document.getElementById('userEmail').textContent = user.email;
     document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
     
@@ -2272,28 +2269,27 @@ auth.onAuthStateChanged((user) => {
     document.getElementById('authButtons').classList.add('hidden');
     document.getElementById('userMenu').classList.remove('hidden');
     
+    // Actualizar estado
+    document.getElementById('connectionStatus').className = 'status status-online';
+    document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
+    document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
+    document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
+    
   } else {
     console.log('User signed out');
-    document.getElementById('connectionStatus').className = 'status status-offline';
-    document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
-    document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
     
     // Mostrar sección de autenticación
     document.getElementById('authSection').classList.remove('hidden');
     document.getElementById('appSection').classList.add('hidden');
     document.getElementById('authButtons').classList.remove('hidden');
     document.getElementById('userMenu').classList.add('hidden');
+    
+    // Actualizar estado
+    document.getElementById('connectionStatus').className = 'status status-offline';
+    document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
+    document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
   }
 });
-
-      // Botones auth header
-      document.getElementById('loginBtn').addEventListener('click', () => {
-        document.querySelector('.auth-tab[data-tab="login"]').click();
-      });
-
-      document.getElementById('registerBtn').addEventListener('click', () => {
-        document.querySelector('.auth-tab[data-tab="register"]').click();
-      });
 
       // Inicializar disciplinas
       refreshDisciplineSelects();
