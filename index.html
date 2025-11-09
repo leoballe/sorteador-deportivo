@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
+    /* TODOS LOS ESTILOS SE MANTIENEN IGUAL */
     :root {
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
@@ -1066,86 +1067,53 @@ Newell's; Santa Fe
     }
 
     // ====================== SISTEMA DE AUTENTICACIÓN ======================
-   /* function showAuthSection() {
-      document.getElementById('authSection').classList.remove('hidden');
-      document.getElementById('appSection').classList.add('hidden');
-      document.getElementById('authButtons').classList.remove('hidden');
-      document.getElementById('userMenu').classList.add('hidden');
-    }
 
-    function showAppSection() {
-      document.getElementById('authSection').classList.add('hidden');
-      document.getElementById('appSection').classList.remove('hidden');
-      document.getElementById('authButtons').classList.add('hidden');
-      document.getElementById('userMenu').classList.remove('hidden');
-    }
+    // Registro
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('registerSubmit');
+      toggleLoading(submitBtn, true);
 
-    function updateUserInfo(user) {
-      if (user) {
-        document.getElementById('userName').textContent = user.displayName || 'Usuario';
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
-        showAppSection();
-      } else {
-        showAuthSection();
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+      if (password !== confirmPassword) {
+        showToast('Las contraseñas no coinciden', 'error');
+        toggleLoading(submitBtn, false);
+        return;
       }
-    }
-*/
-  // Registro - VERSIÓN CORREGIDA  
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const submitBtn = document.getElementById('registerSubmit');
-  toggleLoading(submitBtn, true);
 
-  const name = document.getElementById('registerName').value;
-  const email = document.getElementById('registerEmail').value;
-  const password = document.getElementById('registerPassword').value;
-  const confirmPassword = document.getElementById('registerConfirmPassword').value;
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: name });
+        showToast('Cuenta creada exitosamente', 'success');
+      } catch (error) {
+        console.error('Registration error:', error);
+        showToast('Error: ' + error.message, 'error');
+        toggleLoading(submitBtn, false);
+      }
+    });
 
-  if (password !== confirmPassword) {
-    showToast('Las contraseñas no coinciden', 'error');
-    toggleLoading(submitBtn, false);
-    return;
-  }
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('loginSubmit');
+      toggleLoading(submitBtn, true);
 
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    await userCredential.user.updateProfile({ displayName: name });
-    // El listener onAuthStateChanged manejará la transición de UI
-  } catch (error) {
-    console.error('Registration error:', error);
-    showToast('Error: ' + error.message, 'error');
-    toggleLoading(submitBtn, false);
-  }
-});
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
 
-// Login - VERSIÓN CORREGIDA
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const submitBtn = document.getElementById('loginSubmit');
-  toggleLoading(submitBtn, true);
-
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    // El listener onAuthStateChanged manejará la transición de UI
-  } catch (error) {
-    console.error('Login error:', error);
-    showToast('Error: ' + error.message, 'error');
-    toggleLoading(submitBtn, false);
-  }
-});
-    
-    // No llamar a updateUserInfo aquí - el listener onAuthStateChanged se encargará
-  } catch (error) {
-    console.error('Login error:', error);
-    showToast('Error: ' + error.message, 'error');
-  } finally {
-    toggleLoading(submitBtn, false);
-  }
-});
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast('Sesión iniciada correctamente', 'success');
+      } catch (error) {
+        console.error('Login error:', error);
+        showToast('Error: ' + error.message, 'error');
+        toggleLoading(submitBtn, false);
+      }
+    });
 
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -1588,106 +1556,106 @@ Atl. Tucumán; Tucumán`;
     }
 
     // CORREGIR EL BOTÓN DE SORTEAR ZONAS
-document.getElementById('btnDrawGroups').addEventListener('click', () => {
-  console.log('Iniciando sorteo de zonas...');
-  
-  // Obtener equipos del textarea
-  const teamsText = document.getElementById('teamsInput').value;
-  const teams = teamsText.split('\n')
-    .filter(line => line.trim())
-    .map((line, index) => {
-      const parts = line.split(';').map(part => part.trim());
-      return {
-        id: index,
-        name: parts[0] || '',
-        province: parts[1] || '',
-        head: parts[2] === '*' || parts[0].includes('*')
+    document.getElementById('btnDrawGroups').addEventListener('click', () => {
+      console.log('Iniciando sorteo de zonas...');
+      
+      // Obtener equipos del textarea
+      const teamsText = document.getElementById('teamsInput').value;
+      const teams = teamsText.split('\n')
+        .filter(line => line.trim())
+        .map((line, index) => {
+          const parts = line.split(';').map(part => part.trim());
+          return {
+            id: index,
+            name: parts[0] || '',
+            province: parts[1] || '',
+            head: parts[2] === '*' || parts[0].includes('*')
+          };
+        })
+        .filter(team => team.name); // Filtrar equipos sin nombre
+
+      console.log('Equipos procesados:', teams);
+
+      if (teams.length === 0) {
+        showToast('Ingresa al menos un equipo', 'error');
+        return;
+      }
+
+      const zones = parseInt(document.getElementById('zones').value) || 8;
+      const headsAsFirst = document.getElementById('headsAsFirst').checked;
+      const discipline = document.getElementById('disciplineSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const gender = document.getElementById('genderSelect').value;
+      
+      // Semilla más robusta
+      const seed = discipline || 'sorteo_' + Date.now() + '_' + Math.random();
+
+      console.log('Parámetros:', { zones, headsAsFirst, teamsCount: teams.length });
+
+      // Realizar el sorteo
+      const result = drawGroups(teams, zones, headsAsFirst, seed, 'custom');
+      
+      if (result.error) {
+        document.getElementById('drawStatus').textContent = result.error;
+        showToast(result.error, 'error');
+        return;
+      }
+
+      // Guardar resultado global
+      currentResult = {
+        type: 'grupos',
+        parameters: {
+          discipline: discipline,
+          category: category,
+          gender: gender,
+          zones: zones,
+          teams: teams.length,
+          headsAsFirst: headsAsFirst
+        },
+        result: result,
+        date: new Date().toLocaleString()
       };
-    })
-    .filter(team => team.name); // Filtrar equipos sin nombre
 
-  console.log('Equipos procesados:', teams);
+      // Mostrar resultados EN UNA NUEVA PESTAÑA
+      showResultInNewTab(currentResult);
+      
+      // También mostrar en la misma página
+      const resultsContainer = document.getElementById('resultGroups');
+      resultsContainer.innerHTML = '';
+      
+      result.groups.forEach((group, index) => {
+        const zoneCard = document.createElement('div');
+        zoneCard.className = 'zone-card';
+        zoneCard.innerHTML = `
+          <div class="zone-header">
+            <h4 class="zone-title">Zona ${index + 1}</h4>
+          </div>
+          <ol class="team-list">
+            ${group.map((team, pos) => `
+              <li class="team-item">
+                <span class="team-position">${pos + 1}.</span>
+                <span class="team-name">${escapeHtml(team.name)}</span>
+                ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
+                ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+              </li>
+            `).join('')}
+          </ol>
+        `;
+        resultsContainer.appendChild(zoneCard);
+      });
 
-  if (teams.length === 0) {
-    showToast('Ingresa al menos un equipo', 'error');
-    return;
-  }
+      document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
+      showToast('Sorteo realizado correctamente', 'success');
 
-  const zones = parseInt(document.getElementById('zones').value) || 8;
-  const headsAsFirst = document.getElementById('headsAsFirst').checked;
-  const discipline = document.getElementById('disciplineSelect').value;
-  const category = document.getElementById('categorySelect').value;
-  const gender = document.getElementById('genderSelect').value;
-  
-  // Semilla más robusta
-  const seed = discipline || 'sorteo_' + Date.now() + '_' + Math.random();
-
-  console.log('Parámetros:', { zones, headsAsFirst, teamsCount: teams.length });
-
-  // Realizar el sorteo
-  const result = drawGroups(teams, zones, headsAsFirst, seed, 'custom');
-  
-  if (result.error) {
-    document.getElementById('drawStatus').textContent = result.error;
-    showToast(result.error, 'error');
-    return;
-  }
-
-  // Guardar resultado global
-  currentResult = {
-    type: 'grupos',
-    parameters: {
-      discipline: discipline,
-      category: category,
-      gender: gender,
-      zones: zones,
-      teams: teams.length,
-      headsAsFirst: headsAsFirst
-    },
-    result: result,
-    date: new Date().toLocaleString()
-  };
-
-  // Mostrar resultados EN UNA NUEVA PESTAÑA
-  showResultInNewTab(currentResult);
-  
-  // También mostrar en la misma página
-  const resultsContainer = document.getElementById('resultGroups');
-  resultsContainer.innerHTML = '';
-  
-  result.groups.forEach((group, index) => {
-    const zoneCard = document.createElement('div');
-    zoneCard.className = 'zone-card';
-    zoneCard.innerHTML = `
-      <div class="zone-header">
-        <h4 class="zone-title">Zona ${index + 1}</h4>
-      </div>
-      <ol class="team-list">
-        ${group.map((team, pos) => `
-          <li class="team-item">
-            <span class="team-position">${pos + 1}.</span>
-            <span class="team-name">${escapeHtml(team.name)}</span>
-            ${team.province ? `<span class="text-xs text-muted">${escapeHtml(team.province)}</span>` : ''}
-            ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
-          </li>
-        `).join('')}
-      </ol>
-    `;
-    resultsContainer.appendChild(zoneCard);
-  });
-
-  document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
-  showToast('Sorteo realizado correctamente', 'success');
-
-  // Guardar en Firebase
-  if (currentUser) {
-    saveDraw('grupos', {
-      discipline: discipline,
-      category: category,
-      gender: gender
-    }, result);
-  }
-});
+      // Guardar en Firebase
+      if (currentUser) {
+        saveDraw('grupos', {
+          discipline: discipline,
+          category: category,
+          gender: gender
+        }, result);
+      }
+    });
 
     // ====================== EXPORTACIÓN A PDF ======================
     document.getElementById('btnExportPDFSimple').addEventListener('click', function() {
@@ -1965,278 +1933,280 @@ document.getElementById('btnDrawGroups').addEventListener('click', () => {
       }
     }
 
-async function renderSavedDraws() {
-  console.log('Cargando sorteos guardados...');
-  const container = document.getElementById('savedDrawsList');
-  
-  try {
-    let draws = [];
-    
-    if (currentUser) {
-      console.log('Usuario autenticado, buscando en Firebase...');
+    async function renderSavedDraws() {
+      console.log('Cargando sorteos guardados...');
+      const container = document.getElementById('savedDrawsList');
+      
       try {
-        // Usar get() en lugar de where para debugging
-        const snapshot = await db.collection('draws').get();
-        console.log('Snapshot obtenido:', snapshot.size, 'documentos');
+        let draws = [];
         
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          // Solo mostrar sorteos del usuario actual
-          if (data.userId === currentUser.uid) {
-            draws.push({ ...data, id: doc.id });
+        if (currentUser) {
+          console.log('Usuario autenticado, buscando en Firebase...');
+          try {
+            // Usar get() en lugar de where para debugging
+            const snapshot = await db.collection('draws').get();
+            console.log('Snapshot obtenido:', snapshot.size, 'documentos');
+            
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              // Solo mostrar sorteos del usuario actual
+              if (data.userId === currentUser.uid) {
+                draws.push({ ...data, id: doc.id });
+              }
+            });
+            
+            console.log('Sorteos del usuario:', draws.length);
+          } catch (firebaseError) {
+            console.error('Error Firebase:', firebaseError);
+            showToast('Error cargando sorteos de la nube', 'error');
           }
-        });
+        }
         
-        console.log('Sorteos del usuario:', draws.length);
-      } catch (firebaseError) {
-        console.error('Error Firebase:', firebaseError);
-        showToast('Error cargando sorteos de la nube', 'error');
+        // También cargar desde localStorage
+        const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        console.log('Sorteos locales:', localDraws.length);
+        
+        // Combinar y eliminar duplicados
+        const allDraws = [...draws, ...localDraws];
+        const uniqueDraws = allDraws.filter((draw, index, self) => 
+          index === self.findIndex(d => d.id === draw.id)
+        );
+        
+        // Ordenar por fecha
+        uniqueDraws.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        document.getElementById('savedCount').textContent = uniqueDraws.length;
+        
+        if (uniqueDraws.length === 0) {
+          container.innerHTML = '<div class="text-center text-muted p-4">No hay sorteos guardados</div>';
+          return;
+        }
+        
+        container.innerHTML = uniqueDraws.map(draw => `
+          <div class="saved-draw-item">
+            <div class="saved-draw-info">
+              <div class="font-semibold">
+                ${draw.type === 'grupos' ? '🏆 Zonas' : draw.type === 'simple' ? '🎲 Simple' : '⚔️ Eliminatorias'}
+                <span class="text-xs text-muted">• ${draw.userName || 'Usuario'}</span>
+              </div>
+              <div class="text-xs text-muted">
+                ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
+                ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
+                ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
+                ${draw.date}
+              </div>
+              <div class="text-xs">
+                ${draw.type === 'grupos' ? 
+                  `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
+                  draw.type === 'simple' ? `${draw.result.list.length} equipos` : 
+                  `${draw.result.bracket.length} partidos • ${draw.parameters.teams} equipos`
+                }
+              </div>
+            </div>
+            <div class="saved-draw-actions">
+              <button class="btn btn-sm btn-outline" onclick="openSavedDraw('${draw.id}')">Abrir</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteDraw('${draw.id}')">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+        
+        showToast(`Sorteos cargados: ${uniqueDraws.length}`, 'success');
+        
+      } catch (error) {
+        console.error('Error cargando sorteos:', error);
+        container.innerHTML = '<div class="text-center text-muted p-4">Error cargando sorteos</div>';
       }
     }
-    
-    // También cargar desde localStorage
-    const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
-    console.log('Sorteos locales:', localDraws.length);
-    
-    // Combinar y eliminar duplicados
-    const allDraws = [...draws, ...localDraws];
-    const uniqueDraws = allDraws.filter((draw, index, self) => 
-      index === self.findIndex(d => d.id === draw.id)
-    );
-    
-    // Ordenar por fecha
-    uniqueDraws.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    document.getElementById('savedCount').textContent = uniqueDraws.length;
-    
-    if (uniqueDraws.length === 0) {
-      container.innerHTML = '<div class="text-center text-muted p-4">No hay sorteos guardados</div>';
-      return;
-    }
-    
-    container.innerHTML = uniqueDraws.map(draw => `
-      <div class="saved-draw-item">
-        <div class="saved-draw-info">
-          <div class="font-semibold">
-            ${draw.type === 'grupos' ? '🏆 Zonas' : draw.type === 'simple' ? '🎲 Simple' : '⚔️ Eliminatorias'}
-            <span class="text-xs text-muted">• ${draw.userName || 'Usuario'}</span>
-          </div>
-          <div class="text-xs text-muted">
-            ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
-            ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
-            ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
-            ${draw.date}
-          </div>
-          <div class="text-xs">
-            ${draw.type === 'grupos' ? 
-              `${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos` : 
-              draw.type === 'simple' ? `${draw.result.list.length} equipos` : 
-              `${draw.result.bracket.length} partidos • ${draw.parameters.teams} equipos`
-            }
-          </div>
-        </div>
-        <div class="saved-draw-actions">
-          <button class="btn btn-sm btn-outline" onclick="openSavedDraw('${draw.id}')">Abrir</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteDraw('${draw.id}')">Eliminar</button>
-        </div>
-      </div>
-    `).join('');
-    
-    showToast(`Sorteos cargados: ${uniqueDraws.length}`, 'success');
-    
-  } catch (error) {
-    console.error('Error cargando sorteos:', error);
-    container.innerHTML = '<div class="text-center text-muted p-4">Error cargando sorteos</div>';
-  }
-}
-// FUNCIÓN NUEVA: Mostrar resultado en nueva pestaña
-function showResultInNewTab(resultData) {
-  console.log('Abriendo resultado en nueva pestaña...');
-  
-  const newWindow = window.open('', '_blank');
-  if (!newWindow) {
-    showToast('Permite ventanas emergentes para ver el resultado', 'warning');
-    return;
-  }
-  
-  newWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Resultado del Sorteo - ${resultData.date}</title>
-      <meta charset="utf-8">
-      <style>
-        body { 
-          font-family: Arial, sans-serif; 
-          padding: 20px; 
-          max-width: 1200px; 
-          margin: 0 auto; 
-          background: #f5f5f5;
-        }
-        .result-page { 
-          background: white; 
-          padding: 2rem; 
-          border-radius: 12px; 
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .result-header { 
-          text-align: center; 
-          margin-bottom: 2rem; 
-          padding-bottom: 1rem; 
-          border-bottom: 2px solid #eee; 
-        }
-        .result-actions { 
-          display: flex; 
-          justify-content: center; 
-          gap: 1rem; 
-          margin: 2rem 0; 
-          flex-wrap: wrap;
-        }
-        .btn { 
-          padding: 0.75rem 1.5rem; 
-          border: none; 
-          border-radius: 8px; 
-          cursor: pointer; 
-          font-weight: 500;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .btn-primary { 
-          background: #2563eb; 
-          color: white; 
-        }
-        .btn-outline { 
-          background: transparent; 
-          color: #2563eb; 
-          border: 1px solid #2563eb; 
-        }
-        .results-grid { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-          gap: 1rem; 
-          margin-top: 1.5rem; 
-        }
-        .zone-card { 
-          background: #f8fafc; 
-          border: 1px solid #e2e8f0; 
-          border-radius: 8px; 
-          padding: 1rem; 
-        }
-        .zone-header { 
-          display: flex; 
-          align-items: center; 
-          margin-bottom: 0.75rem; 
-        }
-        .zone-title { 
-          font-weight: 600; 
-          color: #0f172a; 
-        }
-        .team-list { 
-          list-style: none; 
-          padding: 0; 
-        }
-        .team-item { 
-          display: flex; 
-          align-items: center; 
-          gap: 8px; 
-          padding: 0.5rem 0; 
-          border-bottom: 1px solid #e2e8f0; 
-        }
-        .team-item:last-child { border-bottom: none; }
-        .team-position { 
-          font-weight: 600; 
-          color: #64748b; 
-          min-width: 20px; 
-        }
-        .team-name { flex: 1; color: #0f172a; }
-        .team-badge { 
-          font-size: 0.75rem; 
-          padding: 2px 6px; 
-          border-radius: 12px; 
-          background: #10b981; 
-          color: white; 
-        }
-        .text-xs { font-size: 0.75rem; }
-        .text-muted { color: #64748b; }
-        @media print {
-          .result-actions { display: none; }
-          body { background: white; }
-          .result-page { box-shadow: none; padding: 0; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="result-page">
-        <div class="result-header">
-          <h1>Resultado del Sorteo</h1>
-          <p><strong>Fecha:</strong> ${resultData.date}</p>
-          ${resultData.parameters.discipline ? `<p><strong>Disciplina:</strong> ${resultData.parameters.discipline}</p>` : ''}
-          ${resultData.parameters.category ? `<p><strong>Categoría:</strong> ${resultData.parameters.category}</p>` : ''}
-          ${resultData.parameters.gender ? `<p><strong>Género:</strong> ${resultData.parameters.gender}</p>` : ''}
-          <p><strong>Equipos:</strong> ${resultData.parameters.teams} • <strong>Zonas:</strong> ${resultData.parameters.zones}</p>
-        </div>
-        
-        ${resultData.type === 'grupos' ? `
-          <div class="results-grid">
-            ${resultData.result.groups.map((group, index) => `
-              <div class="zone-card">
-                <div class="zone-header">
-                  <h3 class="zone-title">Zona ${index + 1}</h3>
-                </div>
-                <ol class="team-list">
-                  ${group.map((team, pos) => `
-                    <li class="team-item">
-                      <span class="team-position">${pos + 1}.</span>
-                      <span class="team-name">${team.name}</span>
-                      ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
-                      ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
-                    </li>
-                  `).join('')}
-                </ol>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-        
-        <div class="result-actions">
-          <button class="btn btn-primary" onclick="window.print()">
-            🖨️ Imprimir
-          </button>
-          <button class="btn btn-outline" onclick="generatePDF()">
-            📄 Exportar PDF
-          </button>
-          <button class="btn btn-outline" onclick="window.close()">
-            ❌ Cerrar
-          </button>
-        </div>
-      </div>
 
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-      <script>
-        function generatePDF() {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF();
-          const element = document.querySelector('.result-page');
-          
-          doc.html(element, {
-            callback: function(doc) {
-              doc.save('resultado-sorteo.pdf');
-            },
-            x: 10,
-            y: 10,
-            width: 190,
-            windowWidth: 1200
-          });
-        }
-      </script>
-    </body>
-    </html>
-  `);
-  
-  newWindow.document.close();
-}
+    // FUNCIÓN NUEVA: Mostrar resultado en nueva pestaña
+    function showResultInNewTab(resultData) {
+      console.log('Abriendo resultado en nueva pestaña...');
+      
+      const newWindow = window.open('', '_blank');
+      if (!newWindow) {
+        showToast('Permite ventanas emergentes para ver el resultado', 'warning');
+        return;
+      }
+      
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Resultado del Sorteo - ${resultData.date}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px; 
+              max-width: 1200px; 
+              margin: 0 auto; 
+              background: #f5f5f5;
+            }
+            .result-page { 
+              background: white; 
+              padding: 2rem; 
+              border-radius: 12px; 
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .result-header { 
+              text-align: center; 
+              margin-bottom: 2rem; 
+              padding-bottom: 1rem; 
+              border-bottom: 2px solid #eee; 
+            }
+            .result-actions { 
+              display: flex; 
+              justify-content: center; 
+              gap: 1rem; 
+              margin: 2rem 0; 
+              flex-wrap: wrap;
+            }
+            .btn { 
+              padding: 0.75rem 1.5rem; 
+              border: none; 
+              border-radius: 8px; 
+              cursor: pointer; 
+              font-weight: 500;
+              text-decoration: none;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .btn-primary { 
+              background: #2563eb; 
+              color: white; 
+            }
+            .btn-outline { 
+              background: transparent; 
+              color: #2563eb; 
+              border: 1px solid #2563eb; 
+            }
+            .results-grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+              gap: 1rem; 
+              margin-top: 1.5rem; 
+            }
+            .zone-card { 
+              background: #f8fafc; 
+              border: 1px solid #e2e8f0; 
+              border-radius: 8px; 
+              padding: 1rem; 
+            }
+            .zone-header { 
+              display: flex; 
+              align-items: center; 
+              margin-bottom: 0.75rem; 
+            }
+            .zone-title { 
+              font-weight: 600; 
+              color: #0f172a; 
+            }
+            .team-list { 
+              list-style: none; 
+              padding: 0; 
+            }
+            .team-item { 
+              display: flex; 
+              align-items: center; 
+              gap: 8px; 
+              padding: 0.5rem 0; 
+              border-bottom: 1px solid #e2e8f0; 
+            }
+            .team-item:last-child { border-bottom: none; }
+            .team-position { 
+              font-weight: 600; 
+              color: #64748b; 
+              min-width: 20px; 
+            }
+            .team-name { flex: 1; color: #0f172a; }
+            .team-badge { 
+              font-size: 0.75rem; 
+              padding: 2px 6px; 
+              border-radius: 12px; 
+              background: #10b981; 
+              color: white; 
+            }
+            .text-xs { font-size: 0.75rem; }
+            .text-muted { color: #64748b; }
+            @media print {
+              .result-actions { display: none; }
+              body { background: white; }
+              .result-page { box-shadow: none; padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="result-page">
+            <div class="result-header">
+              <h1>Resultado del Sorteo</h1>
+              <p><strong>Fecha:</strong> ${resultData.date}</p>
+              ${resultData.parameters.discipline ? `<p><strong>Disciplina:</strong> ${resultData.parameters.discipline}</p>` : ''}
+              ${resultData.parameters.category ? `<p><strong>Categoría:</strong> ${resultData.parameters.category}</p>` : ''}
+              ${resultData.parameters.gender ? `<p><strong>Género:</strong> ${resultData.parameters.gender}</p>` : ''}
+              <p><strong>Equipos:</strong> ${resultData.parameters.teams} • <strong>Zonas:</strong> ${resultData.parameters.zones}</p>
+            </div>
+            
+            ${resultData.type === 'grupos' ? `
+              <div class="results-grid">
+                ${resultData.result.groups.map((group, index) => `
+                  <div class="zone-card">
+                    <div class="zone-header">
+                      <h3 class="zone-title">Zona ${index + 1}</h3>
+                    </div>
+                    <ol class="team-list">
+                      ${group.map((team, pos) => `
+                        <li class="team-item">
+                          <span class="team-position">${pos + 1}.</span>
+                          <span class="team-name">${team.name}</span>
+                          ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
+                          ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+                        </li>
+                      `).join('')}
+                    </ol>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+            
+            <div class="result-actions">
+              <button class="btn btn-primary" onclick="window.print()">
+                🖨️ Imprimir
+              </button>
+              <button class="btn btn-outline" onclick="generatePDF()">
+                📄 Exportar PDF
+              </button>
+              <button class="btn btn-outline" onclick="window.close()">
+                ❌ Cerrar
+              </button>
+            </div>
+          </div>
+
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+          <script>
+            function generatePDF() {
+              const { jsPDF } = window.jspdf;
+              const doc = new jsPDF();
+              const element = document.querySelector('.result-page');
+              
+              doc.html(element, {
+                callback: function(doc) {
+                  doc.save('resultado-sorteo.pdf');
+                },
+                x: 10,
+                y: 10,
+                width: 190,
+                windowWidth: 1200
+              });
+            }
+          </script>
+        </body>
+        </html>
+      `);
+      
+      newWindow.document.close();
+    }
+
     // ====================== INICIALIZACIÓN ======================
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Sorteador Deportivo Profesional - Inicializado');
@@ -2250,46 +2220,55 @@ function showResultInNewTab(resultData) {
       document.querySelector('input[name="format"][value="8x3"]').checked = true;
       document.getElementById('zones').disabled = true;
 
-// Auth state listener - VERSIÓN CORREGIDA
-auth.onAuthStateChanged((user) => {
-  console.log('Auth state changed:', user);
-  currentUser = user;
-  
-  if (user) {
-    console.log('User signed in:', user.email);
-    
-    // Actualizar UI para usuario autenticado
-    document.getElementById('userName').textContent = user.displayName || user.email;
-    document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
-    
-    // Mostrar sección de aplicación
-    document.getElementById('authSection').classList.add('hidden');
-    document.getElementById('appSection').classList.remove('hidden');
-    document.getElementById('authButtons').classList.add('hidden');
-    document.getElementById('userMenu').classList.remove('hidden');
-    
-    // Actualizar estado
-    document.getElementById('connectionStatus').className = 'status status-online';
-    document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
-    document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
-    document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
-    
-  } else {
-    console.log('User signed out');
-    
-    // Mostrar sección de autenticación
-    document.getElementById('authSection').classList.remove('hidden');
-    document.getElementById('appSection').classList.add('hidden');
-    document.getElementById('authButtons').classList.remove('hidden');
-    document.getElementById('userMenu').classList.add('hidden');
-    
-    // Actualizar estado
-    document.getElementById('connectionStatus').className = 'status status-offline';
-    document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
-    document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
-  }
-});
+      // Auth state listener - VERSIÓN CORREGIDA
+      auth.onAuthStateChanged((user) => {
+        console.log('Auth state changed:', user);
+        currentUser = user;
+        
+        if (user) {
+          console.log('User signed in:', user.email);
+          
+          // Actualizar UI para usuario autenticado
+          document.getElementById('userName').textContent = user.displayName || user.email;
+          document.getElementById('userEmail').textContent = user.email;
+          document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+          
+          // Mostrar sección de aplicación
+          document.getElementById('authSection').classList.add('hidden');
+          document.getElementById('appSection').classList.remove('hidden');
+          document.getElementById('authButtons').classList.add('hidden');
+          document.getElementById('userMenu').classList.remove('hidden');
+          
+          // Actualizar estado
+          document.getElementById('connectionStatus').className = 'status status-online';
+          document.getElementById('connectionStatus').innerHTML = '✅ Conectado';
+          document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
+          document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
+          
+        } else {
+          console.log('User signed out');
+          
+          // Mostrar sección de autenticación
+          document.getElementById('authSection').classList.remove('hidden');
+          document.getElementById('appSection').classList.add('hidden');
+          document.getElementById('authButtons').classList.remove('hidden');
+          document.getElementById('userMenu').classList.add('hidden');
+          
+          // Actualizar estado
+          document.getElementById('connectionStatus').className = 'status status-offline';
+          document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
+          document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
+        }
+      });
+
+      // Botones auth header
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        document.querySelector('.auth-tab[data-tab="login"]').click();
+      });
+
+      document.getElementById('registerBtn').addEventListener('click', () => {
+        document.querySelector('.auth-tab[data-tab="register"]').click();
+      });
 
       // Inicializar disciplinas
       refreshDisciplineSelects();
@@ -2312,45 +2291,45 @@ auth.onAuthStateChanged((user) => {
       });
     }
 
-        // Funciones globales - VERSIÓN CORREGIDA
- window.openSavedDraw = async function(id) {
-  try {
-    console.log('Abriendo sorteo guardado:', id);
-    let draw = null;
-    
-    // Buscar en Firebase
-    if (currentUser) {
+    // Funciones globales - VERSIÓN CORREGIDA
+    window.openSavedDraw = async function(id) {
       try {
-        const doc = await db.collection('draws').doc(id).get();
-        if (doc.exists) {
-          draw = doc.data();
-          console.log('Sorteo encontrado en Firebase');
+        console.log('Abriendo sorteo guardado:', id);
+        let draw = null;
+        
+        // Buscar en Firebase
+        if (currentUser) {
+          try {
+            const doc = await db.collection('draws').doc(id).get();
+            if (doc.exists) {
+              draw = doc.data();
+              console.log('Sorteo encontrado en Firebase');
+            }
+          } catch (error) {
+            console.log('No se pudo cargar desde Firebase:', error);
+          }
         }
+        
+        // Si no se encontró en Firebase, buscar localmente
+        if (!draw) {
+          const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          draw = savedDraws.find(d => d.id === id);
+          console.log('Buscando localmente, encontrado:', !!draw);
+        }
+        
+        if (!draw) {
+          showToast('No se pudo encontrar el sorteo', 'error');
+          return;
+        }
+        
+        // Usar la nueva función para mostrar en pestaña
+        showResultInNewTab(draw);
+        
       } catch (error) {
-        console.log('No se pudo cargar desde Firebase:', error);
+        console.error('Error abriendo sorteo:', error);
+        showToast('Error al abrir el sorteo', 'error');
       }
-    }
-    
-    // Si no se encontró en Firebase, buscar localmente
-    if (!draw) {
-      const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
-      draw = savedDraws.find(d => d.id === id);
-      console.log('Buscando localmente, encontrado:', !!draw);
-    }
-    
-    if (!draw) {
-      showToast('No se pudo encontrar el sorteo', 'error');
-      return;
-    }
-    
-    // Usar la nueva función para mostrar en pestaña
-    showResultInNewTab(draw);
-    
-  } catch (error) {
-    console.error('Error abriendo sorteo:', error);
-    showToast('Error al abrir el sorteo', 'error');
-  }
-};
+    };
 
     window.deleteDraw = async function(id) {
       if (confirm('¿Eliminar este sorteo?')) {
