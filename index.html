@@ -527,7 +527,7 @@
       font-size: 12px;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%); 
     }
 
     .list-box {
@@ -1041,12 +1041,17 @@ Newell's; Santa Fe
       return text.replace(/[&<>"']/g, m => map[m]);
     }
 
-    // ====================== SISTEMA DE AUTENTICACIÓN ======================
+    // ====================== SISTEMA DE AUTENTICACIÓN CORREGIDO ======================
     
-    // Listener de autenticación
+    // Listener de autenticación mejorado
     auth.onAuthStateChanged((user) => {
       console.log('Auth state changed:', user);
       currentUser = user;
+      
+      const authSection = document.getElementById('authSection');
+      const appSection = document.getElementById('appSection');
+      const authButtons = document.getElementById('authButtons');
+      const userMenu = document.getElementById('userMenu');
       
       if (user) {
         console.log('User signed in:', user.email);
@@ -1056,11 +1061,11 @@ Newell's; Santa Fe
         document.getElementById('userEmail').textContent = user.email;
         document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
         
-        // Mostrar sección de aplicación
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('authButtons').classList.add('hidden');
-        document.getElementById('userMenu').classList.remove('hidden');
+        // Mostrar/ocultar secciones correctamente
+        authSection.classList.add('hidden');
+        appSection.classList.remove('hidden');
+        authButtons.classList.add('hidden');
+        userMenu.classList.remove('hidden');
         
         // Actualizar estado
         document.getElementById('connectionStatus').className = 'status status-online';
@@ -1068,23 +1073,30 @@ Newell's; Santa Fe
         document.getElementById('userStatus').textContent = `Sesión iniciada como ${user.email}`;
         document.getElementById('cloudInfo').textContent = '✅ Conectado a la nube - Sorteos sincronizados';
         
+        showToast('Sesión iniciada correctamente', 'success');
+        
       } else {
         console.log('User signed out');
         
         // Mostrar sección de autenticación
-        document.getElementById('authSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
-        document.getElementById('authButtons').classList.remove('hidden');
-        document.getElementById('userMenu').classList.add('hidden');
+        authSection.classList.remove('hidden');
+        appSection.classList.add('hidden');
+        authButtons.classList.remove('hidden');
+        userMenu.classList.add('hidden');
         
-        // Actualizar estado
-        document.getElementById('connectionStatus').className = 'status status-offline';
-        document.getElementById('connectionStatus').innerHTML = '❌ Sin conexión';
-        document.getElementById('userStatus').textContent = 'Inicia sesión para sincronizar tus sorteos';
+        // Limpiar formularios de auth
+        document.getElementById('loginForm').reset();
+        document.getElementById('registerForm').reset();
+        
+        // Asegurarse de que el tab de login esté activo
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
+        document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
+        document.getElementById('loginForm').classList.remove('hidden');
       }
     });
 
-    // Registro
+    // Registro - Manejo mejorado de errores
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('registerSubmit');
@@ -1101,18 +1113,36 @@ Newell's; Santa Fe
         return;
       }
 
+      if (password.length < 6) {
+        showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+        toggleLoading(submitBtn, false);
+        return;
+      }
+
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         await userCredential.user.updateProfile({ displayName: name });
         showToast('Cuenta creada exitosamente', 'success');
+        
+        // Limpiar formulario después del registro exitoso
+        document.getElementById('registerForm').reset();
+        
       } catch (error) {
         console.error('Registration error:', error);
-        showToast('Error: ' + error.message, 'error');
+        let errorMessage = 'Error al crear la cuenta';
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'Este email ya está registrado';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Email inválido';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'La contraseña es muy débil';
+        }
+        showToast(errorMessage, 'error');
         toggleLoading(submitBtn, false);
       }
     });
 
-    // Login
+    // Login - Manejo mejorado de errores
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('loginSubmit');
@@ -1123,10 +1153,20 @@ Newell's; Santa Fe
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        showToast('Sesión iniciada correctamente', 'success');
+        // El listener onAuthStateChanged se encargará de la navegación
       } catch (error) {
         console.error('Login error:', error);
-        showToast('Error: ' + error.message, 'error');
+        let errorMessage = 'Error al iniciar sesión';
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'Usuario no encontrado';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Contraseña incorrecta';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Email inválido';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Demasiados intentos. Intenta más tarde';
+        }
+        showToast(errorMessage, 'error');
         toggleLoading(submitBtn, false);
       }
     });
@@ -1141,14 +1181,24 @@ Newell's; Santa Fe
       }
     });
 
-    // Tabs auth
+    // Tabs auth - Función mejorada
     document.querySelectorAll('.auth-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
+        
+        // Actualizar tabs
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
+        
         tab.classList.add('active');
         document.getElementById(tabName + 'Form').classList.remove('hidden');
+        
+        // Limpiar formularios al cambiar de tab
+        if (tabName === 'login') {
+          document.getElementById('registerForm').reset();
+        } else {
+          document.getElementById('loginForm').reset();
+        }
       });
     });
 
@@ -1694,7 +1744,6 @@ Atl. Tucumán; Tucumán`;
               <p><strong>Fecha:</strong> ${resultData.date}</p>
               ${resultData.parameters.discipline ? `<p><strong>Disciplina:</strong> ${resultData.parameters.discipline}</p>` : ''}
               ${resultData.parameters.category ? `<p><strong>Categoría:</strong> ${resultData.parameters.category}</p>` : ''}
-              ${resultData.parameters.gender ? `<p><strong>Género:</strong> ${resultData.parameters.gender}</p>` : ''}
               <p><strong>Equipos:</strong> ${resultData.parameters.teams} • <strong>Zonas:</strong> ${resultData.parameters.zones}</p>
             </div>
             
@@ -1779,7 +1828,6 @@ Atl. Tucumán; Tucumán`;
       const headsAsFirst = document.getElementById('headsAsFirst').checked;
       const discipline = document.getElementById('disciplineSelect').value;
       const category = document.getElementById('categorySelect').value;
-      const gender = document.getElementById('genderSelect').value;
       const seed = discipline || 'sorteo_' + Date.now() + '_' + Math.random();
 
       const result = drawGroups(teams, zones, headsAsFirst, seed, 'custom');
@@ -1796,7 +1844,6 @@ Atl. Tucumán; Tucumán`;
         parameters: {
           discipline: discipline,
           category: category,
-          gender: gender,
           zones: zones,
           teams: teams.length,
           headsAsFirst: headsAsFirst
@@ -1840,8 +1887,7 @@ Atl. Tucumán; Tucumán`;
       if (currentUser) {
         saveDraw('grupos', {
           discipline: discipline,
-          category: category,
-          gender: gender
+          category: category
         }, result);
       }
     });
@@ -2108,7 +2154,6 @@ Atl. Tucumán; Tucumán`;
               <div class="text-xs text-muted">
                 ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
                 ${draw.parameters.category ? draw.parameters.category + ' • ' : ''}
-                ${draw.parameters.gender ? draw.parameters.gender + ' • ' : ''}
                 ${draw.date}
               </div>
               <div class="text-xs">
