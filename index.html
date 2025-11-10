@@ -583,24 +583,44 @@ function renderGroups(target,result){
   document.getElementById('status').innerHTML=`Sorteo realizado${attempts}`;
   lastResult=result;
 }
-function openResultInNewTab(result){
-  const w=window.open('about:blank','_blank'); if(!w){ toast('Permití pop-ups para ver el resultado'); return }
-  const disciplineText=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
-  const category=(document.getElementById('categorySelect').value)||'';
-  const gender=(document.getElementById('genderSelect').value)||'';
-  const chipsHTML=[
-    disciplineText?`<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>`:'',
-    category?`<span class="chip">Categoría: ${escapeHtml(category)}</span>`:'',
-    gender?`<span class="chip">Género: ${escapeHtml(gender)}</span>`:'',
-    `<span class="chip">${result.groups.length} zonas</span>`,
+function openResultInNewTab(result, meta = null){
+  const w = window.open('about:blank','_blank'); 
+  if(!w){ toast('Permití pop-ups para ver el resultado'); return }
+  
+  // Si no viene meta explícita, intentamos obtenerla del DOM actual
+  if(!meta) {
+    meta = {
+      discipline: (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '',
+      category: (document.getElementById('categorySelect').value) || '',
+      gender: (document.getElementById('genderSelect').value) || '',
+      zones: result.groups ? result.groups.length : 0,
+      format: getFormat()
+    };
+  }
+  
+  const disciplineText = meta.discipline || '';
+  const category = meta.category || '';
+  const gender = meta.gender || '';
+  const zones = meta.zones || (result.groups ? result.groups.length : 0);
+  const format = meta.format || '';
+  
+  const chipsHTML = [
+    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    format ? `<span class="chip">Formato: ${escapeHtml(format)}</span>` : '',
+    `<span class="chip">${zones} zonas</span>`,
     `<span class="chip">${new Date().toLocaleString()}</span>`
   ].filter(Boolean).join('');
-  const zonesHTML=result.groups.map((arr,gi)=>{
-    const items=arr.map(t=>`<li><b>${escapeHtml(t.name)}</b>${t.province?` — ${escapeHtml(t.province)}`:''}${t.head?' ★':''}</li>`).join('');
-    return `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
+  
+  const zonesHTML = result.groups.map((arr, gi) => {
+    const items = arr.map(t => 
+      `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+    ).join('');
+    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
 
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Resultado del Sorteo</title>
   <style>
     body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
@@ -644,7 +664,9 @@ function openResultInNewTab(result){
     <\/script>
   </body></html>`;
 
-  w.document.open(); w.document.write(html); w.document.close();
+  w.document.open(); 
+  w.document.write(html); 
+  w.document.close();
 }
 
 /* ====================== Export CSV ====================== */
@@ -749,19 +771,28 @@ function subscribeCloudHistory(){
         const openBtn = document.createElement('button'); 
         openBtn.className = 'btn tiny'; 
         openBtn.textContent = 'Abrir';
-        openBtn.addEventListener('click', () => {
-          // Reconstruir la estructura original de grupos desde Firestore
-          const groups = (d.groups || []).map(groupObj => 
-            groupObj.teams.map(team => ({
-              name: team.name,
-              province: team.province || '',
-              head: team.head || false
-            }))
-          );
-          
-          const res = { groups: groups };
-          openResultInNewTab(res);
-        });
+        openBtn.addEventListener('click',()=>{
+  const groups = (d.groups || []).map(groupObj => 
+    groupObj.teams.map(team => ({
+      name: team.name,
+      province: team.province || '',
+      head: team.head || false
+    }))
+  );
+  
+  const res = { groups: groups };
+  
+  // Pasamos los metadatos guardados en la nube
+  const meta = {
+    discipline: d.discipline || '',
+    category: d.category || '',
+    gender: d.gender || '',
+    zones: d.zones || groups.length,
+    format: d.format || ''
+  };
+  
+  openResultInNewTab(res, meta);
+});
         
         btns.appendChild(openBtn);
         item.appendChild(btns);
@@ -892,7 +923,14 @@ Atl. Tucumán; Tucumán`;
     const result=drawGroups(teams,z,headsAsFirst,runSeed,fmt);
     renderGroups(document.getElementById('resultGroups'),result);
     if(!result.error){
-      openResultInNewTab(result);
+const meta = {
+  discipline: discTxt,
+  category: cat,
+  gender: gen,
+  zones: z,
+  format: fmt
+};
+openResultInNewTab(result, meta);
       const now=new Date().toLocaleString();
       const item=document.createElement('div'); item.className='item';
       const discTxt=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
