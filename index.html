@@ -4,42 +4,56 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sorteador Deportivo Pro</title>
+
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <!-- Export PDF -->
+  <!-- Utilidades PDF en la pestaña de resultado -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:#0f172a;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
     a{color:var(--accent2)}
     .container{max-width:1100px;margin:0 auto;padding:24px}
+
+    /* Header app */
     header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
     h1{font-size:clamp(22px,3vw,30px);margin:0}
     .badge{font-size:12px;background:#0b2;opacity:.9;padding:4px 8px;border-radius:999px}
-    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:900px){.row{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
-    .card h3{margin:0 0 8px 0;font-size:16px}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type=text],input[type=number],textarea,select{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
-    textarea{min-height:200px;resize:vertical}
-    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .userBox{display:flex;align-items:center;gap:8px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
     .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
     .btn:hover{border-color:#3b82f6}
     .btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
     .btn.ghost{background:transparent;border-color:#2b3b55}
     .btn.warn{background:linear-gradient(135deg,var(--warn),#d97706);border:0;color:#3b1d00}
     .tiny{font-size:12px;color:var(--muted)}
+    .hidden{display:none}
+
+    /* Paneles y tarjetas */
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:900px){.row{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
+    .card h3{margin:0 0 8px 0;font-size:16px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text],input[type=number],input[type=email],input[type=password],textarea,select{
+      width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px
+    }
+    textarea{min-height:200px;resize:vertical}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+    /* Tabs */
     .tabs{display:flex;gap:8px;margin-bottom:12px}
-    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer}
-    .tab.active{background:#0a3622;border-color:#1b5e3b}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer;color:#e5e7eb}
+    .tab.active{background:#0a3622;border-color:#1b5e3b;color:#22c55e}
+
+    /* Resultado */
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
     .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
@@ -47,8 +61,8 @@
     .muted{color:var(--muted)}
     .warnText{color:var(--warn)}
     .errorText{color:var(--danger)}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
-    .hidden { display: none !important; }
+
+    /* Listas con checks */
     .history{display:grid;gap:8px}
     .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
     .listWrap{display:grid;grid-template-columns:1fr 1fr; gap:12px}
@@ -58,254 +72,277 @@
     .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b}
     .itemRow:last-child{border-bottom:none}
     .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px}
-    /* Auth */
-    .auth-section{background:white;color:#333;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);padding:20px;margin-bottom:16px}
-    .auth-tabs{display:flex;border-bottom:1px solid #eee;margin-bottom:12px}
-    .auth-tab{flex:1;padding:8px;text-align:center;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent}
-    .auth-tab.active{border-bottom-color:#2563eb;color:#2563eb}
-    .auth-form.hidden { display: none !important; }
-    .form-group{display:flex;flex-direction:column;gap:6px}
-    .form-label{font-weight:600}
-    .form-input{padding:10px;border:1px solid #ddd;border-radius:6px}
-    .btn-primary{background:#2563eb;color:white;border:none}
-    .btn-primary:hover{background:#1d4ed8}
-    .cloudBox{background:#0b1220;border:1px dashed #2b3b55;border-radius:12px;padding:10px;margin-top:12px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>🎲 Sorteador Deportivo Pro</h1>
-        <div class="tiny">Funciona 100% en tu navegador (sin backend). Iniciá sesión para guardar en la nube.</div>
-      </div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div id="sessInfo" class="tiny">Sesión: —</div>
-        <span class="badge">v2.1.5</span>
-      </div>
-    </header>
 
-    <!-- Auth -->
-    <section class="auth-section" id="authSection">
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
-        <button class="auth-tab" data-tab="register">Registrarse</button>
+  <!-- ============ Sección de Autenticación ============ -->
+  <section id="authSection" class="authWrap" style="max-width:460px;margin:48px auto">
+    <div class="authBrand" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">
+      <h1 style="margin:0">🎲 Sorteador Deportivo Pro</h1>
+    </div>
+    <div class="card" style="background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px">
+      <div class="authTabs" style="display:flex;border-bottom:1px solid #223046;margin-bottom:14px">
+        <button class="authTab active" data-tab="login" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid #22c55e">Iniciar Sesión</button>
+        <button class="authTab" data-tab="register" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent">Registrarse</button>
       </div>
 
-      <form class="auth-form" id="loginForm">
-        <div class="form-group">
-          <label class="form-label" for="loginEmail">Email</label>
-          <input type="email" class="form-input" id="loginEmail" required placeholder="tu@email.com">
+      <!-- Login -->
+      <form class="authForm" id="loginForm">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="tu@email.com">
         </div>
-        <div class="form-group">
-          <label class="form-label" for="loginPassword">Contraseña</label>
-          <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
         </div>
-        <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+        <button type="submit" class="btn primary" style="width:100%">Iniciar Sesión</button>
       </form>
 
-      <form class="auth-form hidden" id="registerForm">
-        <div class="form-group">
-          <label class="form-label" for="registerName">Nombre</label>
-          <input type="text" class="form-input" id="registerName" required placeholder="Tu nombre">
+      <!-- Registro -->
+      <form class="authForm hidden" id="registerForm">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerName">Nombre</label>
+          <input type="text" id="registerName" required placeholder="Tu nombre">
         </div>
-        <div class="form-group">
-          <label class="form-label" for="registerEmail">Email</label>
-          <input type="email" class="form-input" id="registerEmail" required placeholder="tu@email.com">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required placeholder="tu@email.com">
         </div>
-        <div class="form-group">
-          <label class="form-label" for="registerPassword">Contraseña</label>
-          <input type="password" class="form-input" id="registerPassword" required placeholder="••••••••" minlength="6">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerPassword">Contraseña</label>
+          <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
         </div>
-        <div class="form-group">
-          <label class="form-label" for="registerConfirmPassword">Confirmar Contraseña</label>
-          <input type="password" class="form-input" id="registerConfirmPassword" required placeholder="••••••••">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerConfirmPassword">Confirmar Contraseña</label>
+          <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
         </div>
-        <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+        <button type="submit" class="btn primary" style="width:100%">Crear Cuenta</button>
       </form>
-    </section>
+    </div>
+    <div class="tiny" style="margin-top:10px;text-align:center">Todo ocurre del lado del cliente.</div>
+  </section>
 
-    <!-- App -->
-    <div class="panel" id="appSection">
-      <div class="tabs">
-        <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
-        <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
-        <button class="tab" data-tab="bracket" type="button">Eliminación directa (beta)</button>
-      </div>
+  <!-- ============ Aplicación (se muestra tras login) ============ -->
+  <section id="appSection" class="hidden">
+    <div class="container">
+      <header>
+        <div>
+          <h1>🎲 Sorteador Deportivo</h1>
+          <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
+        </div>
+        <div class="userBox">
+          <span class="pill" id="userInfo" title="Usuario"></span>
+          <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
+          <span class="badge">v2.5 Pro (Auth + Cloud)</span>
+        </div>
+      </header>
 
-      <div id="tab-grupos" class="tabcontent">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
-            <textarea id="teamsInput" placeholder="Ejemplos:
+      <div class="panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
+          <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
+          <button class="tab" data-tab="bracket" type="button">Eliminación directa (beta)</button>
+        </div>
+
+        <div id="tab-grupos" class="tabcontent">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
+              <textarea id="teamsInput" placeholder="Ejemplos:
 River Plate; CABA; *
 Boca Juniors; CABA
 Newell's; Santa Fe
 ..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
-              <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
-              <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
-              <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
-            </div>
-            <div class="tiny">CSV de equipos: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
-            <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
+              <div class="controls" style="margin-top:8px">
+                <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
+                <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
+                <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
+              </div>
+              <div class="tiny">CSV de equipos: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
+              <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
 
-            <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
-              <div class="listBox">
-                <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
-                <div class="controls" style="margin-bottom:6px">
-                  <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
-                  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+              <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
+                <div class="listBox">
+                  <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
+                  <div class="controls" style="margin-bottom:6px">
+                    <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
+                    <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+                  </div>
+                  <div id="activeList"></div>
                 </div>
-                <div id="activeList"></div>
-              </div>
-              <div class="listBox">
-                <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
-                <div class="controls" style="margin-bottom:6px">
-                  <label class="pill"><input type="checkbox" id="toggleShowInactive"> Mostrar descartados</label>
-                  <button class="btn tiny" id="btnSelectAllInactive" type="button">Seleccionar todo</button>
-                  <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                <div class="listBox">
+                  <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
+                  <div class="controls" style="margin-bottom:6px">
+                    <label class="pill"><input type="checkbox" id="toggleShowInactive"> Mostrar descartados</label>
+                    <button class="btn tiny" id="btnSelectAllInactive" type="button">Seleccionar todo</button>
+                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                  </div>
+                  <div id="inactiveList" class="hidden"></div>
                 </div>
-                <div id="inactiveList" class="hidden"></div>
               </div>
+            </div>
+
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls" id="formatRow">
+                <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
+                <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
+                <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
+              </div>
+              <div class="controls">
+                <div style="min-width:160px;flex:1">
+                  <label>Nº de zonas / grupos</label>
+                  <input type="number" id="zones" min="1" value="8" />
+                </div>
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelect">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Categoría</label>
+                  <select id="categorySelect">
+                    <option value="">— Seleccionar categoría —</option>
+                  </select>
+                </div>
+                <div style="min-width:220px;flex:1">
+                  <label>Género</label>
+                  <select id="genderSelect">
+                    <option value="">— Seleccionar género —</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Mixto">Mixto</option>
+                    <option value="No Aplica">No Aplica</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls">
+                <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+                <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
+                <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+                <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
+              </div>
+              <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
+              <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
+
+              <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
+              <div id="capInfo" class="tiny" style="margin-top:6px"></div>
+
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawGroups" type="button">🎯 SORTEAR ZONAS</button>
+                <button class="btn" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
+                <button class="btn" id="btnCopy" type="button">📋 Copiar</button>
+                <button class="btn" id="btnShare" type="button">🔗 Compartir</button>
+              </div>
+              <div id="status" class="tiny" style="margin-top:8px"></div>
             </div>
           </div>
 
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls" id="formatRow">
-              <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
-              <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
-              <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
-            </div>
-            <div class="controls">
-              <div style="min-width:160px;flex:1">
-                <label>Nº de zonas / grupos</label>
-                <input type="number" id="zones" min="1" value="8" />
-              </div>
-              <div style="min-width:200px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelect" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls">
-              <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
-              <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
-            </div>
-            <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultGroups" class="grid"></div>
+          </div>
 
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawGroups" type="button">🎯 SORTEAR ZONAS</button>
-              <button class="btn" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
-              <button class="btn" id="btnCopy" type="button">📋 Copiar</button>
-              <button class="btn" id="btnShare" type="button">🔗 Compartir</button>
-              <button class="btn" id="btnExportPDF" type="button">🖨️ Exportar PDF</button>
-            </div>
-            <div id="status" class="tiny" style="margin-top:8px"></div>
+          <div class="card" style="margin-top:12px">
+            <h3>Historial (local)</h3>
+            <div class="history" id="history"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Mis sorteos (en la nube)</h3>
+            <div class="history" id="cloudHistory"></div>
           </div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultGroups" class="grid"></div>
+        <div id="tab-simple" class="tabcontent hidden">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Usa la lista del tab Grupos (o pegá otra):</label>
+              <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
+              <div class="controls" style="margin-top:8px">
+                <button class="btn ghost" id="btnUseFromGroups" type="button">Usar lista del tab Grupos</button>
+                <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelectSimple">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
+                <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
+                <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
+              </div>
+              <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultSimple"></div>
+          </div>
         </div>
 
-        <div class="card cloudBox">
-          <h3>Mis sorteos (en la nube)</h3>
-          <div id="cloudHistory" class="history"><div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div></div>
-          <div id="cloudDebug" class="tiny" style="margin-top:6px;color:#94a3b8"></div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3>Historial (local)</h3>
-          <div class="history" id="history"></div>
+        <div id="tab-bracket" class="tabcontent hidden">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Usa la lista del tab Grupos (o pegá otra):</label>
+              <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
+              <div class="controls" style="margin-top:8px">
+                <button class="btn ghost" id="btnUseFromGroups2" type="button">Usar lista del tab Grupos</button>
+                <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelectBracket">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
+                <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
+                <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
+              </div>
+              <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultBracket" class="grid"></div>
+          </div>
         </div>
       </div>
 
-      <!-- SIMPLE -->
-      <div id="tab-simple" class="tabcontent hidden">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Usa la lista del tab Grupos (o pegá otra):</label>
-            <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <button class="btn ghost" id="btnUseFromGroups" type="button">Usar lista del tab Grupos</button>
-              <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelectSimple" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
-              <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
-              <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
-            </div>
-            <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultSimple"></div>
-        </div>
-      </div>
-
-      <!-- BRACKET -->
-      <div id="tab-bracket" class="tabcontent hidden">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Usa la lista del tab Grupos (o pegá otra):</label>
-            <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <button class="btn ghost" id="btnUseFromGroups2" type="button">Usar lista del tab Grupos</button>
-              <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelectBracket" disabled>
-                  <option value="">— Cargá CSV de disciplinas —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
-              <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
-              <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
-            </div>
-            <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultBracket" class="grid"></div>
-        </div>
-      </div>
+      <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente. Podés guardar y compartir con "🔗 Compartir".</div>
     </div>
-  </div>
+  </section>
 
 <script>
 'use strict';
 
-/* ================= Firebase ================= */
+/* ====================== Firebase ====================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
   authDomain: "sorteador-53cb5.firebaseapp.com",
@@ -316,757 +353,667 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-try {
-  firebase.firestore().enablePersistence({synchronizeTabs:true});
-} catch(e) {
-  console.warn('[Firestore] persistence:', e.code||e.message||e);
+const db   = firebase.firestore();
+
+/* ====================== Utils ====================== */
+function toast(msg){
+  const el=document.createElement('div');
+  el.textContent=msg;
+  el.style.cssText='position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
 }
-const db = firebase.firestore();
-
-function showToast(message) {
-  const el = document.createElement('div');
-  el.className = 'history item';
-  el.style.position='fixed';el.style.top='16px';el.style.right='16px';
-  el.style.background='#111827';el.style.color='#e5e7eb';el.style.border='1px solid #334155';
-  el.textContent = message;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2500);
-}
-
-/* ================= RNG y utils ================= */
-function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
-function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
-function rngFromSeed(seed){if(!seed||seed.trim()===""){return Math.random}else{const h=xmur3(String(seed))();return mulberry32(h)}}
-function shuffle(array, rand){const a=array.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","&gt":"&gt;","\"":"&quot;"}[c]))}
-
-/* ================= Parseo (textarea) ================= */
-function parseLine(line){
-  const raw=line.replace(/\t/g,',').trim();
-  if(!raw) return null;
-  let parts=raw.split(';'); if(parts.length===1) parts=raw.split(',');
-  parts=parts.map(s=>s.trim()).filter(Boolean);
-  const name=parts[0]||'';
-  const province=(parts[1]||'').replace(/\*+$/,'').trim();
-  let head=false;
-  if(parts.length>=3){head=/\*|si|sí|head/i.test(parts[2])}
-  if(/\*$/.test(name)){head=true}
-  return {name:name.replace(/\*+$/,'').trim(), province, head};
-}
-function parseText(value){
-  const lines=value.split(/\r?\n/);
-  const teams=[];
-  for(const line of lines){const t=parseLine(line); if(t&&t.name) teams.push(t)}
-  return teams;
-}
-
-/* ================= CSV equipos ================= */
-function importCSVTeams(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
-  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
-  if(!lines.length) return {list:[], delim:','};
-
-  const sample = lines[0];
-  const cntComma = (sample.match(/,/g)||[]).length;
-  const cntSemi  = (sample.match(/;/g)||[]).length;
-  const cntTab   = (sample.match(/\t/g)||[]).length;
-  let delim = ',';
-  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
-  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
-  else if(cntComma>0) delim = ',';
-
-  function splitQuoted(line){
-    const out=[]; let cur=''; let inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch=='"'){
-        if(inQ && line[i+1]=='"'){ cur+='"'; i++; } else { inQ=!inQ; }
-      } else if(ch===delim && !inQ){
-        out.push(cur); cur='';
-      } else {
-        cur+=ch;
-      }
-    }
-    out.push(cur);
-    return out.map(s=> s.trim());
-  }
-
-  const headRow = splitQuoted(lines[0]);
-  const hasHeader = headRow.some(v=>/^(equipo|team|nombre|provincia|province|regi[óo]n|cabeza|cabeza de serie|head|seed)$/i.test(v));
-
-  let idx = { name:0, province:1, head:2 };
-  if(hasHeader){
-    headRow.forEach((v,i)=>{
-      const s=v.toLowerCase();
-      if(/equipo|team|nombre/.test(s)) idx.name=i;
-      if(/provincia|province|regi[óo]n/.test(s)) idx.province=i;
-      if(/cabeza|cabeza de serie|head|seed/.test(s)) idx.head=i;
-    });
-  }
-
-  const body = hasHeader? lines.slice(1) : lines;
-  const out=[];
-  for(const line of body){
-    const parts=splitQuoted(line);
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    const name=rawName.replace(/\*+$/,'').trim();
-    const province=(parts[idx.province]||'').trim();
-    const headRaw=(parts[idx.head]||'').trim();
-    const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(headRaw) || /\*$/.test(rawName);
-    out.push({name, province, head});
-  }
-  return {list:out, delim};
-}
-
-/* ================= CSV disciplinas ================= */
-let disciplines = []; // {name, seed?}
-function importCSVDisciplines(text){
-  if(text && text.charCodeAt(0)===0xFEFF){ text=text.slice(1) } // BOM
-  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
-  if(!lines.length) return {list:[], delim:','};
-
-  const sample = lines[0];
-  const cntComma = (sample.match(/,/g)||[]).length;
-  const cntSemi  = (sample.match(/;/g)||[]).length;
-  const cntTab   = (sample.match(/\t/g)||[]).length;
-  let delim = ',';
-  if(cntTab>=cntComma && cntTab>=cntSemi && cntTab>0) delim = '\t';
-  else if(cntSemi>=cntComma && cntSemi>0) delim = ';';
-  else if(cntComma>0) delim = ',';
-
-  function splitQuoted(line){
-    const out=[]; let cur=''; let inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch=='"'){
-        if(inQ && line[i+1]=='"'){ cur+='"'; i++; } else { inQ=!inQ; }
-      } else if(ch===delim && !inQ){
-        out.push(cur); cur='';
-      } else {
-        cur+=ch;
-      }
-    }
-    out.push(cur);
-    return out.map(s=> s.trim());
-  }
-
-  const headRow = splitQuoted(lines[0]);
-  const hasHeader = headRow.some(v=>/^(disciplina|deporte|sport|nombre|semilla|seed|codigo|code)$/i.test(v));
-
-  let idx = { name:0, seed:1 };
-  if(hasHeader){
-    headRow.forEach((v,i)=>{
-      const s=v.toLowerCase();
-      if(/^(disciplina|deporte|sport|nombre)$/.test(s)) idx.name=i;
-      if(/^(semilla|seed|codigo|code)$/.test(s)) idx.seed=i;
-    });
-  }
-
-  const body = hasHeader? lines.slice(1) : lines;
-  const out=[];
-  for(const line of body){
-    const parts=splitQuoted(line);
-    let rawName=(parts[idx.name]||''); if(rawName && rawName.charCodeAt(0)===0xFEFF){ rawName=rawName.slice(1) }
-    rawName=rawName.trim(); if(!rawName) continue;
-    const name=rawName;
-    const seed=(parts[idx.seed]||'').trim();
-    out.push({name, seed: seed||name});
-  }
-  return {list:out, delim};
-}
-
-function refreshDisciplineSelects(){
-  const sels=[document.getElementById('disciplineSelect'),
-              document.getElementById('disciplineSelectSimple'),
-              document.getElementById('disciplineSelectBracket')];
-  sels.forEach(sel=>{
-    sel.innerHTML='';
-    if(disciplines.length===0){
-      const opt=document.createElement('option'); opt.value=''; opt.textContent='— Cargá CSV de disciplinas —'; sel.appendChild(opt); sel.disabled=true;
-    }else{
-      const opt0=document.createElement('option'); opt0.value=''; opt0.textContent='— Seleccionar disciplina —'; sel.appendChild(opt0);
-      disciplines.forEach(d=>{
-        const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; o.dataset.seed=d.seed||d.name;
-        sel.appendChild(o);
-      });
-      sel.disabled=false;
-    }
-  });
-}
-function getSelectedDisciplineName(){ const sel=document.getElementById('disciplineSelect'); return sel? (sel.value||'') : ''; }
-function getSelectedDisciplineSeed(){
-  const sel=document.getElementById('disciplineSelect'); if(!sel) return '';
-  const opt=sel.selectedOptions[0];
-  if(opt && opt.dataset && opt.dataset.seed){ return opt.dataset.seed }
-  return sel.value||'';
-}
-
-/* ================= Capacidades ================= */
-function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
-function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24;if(n>=total) return caps;let deficits=total-n;const order=[3,1,2,0];let i=0;while(deficits>0){const idx=order[i%order.length];if(caps[idx]>0){caps[idx]--;deficits--}i++}return caps}
-function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24;if(n>=total) return caps;const d=total-n;const zeros=Math.floor(d/3);const twos=d%3;const order=[7,6,5,4,3,2,1,0];for(let i=0;i<zeros;i++){caps[order[i]]=0}let k=zeros;for(let j=0;j<twos && k<order.length;j++,k++){if(caps[order[k]]===3) caps[order[k]]=2}return caps}
-
-/* ================= Sorteo ================= */
-function placeHeads(groups,heads){for(let i=0;i<groups.length && i<heads.length;i++){groups[i].push(heads[i])}}
-
-function drawGroups(teams,z,seed,headsAsFirst,format){
-  const rand=rngFromSeed(seed);
-  const n=teams.length;
-  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
-  if(n<z) return {error:'Hay menos equipos que zonas.'};
-
-  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24?capacitiesEightByThree(n):capacities(n,z));
-  const groups=Array.from({length:z},()=>[]);
-
-  const heads=shuffle(teams.filter(t=>t.head),rand);
-  const others=shuffle(teams.filter(t=>!t.head),rand);
-  if(headsAsFirst&&heads.length){placeHeads(groups,heads)}
-
-  const targetCaps=capsBase.slice();
-  for(let i=0;i<groups.length;i++){targetCaps[i]=Math.max(0,targetCaps[i]-groups[i].length)}
-
-  const pool=headsAsFirst?others:shuffle(teams,rand);
-  for(const team of pool){
-    const candidates=groups.map((arr,gidx)=>({gidx,size:arr.length,cap:targetCaps[gidx]}))
-      .filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.gidx-b.gidx);
-    if(!candidates.length) return {error:'No se pudo asignar'};
-    const pick=candidates[ Math.floor(rand()*Math.min(2,candidates.length)) ];
-    groups[pick.gidx].push(team); targetCaps[pick.gidx]--;
-  }
-
-  return {groups,caps:capsBase,relaxed:false,attempt:1};
-}
-
-/* ============== Render/Export helpers ============== */
-function renderGroups(target,result){
-  if(result.error){ target.innerHTML='<div class="errorText">'+result.error+'</div>'; return }
-  const {groups} = result;
-  const grid=document.createElement('div'); grid.className='grid';
-  groups.forEach((arr,gi)=>{
-    const card=document.createElement('div'); card.className='zone';
-    card.innerHTML='<h4>Zona '+(gi+1)+'</h4>';
-    const ol=document.createElement('ol');
-    arr.forEach(t=>{
-      const li=document.createElement('li');
-      li.innerHTML='<b>'+escapeHtml(t.name)+'</b>'+(t.province?' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head?' <span class="pill">Cabeza</span>':'');
-      ol.appendChild(li);
-    });
-    card.appendChild(ol); grid.appendChild(card);
-  });
-  target.innerHTML=''; target.appendChild(grid);
-  document.getElementById('status').innerHTML='Sorteo realizado';
-}
-function exportGroupsCSV(groups){
-  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
-  groups.forEach((arr,gi)=>{
-    arr.forEach((t,i)=>{
-      csv+=(gi+1)+','+(i+1)+',"'+t.name.replace(/"/g,'""')+'"'+(t.province?',"'+t.province.replace(/"/g,'""')+'"':',')+(t.head?',si':',no')+'\n';
-    });
-  });
-  downloadText(csv,'sorteo_zonas.csv');
+function escapeHtml(text){
+  const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return text.replace(/[&<>"']/g,m=>map[m]);
 }
 function downloadText(text,filename){
   const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
 }
-function copyText(text){
-  navigator.clipboard.writeText(text).then(()=>{showToast('Copiado')}).catch(()=>alert('No se pudo copiar'))
-}
+function copyText(text){ navigator.clipboard.writeText(text).then(()=>toast('Copiado')).catch(()=>alert('No se pudo copiar')) }
 
-/* ========= Estado, listas activas/inactivas ========= */
+/* ====================== Estado ====================== */
 let activeTeams=[], inactiveTeams=[];
-let lastDraw=null;
+let disciplines=[], categories=[];
+let lastResult=null; // guarda el último sorteo renderizado
+let cloudUnsub=null; // suscripción a historial cloud
 
-function buildListsFromTextarea(){
-  activeTeams = parseText(document.getElementById('teamsInput').value);
-  inactiveTeams = [];
-  document.getElementById('checkLists').classList.remove('hidden');
-  renderLists(); updateCapInfo();
-}
-function renderLists(){
-  const aBox=document.getElementById('activeList');
-  const iBox=document.getElementById('inactiveList');
-  const showInactive=document.getElementById('toggleShowInactive')?.checked;
-
-  document.getElementById('countActive').textContent = activeTeams.length;
-  document.getElementById('countInactive').textContent = inactiveTeams.length;
-
-  if (document.getElementById('toggleShowInactive')) {
-    iBox.classList.toggle('hidden', !showInactive);
+/* ====================== CSV genérico ====================== */
+function parseCSVLine(line, delimiter){
+  const result=[]; let current=''; let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i], next=line[i+1];
+    if(ch==='"'){ if(inQuotes && next==='"'){ current+='"'; i++; } else { inQuotes=!inQuotes; } }
+    else if(ch===delimiter && !inQuotes){ result.push(current.trim()); current=''; }
+    else { current+=ch; }
   }
+  result.push(current.trim()); return result;
+}
+function parseCSV(text){
+  if(!text.trim()) return {headers:[],rows:[],delimiter:','};
+  const firstLine=text.split(/\r?\n/)[0]||'';
+  const counts={',':(firstLine.match(/,/g)||[]).length,';':(firstLine.match(/;/g)||[]).length,'\t':(firstLine.match(/\t/g)||[]).length};
+  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||',';
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()); const headers=parseCSVLine(lines[0],best);
+  const rows=lines.slice(1).map(l=>parseCSVLine(l,best)); return {headers,rows,delimiter:best};
+}
 
-  aBox.innerHTML='';
-  activeTeams.forEach((t,idx)=>{
+/* ====================== Importación: equipos/disciplinas/categorías ====================== */
+function importTeamsCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=-1, provinceIdx=-1, headIdx=-1;
+  if(headers.length){
+    headers.forEach((h,i)=>{
+      const s=h.toLowerCase();
+      if(nameIdx===-1 && (s.includes('equipo')||s.includes('team')||s.includes('nombre')||s.includes('club'))) nameIdx=i;
+      if(provinceIdx===-1 && (s.includes('provincia')||s.includes('province')||s.includes('región')||s.includes('region')||s.includes('localidad'))) provinceIdx=i;
+      if(headIdx===-1 && (s.includes('cabeza')||s.includes('head')||s.includes('seed')||s.includes('semilla'))) headIdx=i;
+    });
+  }
+  if(nameIdx===-1){ nameIdx=0; provinceIdx=headers.length>1?1:-1; headIdx=headers.length>2?2:-1; }
+  const teams=[]; const uniq=new Set();
+  for(const row of rows){
+    if(row.length<=nameIdx) continue;
+    const raw=(row[nameIdx]||''); const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
+    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+    const province=(provinceIdx!==-1 && row[provinceIdx])? row[provinceIdx].replace(/\*+$/,'').trim() : '';
+    const hv=(headIdx!==-1 && row[headIdx])? String(row[headIdx]).toLowerCase().trim() : '';
+    const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw);
+    teams.push({name,province,head});
+  }
+  return {teams, delimiter, hasHeaders:headers.length>0};
+}
+function importDisciplinesCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=0, seedIdx=1;
+  if(headers.length){
+    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('disciplina')||s.includes('deporte')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
+  }
+  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
+  return {items, delimiter, hasHeaders:headers.length>0};
+}
+function importCategoriesCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=0, seedIdx=1;
+  if(headers.length){
+    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('categor')||s.includes('división')||s.includes('division')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
+  }
+  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
+  return {items, delimiter, hasHeaders:headers.length>0};
+}
+
+/* ====================== Selects ====================== */
+function refreshDisciplineSelects(){
+  const sels=[document.getElementById('disciplineSelect'),document.getElementById('disciplineSelectSimple'),document.getElementById('disciplineSelectBracket')];
+  sels.forEach(sel=>{
+    if(!sel) return;
+    const current=sel.value;
+    sel.innerHTML='<option value="">— Seleccionar disciplina —</option>';
+    disciplines.forEach(d=>{ const o=document.createElement('option'); o.value=d.seed; o.textContent=d.name; o.dataset.seed=d.seed; sel.appendChild(o); });
+    if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
+  });
+}
+function refreshCategorySelects(){
+  const sel=document.getElementById('categorySelect'); if(!sel) return;
+  const current=sel.value; sel.innerHTML='<option value="">— Seleccionar categoría —</option>';
+  categories.forEach(c=>{ const o=document.createElement('option'); o.value=c.name; o.textContent=c.name; o.dataset.seed=c.seed; sel.appendChild(o); });
+  if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+
+/* ====================== Listas activas/inactivas ====================== */
+function renderLists(){
+  const aBox=document.getElementById('activeList'); const iBox=document.getElementById('inactiveList');
+  const showInactive=document.getElementById('toggleShowInactive').checked;
+  document.getElementById('countActive').textContent=activeTeams.length;
+  document.getElementById('countInactive').textContent=inactiveTeams.length;
+  iBox.classList.toggle('hidden', !showInactive);
+
+  aBox.innerHTML=''; activeTeams.forEach((t,idx)=>{
     const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type="checkbox" class="chkActive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
+    row.innerHTML=`<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
     aBox.appendChild(row);
   });
-  iBox.innerHTML='';
-  inactiveTeams.forEach((t,idx)=>{
+  iBox.innerHTML=''; inactiveTeams.forEach((t,idx)=>{
     const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML = '<input type="checkbox" class="chkInactive" data-idx="'+idx+'"> <b>'+escapeHtml(t.name)+'</b>'+(t.province? ' <span class="muted">— '+escapeHtml(t.province)+'</span>':'')+(t.head? ' <span class="pill">Cabeza</span>':'');
+    row.innerHTML=`<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
     iBox.appendChild(row);
   });
 }
+function buildListsFromTextarea(){
+  const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
+  activeTeams=[]; inactiveTeams=[];
+  const uniq=new Set();
+  for(const line of lines){
+    const parts=line.split(';').map(p=>p.trim());
+    const name=(parts[0]||'').replace(/\*+$/,'').trim(); if(!name) continue;
+    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+    const province=(parts[1]||'').replace(/\*+$/,'').trim();
+    const head=parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(parts[0]||'');
+    activeTeams.push({name,province,head});
+  }
+  document.getElementById('checkLists').classList.remove('hidden');
+  renderLists(); updateCapInfo(); toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
+}
 function getChecked(selector){
-  return Array.from(document.querySelectorAll(selector+':checked')).map(el=> parseInt(el.getAttribute('data-idx'),10)).filter(n=>!isNaN(n));
+  return Array.from(document.querySelectorAll(selector+':checked')).map(el=>parseInt(el.dataset.idx,10)).filter(n=>!isNaN(n)).sort((a,b)=>b-a);
 }
 function moveSelectedToInactive(){
-  const idxs=getChecked('.chkActive').sort((a,b)=>b-a);
-  const moved=[];
-  idxs.forEach(i=>{ if(activeTeams[i]) moved.push(activeTeams.splice(i,1)[0]); });
-  inactiveTeams = moved.concat(inactiveTeams);
+  const idxs=getChecked('.chkActive'); const moved=idxs.map(i=>activeTeams[i]);
+  idxs.forEach(i=>activeTeams.splice(i,1)); inactiveTeams.unshift(...moved);
   renderLists(); updateCapInfo();
 }
 function restoreSelectedFromInactive(){
-  const idxs=getChecked('.chkInactive').sort((a,b)=>b-a);
-  const moved=[];
-  idxs.forEach(i=>{ if(inactiveTeams[i]) moved.push(inactiveTeams.splice(i,1)[0]); });
-  activeTeams = activeTeams.concat(moved);
+  const idxs=getChecked('.chkInactive'); const moved=idxs.map(i=>inactiveTeams[i]);
+  idxs.forEach(i=>inactiveTeams.splice(i,1)); activeTeams.push(...moved);
   renderLists(); updateCapInfo();
 }
-function selectAll(selector){ document.querySelectorAll(selector).forEach(el=>{ el.checked=true }) }
+function selectAll(selector){ document.querySelectorAll(selector).forEach(cb=>cb.checked=true) }
 function getActiveTeamsLive(){
-  const panelVisible = !document.getElementById('checkLists').classList.contains('hidden');
-  if(panelVisible) return activeTeams.slice();
-  return parseText(document.getElementById('teamsInput').value);
+  if(document.getElementById('checkLists').classList.contains('hidden')){
+    const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
+    const teams=[]; const uniq=new Set();
+    for(const line of lines){
+      const parts=line.split(';').map(p=>p.trim());
+      const raw=parts[0]||''; const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
+      const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+      teams.push({name,province:(parts[1]||'').replace(/\*+$/,'').trim(),head:parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(raw)});
+    }
+    return teams;
+  }
+  return [...activeTeams];
 }
 
-/* =============== Compartir / Caps info =============== */
-function getFormat(){const r=document.querySelector('input[name="format"]:checked');return r?r.value:'custom'}
-function currentZones(){
-  const fmt=getFormat();
-  if(fmt==='8x3') return 8;
-  if(fmt==='4x6') return 4;
-  return parseInt(document.getElementById('zones').value,10)||1;
+/* ====================== RNG + capacidades ====================== */
+function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
+function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
+function rngFromSeed(seed){if(!seed||seed.trim()==="") return Math.random; const h=xmur3(String(seed))(); return mulberry32(h)}
+function shuffle(array,rand){const a=[...array]; for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a}
+function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
+function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24; if(n>=total) return caps; let deficits=total-n; const order=[3,1,2,0]; let i=0; while(deficits>0){const idx=order[i%order.length]; if(caps[idx]>0){caps[idx]--; deficits--} i++} return caps}
+function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24; if(n>=total) return caps; const d=total-n; const zeros=Math.floor(d/3); const twos=d%3; const order=[7,6,5,4,3,2,1,0]; for(let i=0;i<zeros;i++) caps[order[i]]=0; let k=zeros; for(let j=0;j<twos&&k<order.length;j++,k++){ if(caps[order[k]]===3) caps[order[k]]=2 } return caps}
+
+/* ====================== Sorteo (siempre nuevo) ====================== */
+function drawGroups(teams,z,headsAsFirst,seed,format){
+  const rand=rngFromSeed(seed); const n=teams.length;
+  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
+  if(n<z) return {error:'Hay menos equipos que zonas.'};
+
+  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24)?capacitiesEightByThree(n):capacities(n,z);
+  const groups=Array.from({length:z},()=>[]);
+  const heads=shuffle(teams.filter(t=>t.head),rand);
+  const others=shuffle(teams.filter(t=>!t.head),rand);
+  if(headsAsFirst&&heads.length){ for(let i=0;i<groups.length && i<heads.length;i++){ groups[i].push(heads[i]) } }
+  const targetCaps=capsBase.map((cap,i)=>Math.max(0, cap-groups[i].length));
+  const pool=headsAsFirst?others:shuffle(teams,rand);
+
+  const maxAttempts=500;
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const g=groups.map(arr=>[...arr]); const remaining=[...targetCaps]; let ok=true;
+    const order=shuffle(pool,rand);
+    for(const team of order){
+      const options=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]})).filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
+      if(!options.length){ ok=false; break; }
+      const pick=options[Math.floor(rand()*options.length)]; g[pick].push(team); remaining[pick]--;
+    }
+    if(ok) return {groups:g,caps:capsBase,relaxed:false,attempt};
+  }
+  return {error:'No se pudo asignar después de varios intentos'};
 }
-function summaryCaps(caps){const c3=caps.filter(x=>x===3).length;const c2=caps.filter(x=>x===2).length;const c0=caps.filter(x=>x===0).length;return {c3,c2,c0,txt:`${c3}×3, ${c2}×2, ${c0}×0`}}
+
+/* ====================== Render + Pestaña nueva ====================== */
+function renderGroups(target,result){
+  if(result.error){ target.innerHTML=`<div class="errorText">${result.error}</div>`; lastResult=null; return }
+  const grid=document.createElement('div'); grid.className='grid';
+  result.groups.forEach((arr,gi)=>{
+    const card=document.createElement('div'); card.className='zone';
+    card.innerHTML=`<h4>Zona ${gi+1}</h4>`;
+    const ol=document.createElement('ol');
+    arr.forEach(t=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
+      ol.appendChild(li);
+    });
+    card.appendChild(ol); grid.appendChild(card);
+  });
+  target.innerHTML=''; target.appendChild(grid);
+  const attempts=result.attempt!=null? ` (intentos: ${result.attempt+1})` : '';
+  document.getElementById('status').innerHTML=`Sorteo realizado${attempts}`;
+  lastResult=result;
+}
+function openResultInNewTab(result){
+  const w=window.open('about:blank','_blank'); if(!w){ toast('Permití pop-ups para ver el resultado'); return }
+  const disciplineText=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
+  const category=(document.getElementById('categorySelect').value)||'';
+  const gender=(document.getElementById('genderSelect').value)||'';
+  const chipsHTML=[
+    disciplineText?`<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>`:'',
+    category?`<span class="chip">Categoría: ${escapeHtml(category)}</span>`:'',
+    gender?`<span class="chip">Género: ${escapeHtml(gender)}</span>`:'',
+    `<span class="chip">${result.groups.length} zonas</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  const zonesHTML=result.groups.map((arr,gi)=>{
+    const items=arr.map(t=>`<li><b>${escapeHtml(t.name)}</b>${t.province?` — ${escapeHtml(t.province)}`:''}${t.head?' ★':''}</li>`).join('');
+    return `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Resultado del Sorteo</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
+    .zone h4{margin:4px 0 8px 0}
+    .zone ol{margin:0;padding-left:18px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+  </head><body>
+    <div class="container">
+      <h1>🎲 Resultado del Sorteo</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div class="grid">${zonesHTML}</div>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+        document.body.appendChild(sheet);
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
+        });
+      }
+    <\/script>
+  </body></html>`;
+
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+/* ====================== Export CSV ====================== */
+function exportGroupsCSV(groups){
+  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
+  groups.forEach((arr,gi)=>{ arr.forEach((t,i)=>{ csv+=`${gi+1},${i+1},"${t.name.replace(/"/g,'""')}","${(t.province||'').replace(/"/g,'""')}",${t.head?'si':'no'}\n` }) });
+  downloadText(csv,'sorteo_zonas.csv');
+}
+function exportSimpleCSV(list){ let csv='Posicion,Equipo\n'; list.forEach((n,i)=>{ csv+=`${i+1},"${n.replace(/"/g,'""')}"\n` }); downloadText(csv,'sorteo_simple.csv') }
+
+/* ====================== Estado UI ====================== */
+function getFormat(){ const r=document.querySelector('input[name="format"]:checked'); return r?r.value:'custom' }
+function currentZones(){ const fmt=getFormat(); if(fmt==='8x3') return 8; if(fmt==='4x6') return 4; return parseInt(document.getElementById('zones').value)||1 }
 function updateCapInfo(){
-  const teams=getActiveTeamsLive().length;
-  const z=currentZones(); const fmt=getFormat();
-  let msg='Activos: '+teams+' · Zonas: '+z;
-  if(fmt==='4x6'){
-    if(teams<=24){const capsPrev=capacitiesFourBySix(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 6 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'}
-    else { msg+=' — >24 equipos: distribución pareja' }
-  } else if(fmt==='8x3'){
-    if(teams<=24){const capsPrev=capacitiesEightByThree(teams); const s=summaryCaps(capsPrev); msg+=' — Objetivo 3 · Dist.: '+capsPrev.join('-')+' ('+s.txt+')'; if(teams<16){msg+=' — <span class="warnText"><b>Considere cambiar de sistema</b></span>'}}
-    else { msg+=' — >24 equipos: distribución pareja' }
-  } else {
-    const per=(teams/z).toFixed(2); msg+=' — Promedio: '+per+' por zona';
-  }
-  document.getElementById('capInfo')?.innerHTML = msg;
+  const teams=getActiveTeamsLive().length; const z=currentZones(); const fmt=getFormat();
+  let msg=`Equipos: ${teams} · Zonas: ${z}`;
+  if(fmt==='4x6'){ if(teams<=24){ const caps=capacitiesFourBySix(teams); msg+=` — Distribución: ${caps.join('-')}` } else { msg+=' — Distribución pareja' } }
+  else if(fmt==='8x3'){ if(teams<=24){ const caps=capacitiesEightByThree(teams); msg+=` — Distribución: ${caps.join('-')}`; if(teams<16) msg+=' — <span class="warnText">Considere cambiar de sistema</span>'; } else { msg+=' — Distribución pareja' } }
+  else { const avg=(teams/z).toFixed(2); msg+=` — Promedio: ${avg} por zona` }
+  document.getElementById('capInfo').innerHTML=msg;
 }
 
-/* ============== Guardado en Firestore ============== */
-async function saveDrawToCloud(res, meta){
-  try{
-    const user = auth.currentUser;
-    if(!user){ console.log('[save] sin sesión, no guardo'); return; }
-    const payload = {
-      createdAtClient: Date.now(),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      teamsCount: meta.teams,
-      zones: meta.z,
-      format: meta.format,
-      discipline: meta.discipline || '',
-      seedUsed: meta.seedUsed || '',
-      groups: res.groups.map(g => g.map(t => ({name:t.name, province:t.province||'', head:!!t.head})))
-    };
-    const ref = await db.collection('users').doc(user.uid).collection('draws').add(payload);
-    console.log('[save] ok id=', ref.id);
-    showToast('Guardado en la nube');
-    return ref.id;
-  }catch(e){
-    console.error('saveDrawToCloud', e);
-    showToast('No se pudo guardar en la nube: '+(e.code||e.message||e));
-  }
-}
-
-let unsubHistory=null;
-function subscribeCloudHistory(){
-  const listEl=document.getElementById('cloudHistory');
-  const dbg=document.getElementById('cloudDebug');
-  if(unsubHistory){ unsubHistory(); unsubHistory=null; }
+/* ====================== Guardar y listar en Firestore ====================== */
+async function saveDrawToCloud(result, meta){
   const user = auth.currentUser;
-  if(!user){ listEl.innerHTML='<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; dbg.textContent='[cloud] sin sesión'; return; }
-  listEl.innerHTML='<div class="tiny">Cargando...</div>';
-  dbg.textContent='[cloud] suscribiendo…';
-  unsubHistory = db.collection('users').doc(user.uid).collection('draws').orderBy('createdAtClient','desc').limit(100)
-    .onSnapshot(snap=>{
-      console.log('[cloud] snapshot size=', snap.size);
-      listEl.innerHTML='';
-      if(snap.empty){ listEl.innerHTML='<div class="tiny">No hay sorteos guardados aún.</div>'; dbg.textContent='[cloud] 0 items'; return; }
-      dbg.textContent='[cloud] '+snap.size+' items';
-      snap.forEach(doc=>{
+  if(!user) {
+    console.log('Usuario no logueado, no se guarda en nube');
+    return;
+  }
+  
+  try {
+    const payload = {
+      teamsCount: meta.teamsCount,
+      zones: meta.zones,
+      format: meta.format,
+      discipline: meta.discipline,
+      disciplineSeed: meta.disciplineSeed,
+      category: meta.category,
+      gender: meta.gender,
+      groups: result.groups.map(arr => arr.map(t => ({
+        name: t.name, 
+        province: t.province || '', 
+        head: !!t.head
+      }))),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: user.uid // importante para filtrar después
+    };
+    
+    await db.collection('users').doc(user.uid).collection('draws').add(payload);
+    console.log('Sorteo guardado en la nube correctamente');
+    toast('Sorteo guardado en la nube ✓');
+    
+  } catch(e) { 
+    console.error('Error guardando en nube:', e); 
+    toast('No se pudo guardar en la nube: ' + e.message);
+  }
+}
+function subscribeCloudHistory(){
+  const user = auth.currentUser; 
+  const listEl = document.getElementById('cloudHistory');
+  
+  if(cloudUnsub){ 
+    cloudUnsub(); 
+    cloudUnsub = null; 
+  }
+  
+  if(!user){ 
+    listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; 
+    return; 
+  }
+  
+  cloudUnsub = db.collection('users').doc(user.uid)
+    .collection('draws')
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      listEl.innerHTML = '';
+      
+      if(snap.empty){ 
+        listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>'; 
+        return; 
+      }
+      
+      snap.forEach(doc => {
         const d = doc.data();
-        const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : new Date(d.createdAtClient||Date.now()).toLocaleString();
-        const title = `${when} — ${d.teamsCount||'-'} equipos · ${d.zones||'-'} zonas${d.format? ' · '+d.format:''}${d.discipline? ' · '+d.discipline:''}`;
-        const item = document.createElement('div'); item.className='item'; item.textContent=title;
+        const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
+        const title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        
+        const item = document.createElement('div'); 
+        item.className = 'item'; 
+        item.textContent = title;
 
-        const btns=document.createElement('div'); btns.style.marginTop='6px';
-        const openBtn=document.createElement('button'); openBtn.className='btn tiny'; openBtn.textContent='Abrir';
-        openBtn.addEventListener('click',()=>{
-          const res={groups:(d.groups||[]).map(arr=>arr.map(t=>({name:t.name, province:t.province, head:!!t.head}))), caps:[]};
+        const btns = document.createElement('div'); 
+        btns.style.marginTop = '6px';
+        
+        const openBtn = document.createElement('button'); 
+        openBtn.className = 'btn tiny'; 
+        openBtn.textContent = 'Abrir';
+        openBtn.addEventListener('click', () => {
+          const res = {
+            groups: (d.groups || []).map(arr => 
+              arr.map(t => ({
+                name: t.name, 
+                province: t.province || '', 
+                head: !!t.head
+              }))
+            )
+          };
           openResultInNewTab(res);
         });
+        
         btns.appendChild(openBtn);
         item.appendChild(btns);
         listEl.appendChild(item);
       });
-    }, err=>{
-      console.error('[Firestore]', err);
-      listEl.innerHTML = `<div class="tiny errorText">Error al leer historial: ${err.code||''} ${err.message||''}</div>`;
-      dbg.textContent='[cloud] error '+(err.code||err.message||'');
+    }, err => {
+      console.error('Error leyendo historial cloud:', err);
+      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial de nube.</div>';
     });
 }
 
-/* ============== PDF (usa último sorteo) ============== */
-async function exportPDF(){
-  try{
-    if(!(window.jspdf&&window.html2canvas)){alert('No se pudieron cargar las librerías de PDF (jsPDF/html2canvas).');return}
-    let res = lastDraw?.res;
-    let meta = lastDraw?.meta;
-    if(!res){
-      const teams = getActiveTeamsLive(); if(!teams.length){ showToast('No hay equipos activos'); return }
-      const z=currentZones();
-      const baseSeed=getSelectedDisciplineSeed();
-      const salt = (window.crypto?.getRandomValues ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random()*1e9)) + ':' + Date.now();
-      const seed = (baseSeed? baseSeed+'#' : '') + String(salt);
-      const headsFirst = true;
-      const fmt=getFormat();
-      res=drawGroups(teams,z,seed,headsFirst,fmt);
-      meta={z, format:fmt, seedUsed:seed, teams:teams.length, discipline:getSelectedDisciplineName()};
-      lastDraw={res, meta};
-    }
-    const teamsCount = meta.teams || (res.groups||[]).reduce((a,g)=>a+g.length,0);
-
-    const sheet=document.createElement('div');
-    sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#ffffff';sheet.style.color='#0f172a';
-    sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';
-    sheet.style.fontFamily='Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif';
-    const bar=document.createElement('div');bar.style.height='8px';bar.style.background='linear-gradient(90deg,#22c55e,#38bdf8)';sheet.appendChild(bar);
-    const header=document.createElement('div');header.style.display='flex';header.style.justifyContent='space-between';header.style.alignItems='center';header.style.padding='12px 16px 8px';
-    const title=document.createElement('div');title.style.fontSize='22px';title.style.fontWeight='600';title.textContent='Sorteo de Zonas';const right=document.createElement('div');right.style.textAlign='right';right.style.fontSize='11px';right.innerHTML='Equipos: <b>'+teamsCount+'</b><br>'+new Date().toLocaleString();
-    header.appendChild(title);header.appendChild(right);sheet.appendChild(header);
-    const chips=document.createElement('div');chips.style.display='flex';chips.style.flexWrap='wrap';chips.style.gap='6px';chips.style.margin='2px 16px 10px';
-    function chip(txt){const s=document.createElement('span');s.textContent=txt;s.style.fontSize='11px';s.style.padding='4px 8px';s.style.border='1px solid #e2e8f0';s.style.borderRadius='500px';s.style.background='#f8fafc';return s}
-    const fmtTxt=(meta.format==='8x3'?'Formato: 8×3':(meta.format==='4x6'?'Formato: 4×6':'Zonas: '+meta.z)); chips.appendChild(chip(fmtTxt));
-    if(meta.discipline) chips.appendChild(chip('Disciplina: '+meta.discipline));
-    sheet.appendChild(chips);
-    const grid=document.createElement('div');grid.style.display='grid';const cols=(res.groups.length>=6)?4:2;grid.style.gridTemplateColumns='repeat('+cols+',1fr)';grid.style.gap='10px';grid.style.padding='0 12px';grid.style.flex='0';
-    res.groups.forEach((arr,gi)=>{const card=document.createElement('div');card.style.border='1px solid #e2e8f0';card.style.borderRadius='12px';card.style.background='#ffffff';card.style.boxShadow='0 1px 0 rgba(0,0,0,.04)';
-      const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';head.style.alignItems='center';head.style.padding='6px 10px';head.style.background='linear-gradient(90deg, rgba(34,197,94,.08), rgba(56,189,248,.08))';head.style.borderTopLeftRadius='12px';head.style.borderTopRightRadius='12px';
-      const hleft=document.createElement('div');hleft.style.fontWeight='800';hleft.style.fontSize='18px';hleft.textContent='Zona '+(gi+1);
-      const hright=document.createElement('div');hright.style.fontSize='18px';hright.style.color='#334155';hright.textContent='';
-      head.appendChild(hleft);head.appendChild(hright);card.appendChild(head);
-      const body=document.createElement('div');body.style.padding='8px 12px 10px';body.style.textAlign='center';const ol=document.createElement('ol');ol.style.margin='0';ol.style.paddingLeft='8px';ol.style.listStylePosition='inside';ol.style.fontSize='18px';ol.style.lineHeight='1.35';
-      arr.forEach(t=>{const li=document.createElement('li');li.textContent=t.name+(t.province?' — '+t.province:'')+(t.head?' ★':'');ol.appendChild(li)}); body.appendChild(ol); card.appendChild(body); grid.appendChild(card);
-    });
-    sheet.appendChild(grid);
-    const footer=document.createElement('div');footer.style.fontSize='10px';footer.style.color='#64748b';footer.style.textAlign='right';footer.style.padding='4px 12px 10px';footer.textContent='Generado con Sorteador Deportivo — '+(location.href.split('#')[0]||'');sheet.appendChild(footer);
-    document.body.appendChild(sheet);
-    await new Promise(r=>setTimeout(r,20));
-    const canvas=await html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true});
-    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-    pdf.addImage(img,'PNG',0,0,pw,ph); const dateStr=new Date().toISOString().slice(0,10); pdf.save('sorteo_'+dateStr+'.pdf');
-  }catch(err){ console.error(err); alert('No se pudo exportar el PDF.'); }
-}
-
-/* ============== Resultado en pestaña nueva ============== */
-function openResultInNewTab(res){
-  const w = window.open('', '_blank');
-  if(!w){ showToast('Bloqueado por el navegador. Permití pop-ups.'); return; }
-  const doc = w.document;
-  doc.open();
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resultado del Sorteo</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:20px}
-    h2{margin-top:0}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .zone{background:#0b1220;border:1px solid #223046;border-radius:12px;padding:10px}
-    .zone h4{margin:4px 0 8px 0}
-    .zone ol{margin:0;padding-left:18px}
-  </style>
-  </head><body>
-    <h2>Resultado del sorteo</h2>
-    <div class="grid">
-    ${res.groups.map((arr,gi)=>`
-      <div class="zone">
-        <h4>Zona ${gi+1}</h4>
-        <ol>${arr.map(t=>`<li><b>${escapeHtml(t.name)}</b>${t.province?` <span style="color:#94a3b8">— ${escapeHtml(t.province)}</span>`:''}${t.head?` <span style="border:1px solid #2b3b55;border-radius:999px;padding:2px 6px;background:#0b1220">Cabeza</span>`:''}</li>`).join('')}</ol>
-      </div>`).join('')}
-    </div>
-  </body></html>`;
-  doc.write(html);
-  doc.close();
-}
-
-/* ============== UI y eventos ============== */
-function setFormat(fmt){
-  document.querySelectorAll('input[name="format"]').forEach(r=> r.checked=(r.value===fmt));
-  const elZones=document.getElementById('zones');
-  if(fmt==='8x3'){ elZones.value=8; elZones.disabled=true }
-  else if(fmt==='4x6'){ elZones.value=4; elZones.disabled=true }
-  else { elZones.disabled=false }
-  updateCapInfo();
-}
-
+/* ====================== DOM Ready ====================== */
 document.addEventListener('DOMContentLoaded',function(){
-  // Auth tabs
-  document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
-      tab.classList.add('active');
-      document.getElementById('registerForm').classList.add('hidden');
-
-
-    });
-  });
-
-  // Login
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
-      showToast('Sesión iniciada correctamente');
-    } catch (error) { showToast('Error: ' + error.message); }
-  });
-
-  // Register
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('registerConfirmPassword').value;
-    if (password !== confirmPassword) { showToast('Las contraseñas no coinciden'); return; }
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      await userCredential.user.updateProfile({ displayName: name });
-      showToast('Cuenta creada exitosamente');
-    } catch (error) { showToast('Error: ' + error.message); }
-  });
-
-  // Auth state + cloud history
-  auth.onAuthStateChanged((user)=>{
-  const authSection = document.getElementById('authSection');
-  const appSection  = document.getElementById('appSection');
-  const sessInfo    = document.getElementById('sessInfo');
-
-  // La app SIEMPRE visible
-  appSection.style.display = 'block';
-
-  if (user) {
-    sessInfo.textContent = 'Sesión: ' + (user.email || user.uid);
-    // Si preferís ocultar el panel de login cuando hay sesión:
-    authSection.style.display = 'none';
-  } else {
-    sessInfo.textContent = 'Sesión: —';
-    // Podés dejar el panel visible para loguearte cuando quieras:
-    authSection.style.display = 'block';
-  }
-
-  // (Re)conectar el historial en la nube cada vez que cambia el usuario
-  subscribeCloudHistory();
-});
-
-
-  // Radios de formato
-  document.querySelectorAll('input[name="format"]').forEach(r=>{
-    r.addEventListener('change',()=> setFormat(r.value));
-  });
-
-  // Tabs
+  // Tabs app
   document.querySelectorAll('.tab').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      document.querySelectorAll('.tab').forEach(b=> b.classList.toggle('active', b===btn));
-      document.querySelectorAll('.tabcontent').forEach(c=> c.classList.add('hidden'));
-      document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabcontent').forEach(c=>c.classList.add('hidden'));
+      btn.classList.add('active'); document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
     });
   });
 
-  // Panel de checks
+  // Formato
+  document.querySelectorAll('input[name="format"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const elZones=document.getElementById('zones');
+      if(r.value==='8x3'){ elZones.value='8'; elZones.disabled=true }
+      else if(r.value==='4x6'){ elZones.value='4'; elZones.disabled=true }
+      else { elZones.disabled=false }
+      updateCapInfo();
+    });
+  });
+
+  // Panel checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
-  document.getElementById('toggleShowInactive')?.addEventListener('change', renderLists);
+  document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', ()=> selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', ()=> selectAll('.chkInactive'));
+  document.getElementById('btnSelectAllActive').addEventListener('click', ()=>selectAll('.chkActive'));
+  document.getElementById('btnSelectAllInactive').addEventListener('click', ()=>selectAll('.chkInactive'));
 
-  // Equipos CSV
+  // CSV Equipos
   document.getElementById('csvFile').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        const parsed=importCSVTeams(reader.result||'');
-        const teams=parsed.list;
-        if(!teams.length){ showToast('CSV vacío o no se detectaron equipos'); return }
-        document.getElementById('teamsInput').value = teams.map(t=> t.name+(t.province?'; '+t.province:'')+(t.head?'; *':'')).join('\n');
+        const result=importTeamsCSV(reader.result||'');
+        if(result.teams.length===0){ toast('CSV vacío o sin equipos'); return }
+        document.getElementById('teamsInput').value=result.teams.map(t=>`${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('\n');
         buildListsFromTextarea();
-        const prev=teams.slice(0,3).map(t=> t.name+(t.province?' — '+t.province:'')+(t.head?' — *':'' )).join(' · ');
-        document.getElementById('csvInfo').innerHTML = 'CSV de equipos: <b>'+teams.length+'</b> filas · Delimitador: <b>'+((parsed.delim=== '\t')?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        showToast('CSV de equipos cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de equipos.'); }
+        const info=`CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter==='\t'?'TAB':result.delimiter}${result.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('csvInfo').innerHTML=info; toast('CSV de equipos cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
     };
-    reader.readAsText(file,'utf-8');
+    reader.readAsText(file,'UTF-8');
   });
 
-  // Disciplinas CSV
+  // CSV Disciplinas
   document.getElementById('csvDisciplines').addEventListener('change',function(e){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=function(){
       try{
-        const parsed=importCSVDisciplines(reader.result||'');
-        disciplines = parsed.list;
-        refreshDisciplineSelects();
-        const prev=disciplines.slice(0,5).map(d=> d.name).join(' · ');
-        document.getElementById('discCSVInfo').innerHTML = 'CSV de disciplinas: <b>'+disciplines.length+'</b> filas · Delimitador: <b>'+((parsed.delim=== '\t')?'TAB':parsed.delim)+'</b>'+(prev?' · Ej: '+prev:'');
-        showToast('CSV de disciplinas cargado');
-      }catch(err){ console.error(err); alert('No se pudo leer el CSV de disciplinas.'); }
+        const res=importDisciplinesCSV(reader.result||''); disciplines=res.items; refreshDisciplineSelects();
+        const info=`CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('discCSVInfo').innerHTML=info; toast('CSV de disciplinas cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
     };
-    reader.readAsText(file,'utf-8');
+    reader.readAsText(file,'UTF-8');
   });
 
-  // Demo disciplinas
+  // CSV Categorías
+  document.getElementById('csvCategories').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const res=importCategoriesCSV(reader.result||''); categories=res.items; refreshCategorySelects();
+        const info=`CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('catCSVInfo').innerHTML=info; toast('CSV de categorías cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
+    };
+    reader.readAsText(file,'UTF-8');
+  });
+
+  // Demos
   document.getElementById('btnDiscDemo').addEventListener('click',()=>{
-    disciplines = [
-      {name:'Fútbol', seed:'futbol-24'},
-      {name:'Básquet', seed:'basquet-24'},
-      {name:'Vóley', seed:'voley-24'},
-      {name:'Handball', seed:'hand-24'},
-      {name:'Hockey', seed:'hockey-24'}
-    ];
-    refreshDisciplineSelects();
-    showToast('Disciplinas demo cargadas');
+    disciplines=[{name:'Fútbol',seed:'futbol'},{name:'Básquet',seed:'basquet'},{name:'Vóley',seed:'voley'},{name:'Hockey',seed:'hockey'}];
+    refreshDisciplineSelects(); document.getElementById('discCSVInfo').innerHTML='Demo: 4 disciplinas cargadas'; toast('Disciplinas demo cargadas');
   });
-
-  // Sincronizar info al tipear
-  document.getElementById('teamsInput').addEventListener('input', ()=>{
-    if(document.getElementById('checkLists').classList.contains('hidden')){ updateCapInfo(); }
+  document.getElementById('btnCatDemo').addEventListener('click',()=>{
+    categories=[{name:'Sub-15',seed:'sub15'},{name:'Sub-17',seed:'sub17'},{name:'Senior',seed:'senior'},{name:'Libre',seed:'libre'}];
+    refreshCategorySelects(); document.getElementById('catCSVInfo').innerHTML='Demo: 4 categorías cargadas'; toast('Categorías demo cargadas');
   });
 
   // Utilidad
   document.getElementById('btnExample').addEventListener('click',()=>{
-    const sample=[["River Plate","CABA","*"],["Boca Juniors","CABA","*"],["Newell's","Santa Fe",""],["Rosario Central","Santa Fe",""],["San Lorenzo","CABA",""],["Racing","Buenos Aires",""],["Independiente","Buenos Aires",""],["Estudiantes","Buenos Aires",""],["Talleres","Córdoba",""],["Belgrano","Córdoba",""],["Godoy Cruz","Mendoza",""],["Atl. Tucumán","Tucumán",""]];
-    document.getElementById('teamsInput').value = sample.map(r=> r.filter(Boolean).join('; ')).join('\n');
-    updateCapInfo();
+    const sample=`River Plate; CABA; *
+Boca Juniors; CABA; *
+Newell's; Santa Fe
+Rosario Central; Santa Fe
+San Lorenzo; CABA
+Racing; Buenos Aires
+Independiente; Buenos Aires
+Estudiantes; Buenos Aires
+Talleres; Córdoba
+Belgrano; Córdoba
+Godoy Cruz; Mendoza
+Atl. Tucumán; Tucumán`;
+    document.getElementById('teamsInput').value=sample; updateCapInfo();
   });
   document.getElementById('btnClear').addEventListener('click',()=>{
-    document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[]; document.getElementById('checkLists').classList.add('hidden');
+    document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[];
+    document.getElementById('checkLists').classList.add('hidden');
     document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
+    lastResult=null;
   });
 
-  // Sorteo zonas — SIEMPRE nuevo (seed con random + timestamp)
-  document.getElementById('btnDrawGroups').addEventListener('click', async ()=>{
-    const teams = getActiveTeamsLive();
-    if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos. Pegá o importá una lista.</span>'; return }
-    const z=currentZones();
-    const baseSeed=getSelectedDisciplineSeed();
-    const salt = (window.crypto?.getRandomValues ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random()*1e9)) + ':' + Date.now();
-    const seed = (baseSeed? baseSeed+'#' : '') + String(salt);
-    const res=drawGroups(teams,z,seed,true,getFormat());
-    const meta = {z, format:getFormat(), seedUsed:seed, teams:teams.length, discipline:getSelectedDisciplineName()};
-    lastDraw = {res, meta};
+  // Sorteos (siempre nuevo)
+  document.getElementById('btnDrawGroups').addEventListener('click',async()=>{
+    const teams=getActiveTeamsLive(); if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos</span>'; return }
+    const z=currentZones(); const fmt=getFormat();
+    // semilla única por click: disciplina + timestamp + random
+    const base=(document.getElementById('disciplineSelect').value||'sorteo');
+    const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const headsAsFirst=document.getElementById('headsAsFirst').checked;
 
-    renderGroups(document.getElementById('resultGroups'),res);
-
-    // Guardar en la nube si hay sesión (y refrescar suscripción)
-    await saveDrawToCloud(res, meta);
-    // Historial local
-    if(!res.error){
-      const iso=new Date().toISOString().replace('T',' ').slice(0,19);
+    const result=drawGroups(teams,z,headsAsFirst,runSeed,fmt);
+    renderGroups(document.getElementById('resultGroups'),result);
+    if(!result.error){
+      openResultInNewTab(result);
+      const now=new Date().toLocaleString();
       const item=document.createElement('div'); item.className='item';
-      const heads=teams.filter(t=>t.head).length; const provs=[...new Set(teams.map(t=>t.province).filter(Boolean))].length;
-      const disc=getSelectedDisciplineName();
-      item.textContent=iso+' — '+(disc?('['+disc+'] '):'')+teams.length+' equipos · '+z+' zonas · cabezas: '+heads+' · provincias: '+provs;
+      const discTxt=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
+      const cat=(document.getElementById('categorySelect').value)||'';
+      const gen=(document.getElementById('genderSelect').value)||'';
+      item.textContent=`${now} — ${teams.length} equipos · ${z} zonas${fmt? ' · '+fmt:''}${discTxt? ' · '+discTxt:''}${cat? ' · '+cat:''}${gen? ' · '+gen:''}`;
       document.getElementById('history').prepend(item);
-    }
 
-    // Abrir resultado en pestaña nueva
-    openResultInNewTab(res);
+      // Guardar en la nube (multidispositivo)
+      const meta={
+        teamsCount: teams.length,
+        zones: z,
+        format: fmt,
+        discipline: discTxt,
+        disciplineSeed: base,
+        category: cat,
+        gender: gen,
+      };
+      await saveDrawToCloud(result, meta);
+    }
   });
 
-  // Export/Copy/Share/PDF
+  // Export/Copy usan el último sorteo (no recalculan)
   document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    if(!lastDraw?.res){ showToast('Primero generá un sorteo'); return; }
-    exportGroupsCSV(lastDraw.res.groups);
+    if(!lastResult || lastResult.error){ toast('Generá el sorteo primero'); return }
+    exportGroupsCSV(lastResult.groups);
   });
   document.getElementById('btnCopy').addEventListener('click',()=>{
-    if(!lastDraw?.res){ showToast('Primero generá un sorteo'); return; }
-    const zones=lastDraw.res.groups; let txt='';
-    zones.forEach((arr,zi)=>{ txt+='Zona '+(zi+1)+'\n'; arr.forEach((t,i)=>{ txt+=(i+1)+'. '+t.name+(t.province?(' — '+t.province):'')+(t.head?' (Cabeza)':'')+'\n' }); txt+='\n' });
+    if(!lastResult || lastResult.error){ toast('No hay resultado'); return }
+    let txt=''; lastResult.groups.forEach((arr,zi)=>{ txt+=`Zona ${zi+1}\n`; arr.forEach((t,i)=>{ txt+=`${i+1}. ${t.name}${t.province? ' — '+t.province:''}${t.head?' (Cabeza)':''}\n`}); txt+='\n' });
     copyText(txt);
   });
-  document.getElementById('btnShare').addEventListener('click', ()=>{
-    const st = { teams: getActiveTeamsLive(), z: currentZones(), format: getFormat(), discipline:getSelectedDisciplineName() };
-    const json=JSON.stringify(st); const b64=btoa(unescape(encodeURIComponent(json)));
-    const url=location.origin+location.pathname+'#'+b64;
-    copyText(url);
-    showToast('Enlace copiado');
-  });
-  document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
 
   // Simple
   document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
-    const names = getActiveTeamsLive().map(t=>t.name);
-    document.getElementById('simpleInput').value = names.join('\n');
+    const names=getActiveTeamsLive().map(t=>t.name); document.getElementById('simpleInput').value=names.join('\n'); toast('Lista copiada al tab Sorteo simple');
   });
   document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
   document.getElementById('btnDrawSimple').addEventListener('click',()=>{
+    const seed=document.getElementById('disciplineSelectSimple').value||`simple-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">Pegá al menos un equipo.</span>'; return }
-    const baseSeed=getSelectedDisciplineSeed();
-    const salt = (window.crypto?.getRandomValues ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random()*1e9)) + ':' + Date.now();
-    const seed = (baseSeed? baseSeed+'#' : '') + String(salt);
+    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">No hay equipos</span>'; return }
     const rand=rngFromSeed(seed); const list=shuffle(names,rand);
-    const out=list.map((n,i)=> (i+1)+'. '+n).join('\n');
-    document.getElementById('resultSimple').innerHTML = '<pre>'+escapeHtml(out)+'</pre>';
-    document.getElementById('statusSimple').textContent = 'Sorteo realizado.';
+    document.getElementById('resultSimple').innerHTML=list.map((n,i)=>`<div>${i+1}. <b>${escapeHtml(n)}</b></div>`).join('');
+    document.getElementById('statusSimple').textContent='Sorteo realizado';
   });
   document.getElementById('btnExportSimple').addEventListener('click',()=>{
-    const names=document.getElementById('resultSimple').innerText.split('\n').map(s=>s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
-    if(!names.length){ showToast('Generá el sorteo primero'); return }
-    let csv='Posicion,Equipo\n';
-    names.forEach((n,i)=>{ csv+=(i+1)+',"'+n.replace(/"/g,'""')+'"\n' });
-    downloadText(csv,'sorteo_simple.csv');
-  });
-  document.getElementById('btnCopySimple').addEventListener('click',()=>{
-    const txt=document.getElementById('resultSimple').innerText; if(!txt){ showToast('No hay resultado'); return } copyText(txt);
+    const names=document.getElementById('resultSimple').textContent.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean);
+    if(!names.length){ toast('No hay resultado para exportar'); return } exportSimpleCSV(names);
   });
 
   // Bracket
-  function nextPow2(x){let p=1;while(p<x) p<<=1;return p}
+  document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{ document.getElementById('bracketInput').value=getActiveTeamsLive().map(t=>t.name).join('\n') });
+  document.getElementById('btnClearBracket').addEventListener('click',()=>{ document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML='' });
+  function nextPow2(x){let p=1;while(p<x)p<<=1;return p}
   function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
-  function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML='<h4>Partido '+(i+1)+'</h4><ol><li><b>'+escapeHtml(m[0])+'</b></li><li><b>'+escapeHtml(m[1])+'</b></li></ol>';grid.appendChild(card)});target.appendChild(grid)}
-  document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{
-    document.getElementById('bracketInput').value = getActiveTeamsLive().map(t=>t.name).join('\n');
-  });
-  document.getElementById('btnClearBracket').addEventListener('click',()=>{document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML=''});
+  function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML=`<h4>Partido ${i+1}</h4><ol><li><b>${escapeHtml(m[0])}</b></li><li><b>${escapeHtml(m[1])}</b></li></ol>`;grid.appendChild(card)});target.appendChild(grid)}
   document.getElementById('btnDrawBracket').addEventListener('click',()=>{
+    const seed=(document.getElementById('disciplineSelectBracket').value||`bracket-${Date.now()}-${Math.random().toString(36).slice(2,8)}`);
     const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
-    const baseSeed=getSelectedDisciplineSeed();
-    const salt = (window.crypto?.getRandomValues ? window.crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random()*1e9)) + ':' + Date.now();
-    const seed = (baseSeed? baseSeed+'#' : '') + String(salt);
-    const matches=buildBracket(names, seed);
-    renderBracket(document.getElementById('resultBracket'), matches);
-    document.getElementById('statusBracket').textContent = 'Llaves generadas (ronda 1).';
+    const matches=buildBracket(names,seed); renderBracket(document.getElementById('resultBracket'),matches);
+    document.getElementById('statusBracket').textContent='Llaves generadas (ronda 1).';
   });
 
-  // Init
-  setFormat(document.querySelector('input[name="format"]:checked')?.value || '8x3');
   updateCapInfo();
-  refreshDisciplineSelects();
+});
+
+/* ====================== Auth UI y eventos ====================== */
+// Tabs auth
+document.querySelectorAll('.authTab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.authTab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab+'Form').classList.remove('hidden');
+  });
+});
+
+// Registro
+document.getElementById('registerForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const name=document.getElementById('registerName').value.trim();
+  const email=document.getElementById('registerEmail').value.trim();
+  const pass=document.getElementById('registerPassword').value;
+  const pass2=document.getElementById('registerConfirmPassword').value;
+  if(pass!==pass2){ toast('Las contraseñas no coinciden'); return }
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:name});
+    toast('Cuenta creada exitosamente');
+  }catch(err){ toast('Error: '+err.message) }
+});
+
+// Login
+document.getElementById('loginForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+    toast('Sesión iniciada');
+  }catch(err){ toast('Error: '+err.message) }
+});
+
+// Logout
+document.getElementById('logoutBtn').addEventListener('click',async()=>{
+  try{ await auth.signOut(); toast('Sesión cerrada') } catch{ toast('Error al cerrar sesión') }
+});
+
+// Cambios de sesión
+auth.onAuthStateChanged((user)=>{
+  const authSection=document.getElementById('authSection');
+  const appSection=document.getElementById('appSection');
+  const userInfo=document.getElementById('userInfo');
+  if(user){
+    authSection.classList.add('hidden');
+    appSection.classList.remove('hidden');
+    userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
+    subscribeCloudHistory();
+  }else{
+    appSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+    userInfo.textContent = '';
+    if(cloudUnsub){ cloudUnsub(); cloudUnsub=null; }
+  }
 });
 </script>
 </body>
