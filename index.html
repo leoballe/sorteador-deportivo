@@ -676,6 +676,16 @@ async function saveDrawToCloud(result, meta){
   }
   
   try {
+    // Transformar los arrays anidados a formato que Firestore acepte
+    const groupsData = result.groups.map((group, groupIndex) => ({
+      groupNumber: groupIndex + 1,
+      teams: group.map(team => ({
+        name: team.name,
+        province: team.province || '',
+        head: team.head || false
+      }))
+    }));
+
     const payload = {
       teamsCount: meta.teamsCount,
       zones: meta.zones,
@@ -684,13 +694,9 @@ async function saveDrawToCloud(result, meta){
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
       gender: meta.gender,
-      groups: result.groups.map(arr => arr.map(t => ({
-        name: t.name, 
-        province: t.province || '', 
-        head: !!t.head
-      }))),
+      groups: groupsData,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: user.uid // importante para filtrar después
+      userId: user.uid
     };
     
     await db.collection('users').doc(user.uid).collection('draws').add(payload);
@@ -699,7 +705,7 @@ async function saveDrawToCloud(result, meta){
     
   } catch(e) { 
     console.error('Error guardando en nube:', e); 
-    toast('No se pudo guardar en la nube: ' + e.message);
+    toast('Error al guardar en nube. Revisa la consola.');
   }
 }
 function subscribeCloudHistory(){
@@ -744,15 +750,16 @@ function subscribeCloudHistory(){
         openBtn.className = 'btn tiny'; 
         openBtn.textContent = 'Abrir';
         openBtn.addEventListener('click', () => {
-          const res = {
-            groups: (d.groups || []).map(arr => 
-              arr.map(t => ({
-                name: t.name, 
-                province: t.province || '', 
-                head: !!t.head
-              }))
-            )
-          };
+          // Reconstruir la estructura original de grupos desde Firestore
+          const groups = (d.groups || []).map(groupObj => 
+            groupObj.teams.map(team => ({
+              name: team.name,
+              province: team.province || '',
+              head: team.head || false
+            }))
+          );
+          
+          const res = { groups: groups };
           openResultInNewTab(res);
         });
         
@@ -762,10 +769,9 @@ function subscribeCloudHistory(){
       });
     }, err => {
       console.error('Error leyendo historial cloud:', err);
-      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial de nube.</div>';
+      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial. Verifica permisos.</div>';
     });
 }
-
 /* ====================== DOM Ready ====================== */
 document.addEventListener('DOMContentLoaded',function(){
   // Tabs app
