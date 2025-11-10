@@ -3,34 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sorteador Deportivo</title>
+  <title>Sorteador Deportivo Pro</title>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+  <!-- Utilidades PDF en la pestaña de resultado -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
     a{color:var(--accent2)}
     .container{max-width:1100px;margin:0 auto;padding:24px}
+
+    /* Header app */
     header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
     h1{font-size:clamp(22px,3vw,30px);margin:0}
     .badge{font-size:12px;background:#0b2;opacity:.9;padding:4px 8px;border-radius:999px}
-    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media (max-width:900px){.row{grid-template-columns:1fr}}
-    .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
-    .card h3{margin:0 0 8px 0;font-size:16px}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type=text],input[type=number],textarea,select{width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px}
-    textarea{min-height:200px;resize:vertical}
-    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .userBox{display:flex;align-items:center;gap:8px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
     .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
     .btn:hover{border-color:#3b82f6}
     .btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);border:0;color:#052e16}
     .btn.ghost{background:transparent;border-color:#2b3b55}
     .btn.warn{background:linear-gradient(135deg,var(--warn),#d97706);border:0;color:#3b1d00}
     .tiny{font-size:12px;color:var(--muted)}
+    .hidden{display:none}
+
+    /* Paneles y tarjetas */
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:900px){.row{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
+    .card h3{margin:0 0 8px 0;font-size:16px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text],input[type=number],input[type=email],input[type=password],textarea,select{
+      width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px
+    }
+    textarea{min-height:200px;resize:vertical}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+    /* Tabs */
     .tabs{display:flex;gap:8px;margin-bottom:12px}
     .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer;color:#e5e7eb}
     .tab.active{background:#0a3622;border-color:#1b5e3b;color:#22c55e}
+
+    /* Resultado */
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
     .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
@@ -38,8 +60,8 @@
     .muted{color:var(--muted)}
     .warnText{color:var(--warn)}
     .errorText{color:var(--danger)}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid #2b3b55;border-radius:999px;background:#0b1220}
-    .hidden{display:none}
+
+    /* Listas con checks */
     .history{display:grid;gap:8px}
     .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
     .listWrap{display:grid;grid-template-columns:1fr 1fr; gap:12px}
@@ -49,1210 +71,689 @@
     .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b}
     .itemRow:last-child{border-bottom:none}
     .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px}
+
+    /* Auth (login/registro) */
+    .authWrap{max-width:460px;margin:48px auto}
+    .authBrand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+    .authCard{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .authTabs{display:flex;border-bottom:1px solid #223046;margin-bottom:14px}
+    .authTab{flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent}
+    .authTab.active{border-bottom-color:#22c55e;color:#22c55e}
+    .authForm .formGroup{margin-bottom:12px}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>🎲 Sorteador Deportivo</h1>
-        <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
-      </div>
-      <span class="badge">v2.3</span>
-    </header>
 
-    <div class="panel">
-      <div class="tabs">
-        <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
-        <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
-        <button class="tab" data-tab="bracket" type="button">Eliminación directa (beta)</button>
+  <!-- ============ Sección de Autenticación ============ -->
+  <section id="authSection" class="authWrap">
+    <div class="authBrand">
+      <h1 style="margin:0">🎲 Sorteador Deportivo Pro</h1>
+    </div>
+    <div class="authCard">
+      <div class="authTabs">
+        <button class="authTab active" data-tab="login">Iniciar Sesión</button>
+        <button class="authTab" data-tab="register">Registrarse</button>
       </div>
 
-      <div id="tab-grupos" class="tabcontent">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
-            <textarea id="teamsInput" placeholder="Ejemplos:
+      <!-- Login -->
+      <form class="authForm" id="loginForm">
+        <div class="formGroup">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="tu@email.com">
+        </div>
+        <div class="formGroup">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">Iniciar Sesión</button>
+      </form>
+
+      <!-- Registro -->
+      <form class="authForm hidden" id="registerForm">
+        <div class="formGroup">
+          <label for="registerName">Nombre</label>
+          <input type="text" id="registerName" required placeholder="Tu nombre">
+        </div>
+        <div class="formGroup">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required placeholder="tu@email.com">
+        </div>
+        <div class="formGroup">
+          <label for="registerPassword">Contraseña</label>
+          <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
+        </div>
+        <div class="formGroup">
+          <label for="registerConfirmPassword">Confirmar Contraseña</label>
+          <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">Crear Cuenta</button>
+      </form>
+    </div>
+    <div class="tiny" style="margin-top:10px;text-align:center">Todo ocurre del lado del cliente.</div>
+  </section>
+
+  <!-- ============ Aplicación (se muestra tras login) ============ -->
+  <section id="appSection" class="hidden">
+    <div class="container">
+      <header>
+        <div>
+          <h1>🎲 Sorteador Deportivo</h1>
+          <div class="tiny">Funciona 100% en tu navegador (sin backend).</div>
+        </div>
+        <div class="userBox">
+          <span class="pill" id="userInfo" title="Usuario"></span>
+          <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
+          <span class="badge">v2.4 Pro (Auth)</span>
+        </div>
+      </header>
+
+      <div class="panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
+          <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
+          <button class="tab" data-tab="bracket" type="button">Eliminación directa (beta)</button>
+        </div>
+
+        <div id="tab-grupos" class="tabcontent">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; Provincia</span> y <span class="pill">; *</span> para cabeza.</label>
+              <textarea id="teamsInput" placeholder="Ejemplos:
 River Plate; CABA; *
 Boca Juniors; CABA
 Newell's; Santa Fe
 ..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
-              <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
-              <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
-              <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
-            </div>
-            <div class="tiny">CSV de equipos: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
-            <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
+              <div class="controls" style="margin-top:8px">
+                <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
+                <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
+                <button class="btn" id="btnBuildList" type="button">🗂️ Mostrar lista con checks</button>
+              </div>
+              <div class="tiny">CSV de equipos: <b>Equipo, Provincia, Cabeza</b> ("sí" para cabeza). Acepta <b>,</b>, <b>;</b> o <b>TAB</b>, con o sin cabecera.</div>
+              <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
 
-            <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
-              <div class="listBox">
-                <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
-                <div class="controls" style="margin-bottom:6px">
-                  <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
-                  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+              <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
+                <div class="listBox">
+                  <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
+                  <div class="controls" style="margin-bottom:6px">
+                    <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
+                    <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+                  </div>
+                  <div id="activeList"></div>
                 </div>
-                <div id="activeList"></div>
-              </div>
-              <div class="listBox">
-                <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
-                <div class="controls" style="margin-bottom:6px">
-                  <label class="pill"><input type="checkbox" id="toggleShowInactive"> Mostrar descartados</label>
-                  <button class="btn tiny" id="btnSelectAllInactive" type="button">Seleccionar todo</button>
-                  <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                <div class="listBox">
+                  <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
+                  <div class="controls" style="margin-bottom:6px">
+                    <label class="pill"><input type="checkbox" id="toggleShowInactive"> Mostrar descartados</label>
+                    <button class="btn tiny" id="btnSelectAllInactive" type="button">Seleccionar todo</button>
+                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                  </div>
+                  <div id="inactiveList" class="hidden"></div>
                 </div>
-                <div id="inactiveList" class="hidden"></div>
               </div>
+            </div>
+
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls" id="formatRow">
+                <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
+                <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
+                <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
+              </div>
+              <div class="controls">
+                <div style="min-width:160px;flex:1">
+                  <label>Nº de zonas / grupos</label>
+                  <input type="number" id="zones" min="1" value="8" />
+                </div>
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelect">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Categoría</label>
+                  <select id="categorySelect">
+                    <option value="">— Seleccionar categoría —</option>
+                  </select>
+                </div>
+                <div style="min-width:220px;flex:1">
+                  <label>Género</label>
+                  <select id="genderSelect">
+                    <option value="">— Seleccionar género —</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Mixto">Mixto</option>
+                    <option value="No Aplica">No Aplica</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls">
+                <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+                <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
+                <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+                <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
+              </div>
+              <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
+              <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
+
+              <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
+              <div id="capInfo" class="tiny" style="margin-top:6px"></div>
+
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawGroups" type="button">🎯 SORTEAR ZONAS</button>
+                <button class="btn" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
+                <button class="btn" id="btnCopy" type="button">📋 Copiar</button>
+                <button class="btn" id="btnShare" type="button">🔗 Compartir</button>
+              </div>
+              <div id="status" class="tiny" style="margin-top:8px"></div>
             </div>
           </div>
 
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls" id="formatRow">
-              <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
-              <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
-              <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
-            </div>
-            <div class="controls">
-              <div style="min-width:160px;flex:1">
-                <label>Nº de zonas / grupos</label>
-                <input type="number" id="zones" min="1" value="8" />
-              </div>
-              <div style="min-width:220px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelect">
-                  <option value="">— Seleccionar disciplina —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Categoría</label>
-                <select id="categorySelect">
-                  <option value="">— Seleccionar categoría —</option>
-                </select>
-              </div>
-              <div style="min-width:220px;flex:1">
-                <label>Género</label>
-                <select id="genderSelect">
-                  <option value="">— Seleccionar género —</option>
-                  <option value="Masculino">Masculino</option>
-                  <option value="Femenino">Femenino</option>
-                  <option value="Mixto">Mixto</option>
-                  <option value="No Aplica">No Aplica</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls">
-              <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
-              <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
-              <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
-              <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
-              <button class="btn ghost" id="btnCatDemo" type="button">Cargar categorías demo</button>
-            </div>
-            <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
-            <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultGroups" class="grid"></div>
+          </div>
 
-            <label><input type="checkbox" id="headsAsFirst" checked> Cabezas de serie primero</label>
-            <div id="capInfo" class="tiny" style="margin-top:6px"></div>
-
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawGroups" type="button">🎯 SORTEAR ZONAS</button>
-              <button class="btn" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
-              <button class="btn" id="btnCopy" type="button">📋 Copiar</button>
-              <button class="btn" id="btnShare" type="button">🔗 Compartir</button>
-            </div>
-            <div id="status" class="tiny" style="margin-top:8px"></div>
+          <div class="card" style="margin-top:12px">
+            <h3>Historial (local)</h3>
+            <div class="history" id="history"></div>
           </div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultGroups" class="grid"></div>
+        <div id="tab-simple" class="tabcontent hidden">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Usa la lista del tab Grupos (o pegá otra):</label>
+              <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
+              <div class="controls" style="margin-top:8px">
+                <button class="btn ghost" id="btnUseFromGroups" type="button">Usar lista del tab Grupos</button>
+                <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelectSimple">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
+                <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
+                <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
+              </div>
+              <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultSimple"></div>
+          </div>
         </div>
 
-        <div class="card" style="margin-top:12px">
-          <h3>Historial (local)</h3>
-          <div class="history" id="history"></div>
+        <div id="tab-bracket" class="tabcontent hidden">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Usa la lista del tab Grupos (o pegá otra):</label>
+              <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
+              <div class="controls" style="margin-top:8px">
+                <button class="btn ghost" id="btnUseFromGroups2" type="button">Usar lista del tab Grupos</button>
+                <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Parámetros</h3>
+              <div class="controls">
+                <div style="min-width:220px;flex:1">
+                  <label>Disciplina</label>
+                  <select id="disciplineSelectBracket">
+                    <option value="">— Seleccionar disciplina —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
+                <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
+                <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
+              </div>
+              <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultBracket" class="grid"></div>
+          </div>
         </div>
       </div>
 
-      <div id="tab-simple" class="tabcontent hidden">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Usa la lista del tab Grupos (o pegá otra):</label>
-            <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <button class="btn ghost" id="btnUseFromGroups" type="button">Usar lista del tab Grupos</button>
-              <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelectSimple">
-                  <option value="">— Seleccionar disciplina —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
-              <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
-              <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
-            </div>
-            <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultSimple"></div>
-        </div>
-      </div>
-
-      <div id="tab-bracket" class="tabcontent hidden">
-        <div class="row">
-          <div class="card">
-            <h3>Equipos</h3>
-            <label>Usa la lista del tab Grupos (o pegá otra):</label>
-            <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
-            <div class="controls" style="margin-top:8px">
-              <button class="btn ghost" id="btnUseFromGroups2" type="button">Usar lista del tab Grupos</button>
-              <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3>Parámetros</h3>
-            <div class="controls">
-              <div style="min-width:220px;flex:1">
-                <label>Disciplina</label>
-                <select id="disciplineSelectBracket">
-                  <option value="">— Seleccionar disciplina —</option>
-                </select>
-              </div>
-            </div>
-            <div class="controls" style="margin-top:10px">
-              <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
-              <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
-              <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
-            </div>
-            <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
-          </div>
-        </div>
-        <div class="card" style="margin-top:12px">
-          <h3>Resultado</h3>
-          <div id="resultBracket" class="grid"></div>
-        </div>
-      </div>
+      <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente. Podés guardar y compartir con "🔗 Compartir".</div>
     </div>
-
-    <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente (no se sube nada). Podés guardar y compartir con "🔗 Compartir".</div>
-  </div>
+  </section>
 
 <script>
 'use strict';
 
-// ====================== CONFIGURACIÓN INICIAL ======================
-let activeTeams = [];
-let inactiveTeams = [];
-let disciplines = [];
-let categories = [];
+/* ====================== Firebase Auth ====================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
+  authDomain: "sorteador-53cb5.firebaseapp.com",
+  projectId: "sorteador-53cb5",
+  storageBucket: "sorteador-53cb5.firebasestorage.app",
+  messagingSenderId: "583913752340",
+  appId: "1:583913752340:web:347f8b2866fcbb216e6401"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-// ====================== UTILIDADES BÁSICAS ======================
-function escapeHtml(text) {
-  const map = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, m => map[m]);
+/* ====================== Utils ====================== */
+function toast(msg){
+  const el=document.createElement('div');
+  el.textContent=msg;
+  el.style.cssText='position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
 }
-
-function toast(msg) {
-  const el = document.createElement('div');
-  el.textContent = msg;
-  el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1500);
+function escapeHtml(text){
+  const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return text.replace(/[&<>"']/g,m=>map[m]);
 }
-
-function downloadText(text, filename) {
-  const blob = new Blob([text], {type: 'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function downloadText(text,filename){
+  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
 }
+function copyText(text){ navigator.clipboard.writeText(text).then(()=>toast('Copiado')).catch(()=>alert('No se pudo copiar')) }
 
-function copyText(text) {
-  navigator.clipboard.writeText(text)
-    .then(() => toast('Copiado'))
-    .catch(() => alert('No se pudo copiar'));
-}
+/* ====================== Estado ====================== */
+let activeTeams=[], inactiveTeams=[];
+let disciplines=[], categories=[];
 
-// ====================== PARSERS DE CSV ======================
-function parseCSV(text) {
-  if (!text.trim()) return {headers: [], rows: []};
-  
-  // Detectar delimitador
-  const firstLine = text.split('\n')[0];
-  const delimiters = [',', ';', '\t'];
-  let bestDelimiter = ',';
-  let maxCount = 0;
-  
-  for (const delim of delimiters) {
-    const count = (firstLine.match(new RegExp(delim, 'g')) || []).length;
-    if (count > maxCount) {
-      maxCount = count;
-      bestDelimiter = delim;
-    }
+/* ====================== CSV genérico ====================== */
+function parseCSVLine(line, delimiter){
+  const result=[]; let current=''; let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i], next=line[i+1];
+    if(ch==='"'){ if(inQuotes && next==='"'){ current+='"'; i++; } else { inQuotes=!inQuotes; } }
+    else if(ch===delimiter && !inQuotes){ result.push(current.trim()); current=''; }
+    else { current+=ch; }
   }
-  
-  const lines = text.split(/\r?\n/).filter(line => line.trim());
-  const headers = parseCSVLine(lines[0], bestDelimiter);
-  const rows = lines.slice(1).map(line => parseCSVLine(line, bestDelimiter));
-  
-  return {headers, rows, delimiter: bestDelimiter};
+  result.push(current.trim()); return result;
+}
+function parseCSV(text){
+  if(!text.trim()) return {headers:[],rows:[],delimiter:','};
+  const firstLine=text.split(/\r?\n/)[0]||'';
+  const candidates=[',',';','\t']; let best=',', max=0;
+  for(const d of candidates){ const c=(firstLine.match(new RegExp('\\'+(d==='\t'?'t':d),'g'))||[]).length; if(c>max){max=c;best=d} }
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()); const headers=parseCSVLine(lines[0],best);
+  const rows=lines.slice(1).map(l=>parseCSVLine(l,best)); return {headers,rows,delimiter:best};
 }
 
-function parseCSVLine(line, delimiter) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-    
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === delimiter && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  
-  result.push(current.trim());
-  return result;
-}
-
-// ====================== IMPORTACIÓN DE EQUIPOS ======================
-function importTeamsCSV(text) {
-  try {
-    // Limpiar BOM si existe
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    
-    const {headers, rows, delimiter} = parseCSV(text);
-    
-    console.log('=== DEBUG CSV PARSING ===');
-    console.log('Headers:', headers);
-    console.log('First row:', rows[0]);
-    
-    // DETECCIÓN INTELIGENTE de columnas
-    let nameIdx = -1, provinceIdx = -1, headIdx = -1;
-    
-    if (headers.length > 0) {
-      headers.forEach((header, idx) => {
-        const h = header.toLowerCase().trim();
-        
-        // Buscar columna de NOMBRE (la más importante)
-        if (nameIdx === -1 && (
-          h.includes('equipo') || h.includes('team') || h.includes('nombre') || 
-          h.includes('club') || h.includes('institución') || h === 'nombre'
-        )) {
-          nameIdx = idx;
-          console.log('Columna NOMBRE detectada:', idx, header);
-        }
-        
-        // Buscar columna de PROVINCIA
-        if (provinceIdx === -1 && (
-          h.includes('provincia') || h.includes('province') || h.includes('región') ||
-          h.includes('region') || h.includes('localidad') || h === 'provincia'
-        )) {
-          provinceIdx = idx;
-          console.log('Columna PROVINCIA detectada:', idx, header);
-        }
-        
-        // Buscar columna de CABEZA
-        if (headIdx === -1 && (
-          h.includes('cabeza') || h.includes('head') || h.includes('seed') ||
-          h.includes('semilla') || h.includes('cabezas') || h === 'cabeza'
-        )) {
-          headIdx = idx;
-          console.log('Columna CABEZA detectada:', idx, header);
-        }
-      });
-    }
-    
-    // FALLBACK: Si no detectó columnas, usar las primeras 3
-    if (nameIdx === -1) {
-      nameIdx = 0;
-      provinceIdx = headers.length > 1 ? 1 : -1;
-      headIdx = headers.length > 2 ? 2 : -1;
-      console.log('Usando columnas por defecto:', {nameIdx, provinceIdx, headIdx});
-    }
-    
-    const teams = [];
-    const uniqueNames = new Set();
-    
-    for (const row of rows) {
-      if (row.length <= nameIdx) continue;
-      
-      const name = (row[nameIdx] || '').replace(/\*+$/, '').trim();
-      if (!name) continue;
-      
-      // Verificar duplicados
-      if (uniqueNames.has(name.toLowerCase())) {
-        console.log('Duplicado ignorado:', name);
-        continue;
-      }
-      uniqueNames.add(name.toLowerCase());
-      
-      const province = (provinceIdx !== -1 && row[provinceIdx]) ? 
-                      row[provinceIdx].replace(/\*+$/, '').trim() : '';
-      
-      const headValue = (headIdx !== -1 && row[headIdx]) ? 
-                       row[headIdx].toLowerCase().trim() : '';
-      
-      const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/.test(headValue) || 
-                  (row[nameIdx] || '').includes('*');
-      
-      teams.push({name, province, head});
-      console.log('Equipo procesado:', {name, province, head});
-    }
-    
-    console.log('Total equipos únicos:', teams.length);
-    return {teams, delimiter, hasHeaders: headers.length > 0};
-    
-  } catch (error) {
-    console.error('Error importando equipos:', error);
-    throw new Error('No se pudo leer el CSV de equipos: ' + error.message);
-  }
-}
-// ====================== IMPORTACIÓN DE DISCIPLINAS ======================
-function importDisciplinesCSV(text) {
-  try {
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    
-    const {headers, rows, delimiter} = parseCSV(text);
-    
-    let nameIdx = 0, seedIdx = 1;
-    
-    if (headers.length > 0) {
-      headers.forEach((header, idx) => {
-        const h = header.toLowerCase();
-        if (h.includes('disciplina') || h.includes('deporte') || h.includes('nombre')) nameIdx = idx;
-        if (h.includes('semilla') || h.includes('seed') || h.includes('código')) seedIdx = idx;
-      });
-    }
-    
-    const items = [];
-    for (const row of rows) {
-      if (row.length <= nameIdx) continue;
-      
-      const name = (row[nameIdx] || '').trim();
-      if (!name) continue;
-      
-      const seed = (row[seedIdx] || name).trim();
-      items.push({name, seed});
-    }
-    
-    return {items, delimiter, hasHeaders: headers.length > 0};
-  } catch (error) {
-    console.error('Error importando disciplinas:', error);
-    throw new Error('No se pudo leer el CSV de disciplinas');
-  }
-}
-
-// ====================== IMPORTACIÓN DE CATEGORÍAS ======================
-function importCategoriesCSV(text) {
-  try {
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    
-    const {headers, rows, delimiter} = parseCSV(text);
-    
-    let nameIdx = 0, seedIdx = 1;
-    
-    if (headers.length > 0) {
-      headers.forEach((header, idx) => {
-        const h = header.toLowerCase();
-        if (h.includes('categoría') || h.includes('category') || h.includes('división')) nameIdx = idx;
-        if (h.includes('semilla') || h.includes('seed') || h.includes('código')) seedIdx = idx;
-      });
-    }
-    
-    const items = [];
-    for (const row of rows) {
-      if (row.length <= nameIdx) continue;
-      
-      const name = (row[nameIdx] || '').trim();
-      if (!name) continue;
-      
-      const seed = (row[seedIdx] || name).trim();
-      items.push({name, seed});
-    }
-    
-    return {items, delimiter, hasHeaders: headers.length > 0};
-  } catch (error) {
-    console.error('Error importando categorías:', error);
-    throw new Error('No se pudo leer el CSV de categorías');
-  }
-}
-
-// ====================== GESTIÓN DE SELECTORES ======================
-function refreshDisciplineSelects() {
-  const selects = [
-    document.getElementById('disciplineSelect'),
-    document.getElementById('disciplineSelectSimple'),
-    document.getElementById('disciplineSelectBracket')
-  ];
-  
-  selects.forEach(select => {
-    if (!select) return;
-    
-    // Guardar selección actual
-    const currentValue = select.value;
-    
-    // Limpiar opciones
-    select.innerHTML = '<option value="">— Seleccionar disciplina —</option>';
-    
-    // Agregar disciplinas
-    disciplines.forEach(d => {
-      const option = document.createElement('option');
-      option.value = d.seed;
-      option.textContent = d.name;
-      option.dataset.seed = d.seed;
-      select.appendChild(option);
+/* ====================== Importación: equipos/disciplinas/categorías ====================== */
+function importTeamsCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=-1, provinceIdx=-1, headIdx=-1;
+  if(headers.length){
+    headers.forEach((h,i)=>{
+      const s=h.toLowerCase();
+      if(nameIdx===-1 && (s.includes('equipo')||s.includes('team')||s.includes('nombre')||s.includes('club'))) nameIdx=i;
+      if(provinceIdx===-1 && (s.includes('provincia')||s.includes('province')||s.includes('región')||s.includes('region')||s.includes('localidad'))) provinceIdx=i;
+      if(headIdx===-1 && (s.includes('cabeza')||s.includes('head')||s.includes('seed')||s.includes('semilla'))) headIdx=i;
     });
-    
-    // Restaurar selección si existe
-    if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
-      select.value = currentValue;
-    }
-  });
-}
-
-function refreshCategorySelects() {
-  const select = document.getElementById('categorySelect');
-  if (!select) return;
-  
-  const currentValue = select.value;
-  select.innerHTML = '<option value="">— Seleccionar categoría —</option>';
-  
-  categories.forEach(c => {
-    const option = document.createElement('option');
-    option.value = c.name;
-    option.textContent = c.name;
-    option.dataset.seed = c.seed;
-    select.appendChild(option);
-  });
-  
-  if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
-    select.value = currentValue;
   }
+  if(nameIdx===-1){ nameIdx=0; provinceIdx=headers.length>1?1:-1; headIdx=headers.length>2?2:-1; }
+  const teams=[]; const uniq=new Set();
+  for(const row of rows){
+    if(row.length<=nameIdx) continue;
+    const raw=(row[nameIdx]||''); const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
+    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+    const province=(provinceIdx!==-1 && row[provinceIdx])? row[provinceIdx].replace(/\*+$/,'').trim() : '';
+    const hv=(headIdx!==-1 && row[headIdx])? String(row[headIdx]).toLowerCase().trim() : '';
+    const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw);
+    teams.push({name,province,head});
+  }
+  return {teams, delimiter, hasHeaders:headers.length>0};
+}
+function importDisciplinesCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=0, seedIdx=1;
+  if(headers.length){
+    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('disciplina')||s.includes('deporte')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
+  }
+  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
+  return {items, delimiter, hasHeaders:headers.length>0};
+}
+function importCategoriesCSV(text){
+  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const {headers,rows,delimiter}=parseCSV(text);
+  let nameIdx=0, seedIdx=1;
+  if(headers.length){
+    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('categor')||s.includes('división')||s.includes('division')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
+  }
+  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
+  return {items, delimiter, hasHeaders:headers.length>0};
 }
 
-// ====================== GESTIÓN DE LISTAS ACTIVAS/INACTIVAS ======================
-function buildListsFromTextarea() {
-  const text = document.getElementById('teamsInput').value;
-  const lines = text.split(/\r?\n/).filter(line => line.trim());
-  
-  // LIMPIAR COMPLETAMENTE antes de empezar
-  activeTeams = [];
-  inactiveTeams = [];
-  
-  const uniqueNames = new Set(); // ← Para controlar duplicados
-  
-  lines.forEach(line => {
-    if (!line.trim()) return;
-    
-    const parts = line.split(';').map(p => p.trim());
-    const name = parts[0].replace(/\*+$/, '').trim();
-    
-    if (!name) return;
-    
-    // ← CRÍTICO: Verificar duplicado
-    if (uniqueNames.has(name.toLowerCase())) {
-      console.log('Duplicado ignorado:', name);
-      return;
-    }
-    uniqueNames.add(name.toLowerCase());
-    
-    const province = (parts[1] || '').replace(/\*+$/, '').trim();
-    const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : 
-                parts[0].includes('*');
-    
-    activeTeams.push({name, province, head});
+/* ====================== Selects ====================== */
+function refreshDisciplineSelects(){
+  const sels=[document.getElementById('disciplineSelect'),document.getElementById('disciplineSelectSimple'),document.getElementById('disciplineSelectBracket')];
+  sels.forEach(sel=>{
+    if(!sel) return;
+    const current=sel.value;
+    sel.innerHTML='<option value="">— Seleccionar disciplina —</option>';
+    disciplines.forEach(d=>{ const o=document.createElement('option'); o.value=d.seed; o.textContent=d.name; o.dataset.seed=d.seed; sel.appendChild(o); });
+    if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
   });
-  
+}
+function refreshCategorySelects(){
+  const sel=document.getElementById('categorySelect'); if(!sel) return;
+  const current=sel.value; sel.innerHTML='<option value="">— Seleccionar categoría —</option>';
+  categories.forEach(c=>{ const o=document.createElement('option'); o.value=c.name; o.textContent=c.name; o.dataset.seed=c.seed; sel.appendChild(o); });
+  if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
+}
+
+/* ====================== Listas activas/inactivas ====================== */
+function renderLists(){
+  const aBox=document.getElementById('activeList'); const iBox=document.getElementById('inactiveList');
+  const showInactive=document.getElementById('toggleShowInactive').checked;
+  document.getElementById('countActive').textContent=activeTeams.length;
+  document.getElementById('countInactive').textContent=inactiveTeams.length;
+  iBox.classList.toggle('hidden', !showInactive);
+
+  aBox.innerHTML=''; activeTeams.forEach((t,idx)=>{
+    const row=document.createElement('div'); row.className='itemRow';
+    row.innerHTML=`<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
+    aBox.appendChild(row);
+  });
+  iBox.innerHTML=''; inactiveTeams.forEach((t,idx)=>{
+    const row=document.createElement('div'); row.className='itemRow';
+    row.innerHTML=`<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
+    iBox.appendChild(row);
+  });
+}
+function buildListsFromTextarea(){
+  const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
+  activeTeams=[]; inactiveTeams=[];
+  const uniq=new Set();
+  for(const line of lines){
+    const parts=line.split(';').map(p=>p.trim());
+    const name=(parts[0]||'').replace(/\*+$/,'').trim(); if(!name) continue;
+    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+    const province=(parts[1]||'').replace(/\*+$/,'').trim();
+    const head=parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(parts[0]||'');
+    activeTeams.push({name,province,head});
+  }
   document.getElementById('checkLists').classList.remove('hidden');
-  renderLists();
-  updateCapInfo();
-  toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
+  renderLists(); updateCapInfo(); toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
 }
-
-function renderLists() {
-  const activeList = document.getElementById('activeList');
-  const inactiveList = document.getElementById('inactiveList');
-  const showInactive = document.getElementById('toggleShowInactive').checked;
-  
-  document.getElementById('countActive').textContent = activeTeams.length;
-  document.getElementById('countInactive').textContent = inactiveTeams.length;
-  
-  inactiveList.classList.toggle('hidden', !showInactive);
-  
-  // Render lista activa
-  activeList.innerHTML = '';
-  activeTeams.forEach((team, idx) => {
-    const row = document.createElement('div');
-    row.className = 'itemRow';
-    row.innerHTML = `
-      <input type="checkbox" class="chkActive" data-idx="${idx}">
-      <b>${escapeHtml(team.name)}</b>
-      ${team.province ? `<span class="muted">— ${escapeHtml(team.province)}</span>` : ''}
-      ${team.head ? '<span class="pill">Cabeza</span>' : ''}
-    `;
-    activeList.appendChild(row);
-  });
-  
-  // Render lista inactiva
-  inactiveList.innerHTML = '';
-  inactiveTeams.forEach((team, idx) => {
-    const row = document.createElement('div');
-    row.className = 'itemRow';
-    row.innerHTML = `
-      <input type="checkbox" class="chkInactive" data-idx="${idx}">
-      <b>${escapeHtml(team.name)}</b>
-      ${team.province ? `<span class="muted">— ${escapeHtml(team.province)}</span>` : ''}
-      ${team.head ? '<span class="pill">Cabeza</span>' : ''}
-    `;
-    inactiveList.appendChild(row);
-  });
+function getChecked(selector){
+  return Array.from(document.querySelectorAll(selector+':checked')).map(el=>parseInt(el.dataset.idx,10)).filter(n=>!isNaN(n)).sort((a,b)=>b-a);
 }
-
-function getChecked(selector) {
-  return Array.from(document.querySelectorAll(selector))
-    .map(el => parseInt(el.dataset.idx))
-    .filter(idx => !isNaN(idx))
-    .sort((a, b) => b - a);
+function moveSelectedToInactive(){
+  const idxs=getChecked('.chkActive'); const moved=idxs.map(i=>activeTeams[i]);
+  idxs.forEach(i=>activeTeams.splice(i,1)); inactiveTeams.unshift(...moved);
+  renderLists(); updateCapInfo();
 }
-
-function moveSelectedToInactive() {
-  const indices = getChecked('.chkActive:checked');
-  const moved = indices.map(idx => activeTeams[idx]);
-  
-  indices.forEach(idx => activeTeams.splice(idx, 1));
-  inactiveTeams.unshift(...moved);
-  
-  renderLists();
-  updateCapInfo();
+function restoreSelectedFromInactive(){
+  const idxs=getChecked('.chkInactive'); const moved=idxs.map(i=>inactiveTeams[i]);
+  idxs.forEach(i=>inactiveTeams.splice(i,1)); activeTeams.push(...moved);
+  renderLists(); updateCapInfo();
 }
-
-function restoreSelectedFromInactive() {
-  const indices = getChecked('.chkInactive:checked');
-  const moved = indices.map(idx => inactiveTeams[idx]);
-  
-  indices.forEach(idx => inactiveTeams.splice(idx, 1));
-  activeTeams.push(...moved);
-  
-  renderLists();
-  updateCapInfo();
-}
-
-function selectAll(selector) {
-  document.querySelectorAll(selector).forEach(cb => cb.checked = true);
-}
-
-function getActiveTeamsLive() {
-  if (document.getElementById('checkLists').classList.contains('hidden')) {
-    const text = document.getElementById('teamsInput').value;
-    const lines = text.split(/\r?\n/).filter(line => line.trim());
-    const teams = [];
-    const uniqueNames = new Set(); // ← Para controlar duplicados
-    
-    lines.forEach(line => {
-      const parts = line.split(';').map(p => p.trim());
-      const name = parts[0].replace(/\*+$/, '').trim();
-      
-      if (!name) return;
-      
-      // ← CRÍTICO: Verificar duplicado
-      if (uniqueNames.has(name.toLowerCase())) return;
-      uniqueNames.add(name.toLowerCase());
-      
-      teams.push({
-        name: name,
-        province: parts[1] ? parts[1].replace(/\*+$/, '').trim() : '',
-        head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : parts[0].includes('*')
-      });
-    });
-    
+function selectAll(selector){ document.querySelectorAll(selector).forEach(cb=>cb.checked=true) }
+function getActiveTeamsLive(){
+  if(document.getElementById('checkLists').classList.contains('hidden')){
+    const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
+    const teams=[]; const uniq=new Set();
+    for(const line of lines){
+      const parts=line.split(';').map(p=>p.trim());
+      const raw=parts[0]||''; const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
+      const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
+      teams.push({name,province:(parts[1]||'').replace(/\*+$/,'').trim(),head:parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(raw)});
+    }
     return teams;
   }
   return [...activeTeams];
 }
-// Función temporal para diagnosticar duplicados - después la podés borrar
-function debugTeams() {
-  console.log('=== DEBUG EQUIPOS ===');
-  console.log('Active teams:', activeTeams);
-  console.log('Unique names:', [...new Set(activeTeams.map(t => t.name.toLowerCase()))]);
-  const duplicates = activeTeams.filter((team, index, array) => 
-    array.findIndex(t => t.name.toLowerCase() === team.name.toLowerCase()) !== index
-  );
-  console.log('Duplicados encontrados:', duplicates);
-}
-// ====================== SISTEMA DE SORTEO ======================
-function xmur3(str) {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = h << 13 | h >>> 19;
-  }
-  return function() {
-    h = Math.imul(h ^ h >>> 16, 2246822507);
-    h = Math.imul(h ^ h >>> 13, 3266489909);
-    return (h ^ h >>> 16) >>> 0;
-  };
-}
 
-function mulberry32(a) {
-  return function() {
-    let t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
+/* ====================== RNG + capacidades ====================== */
+function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
+function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
+function rngFromSeed(seed){if(!seed||seed.trim()==="") return Math.random; const h=xmur3(String(seed))(); return mulberry32(h)}
+function shuffle(array,rand){const a=[...array]; for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a}
+function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
+function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24; if(n>=total) return caps; let deficits=total-n; const order=[3,1,2,0]; let i=0; while(deficits>0){const idx=order[i%order.length]; if(caps[idx]>0){caps[idx]--; deficits--} i++} return caps}
+function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24; if(n>=total) return caps; const d=total-n; const zeros=Math.floor(d/3); const twos=d%3; const order=[7,6,5,4,3,2,1,0]; for(let i=0;i<zeros;i++) caps[order[i]]=0; let k=zeros; for(let j=0;j<twos&&k<order.length;j++,k++){ if(caps[order[k]]===3) caps[order[k]]=2 } return caps}
 
-function rngFromSeed(seed) {
-  if (!seed || seed.trim() === "") return Math.random;
-  const h = xmur3(String(seed))();
-  return mulberry32(h);
-}
+/* ====================== Sorteo (sin restricción por provincia) ====================== */
+function drawGroups(teams,z,headsAsFirst,seed,format){
+  const rand=rngFromSeed(seed); const n=teams.length;
+  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
+  if(n<z) return {error:'Hay menos equipos que zonas.'};
 
-function shuffle(array, rand) {
-  const a = [...array];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24)?capacitiesEightByThree(n):capacities(n,z);
+  const groups=Array.from({length:z},()=>[]);
+  const heads=shuffle(teams.filter(t=>t.head),rand);
+  const others=shuffle(teams.filter(t=>!t.head),rand);
+  if(headsAsFirst&&heads.length){ for(let i=0;i<groups.length && i<heads.length;i++){ groups[i].push(heads[i]) } }
+  const targetCaps=capsBase.map((cap,i)=>Math.max(0, cap-groups[i].length));
+  const pool=headsAsFirst?others:shuffle(teams,rand);
 
-function capacities(n, z) {
-  const base = Math.floor(n / z);
-  const rest = n % z;
-  return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0));
-}
-
-function capacitiesFourBySix(n) {
-  const caps = [6, 6, 6, 6];
-  const total = 24;
-  if (n >= total) return caps;
-  
-  let deficits = total - n;
-  const order = [3, 1, 2, 0];
-  let i = 0;
-  
-  while (deficits > 0) {
-    const idx = order[i % order.length];
-    if (caps[idx] > 0) {
-      caps[idx]--;
-      deficits--;
+  const maxAttempts=500;
+  for(let attempt=0;attempt<maxAttempts;attempt++){
+    const g=groups.map(arr=>[...arr]); const remaining=[...targetCaps]; let ok=true;
+    const order=shuffle(pool,rand);
+    for(const team of order){
+      const options=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]})).filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
+      if(!options.length){ ok=false; break; }
+      const pick=options[Math.floor(rand()*options.length)]; g[pick].push(team); remaining[pick]--;
     }
-    i++;
+    if(ok) return {groups:g,caps:capsBase,relaxed:false,attempt};
   }
-  return caps;
+  return {error:'No se pudo asignar después de varios intentos'};
 }
 
-function capacitiesEightByThree(n) {
-  const caps = Array(8).fill(3);
-  const total = 24;
-  if (n >= total) return caps;
-  
-  const d = total - n;
-  const zeros = Math.floor(d / 3);
-  const twos = d % 3;
-  const order = [7, 6, 5, 4, 3, 2, 1, 0];
-  
-  for (let i = 0; i < zeros; i++) caps[order[i]] = 0;
-  
-  let k = zeros;
-  for (let j = 0; j < twos && k < order.length; j++, k++) {
-    if (caps[order[k]] === 3) caps[order[k]] = 2;
-  }
-  
-  return caps;
-}
-
-function drawGroups(teams, z, headsAsFirst, seed, format) {
-  const rand = rngFromSeed(seed);
-  const n = teams.length;
-  
-  if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
-  if (n < z) return {error: 'Hay menos equipos que zonas.'};
-  
-  const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) :
-                  (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) :
-                  capacities(n, z);
-  
-  const groups = Array.from({length: z}, () => []);
-  const heads = shuffle(teams.filter(t => t.head), rand);
-  const others = shuffle(teams.filter(t => !t.head), rand);
-  
-  if (headsAsFirst && heads.length) {
-    for (let i = 0; i < groups.length && i < heads.length; i++) {
-      groups[i].push(heads[i]);
-    }
-  }
-  
-  const targetCaps = capsBase.map((cap, i) => Math.max(0, cap - groups[i].length));
-  const pool = headsAsFirst ? others : shuffle(teams, rand);
-  
-  const maxAttempts = 500;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const g = groups.map(arr => [...arr]);
-    const remaining = [...targetCaps];
-    let ok = true;
-    
-    const order = shuffle(pool, rand);
-    
-    for (const team of order) {
-      const candidates = g
-        .map((arr, idx) => ({idx, size: arr.length, cap: remaining[idx]}))
-        .filter(x => x.cap > 0)
-        .sort((a, b) => a.size - b.size || a.idx - b.idx)
-        .map(x => x.idx);
-      
-      if (candidates.length === 0) {
-        ok = false;
-        break;
-      }
-      
-      const pick = candidates[Math.floor(rand() * candidates.length)];
-      g[pick].push(team);
-      remaining[pick]--;
-    }
-    
-    if (ok) return {groups: g, caps: capsBase, relaxed: false, attempt};
-  }
-  
-  return {error: 'No se pudo asignar después de varios intentos'};
-}
-
-// ====================== RENDERIZADO DE RESULTADOS ======================
-function renderGroups(target, result) {
-  if (result.error) {
-    target.innerHTML = `<div class="errorText">${result.error}</div>`;
-    return;
-  }
-  
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  
-  result.groups.forEach((arr, gi) => {
-    const card = document.createElement('div');
-    card.className = 'zone';
-    // SIN (x/x) - solo "Zona N"
-    card.innerHTML = `<h4>Zona ${gi + 1}</h4>`;
-    
-    const ol = document.createElement('ol');
-    arr.forEach(t => {
-      const li = document.createElement('li');
-      li.innerHTML = `<b>${escapeHtml(t.name)}</b>` +
-        (t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : '') +
-        (t.head ? ' <span class="pill">Cabeza</span>' : '');
+/* ====================== Render y apertura en nueva pestaña ====================== */
+function renderGroups(target,result){
+  if(result.error){ target.innerHTML=`<div class="errorText">${result.error}</div>`; return }
+  const grid=document.createElement('div'); grid.className='grid';
+  result.groups.forEach((arr,gi)=>{
+    const card=document.createElement('div'); card.className='zone';
+    card.innerHTML=`<h4>Zona ${gi+1}</h4>`;
+    const ol=document.createElement('ol');
+    arr.forEach(t=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
       ol.appendChild(li);
     });
-    
-    card.appendChild(ol);
-    grid.appendChild(card);
+    card.appendChild(ol); grid.appendChild(card);
   });
-  
-  target.innerHTML = '';
-  target.appendChild(grid);
-  
-  const status = result.relaxed ? ' (con relajación)' : '';
-  const attempts = result.attempt != null ? ` (intentos: ${result.attempt + 1})` : '';
-  document.getElementById('status').innerHTML = `Sorteo realizado${status}${attempts}`;
+  target.innerHTML=''; target.appendChild(grid);
+  const attempts=result.attempt!=null? ` (intentos: ${result.attempt+1})` : '';
+  document.getElementById('status').innerHTML=`Sorteo realizado${attempts}`;
 }
-
-// ====================== VISTA PREVIA EN NUEVA PESTAÑA CON PDF ======================
-function openResultInNewTab(result) {
-  const w = window.open('', '_blank');
-  if (!w) {
-    toast('Permití pop-ups para ver el resultado en nueva pestaña');
-    return;
-  }
-  
-  const discipline = document.getElementById('disciplineSelect').options[document.getElementById('disciplineSelect').selectedIndex]?.text || '';
-  const category = document.getElementById('categorySelect').value || '';
-  const gender = document.getElementById('genderSelect').value || '';
-  
-  const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => 
-      `<li><b>${escapeHtml(t.name)}</b>` +
-      (t.province ? ` — ${escapeHtml(t.province)}</span>` : '') +
-      (t.head ? ' ★' : '') +
-      `</li>`
-    ).join('');
-    
-    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
-  }).join('');
-
-  const chipsHTML = [
-    discipline ? `<span class="chip">Disciplina: ${escapeHtml(discipline)}</span>` : '',
-    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
-    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+function openResultInNewTab(result){
+  const w=window.open('about:blank','_blank'); if(!w){ toast('Permití pop-ups para ver el resultado'); return }
+  const disciplineText=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
+  const category=(document.getElementById('categorySelect').value)||'';
+  const gender=(document.getElementById('genderSelect').value)||'';
+  const chipsHTML=[
+    disciplineText?`<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>`:'',
+    category?`<span class="chip">Categoría: ${escapeHtml(category)}</span>`:'',
+    gender?`<span class="chip">Género: ${escapeHtml(gender)}</span>`:'',
     `<span class="chip">${result.groups.length} zonas</span>`,
     `<span class="chip">${new Date().toLocaleString()}</span>`
   ].filter(Boolean).join('');
-  
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
+  const zonesHTML=result.groups.map((arr,gi)=>{
+    const items=arr.map(t=>`<li><b>${escapeHtml(t.name)}</b>${t.province?` — ${escapeHtml(t.province)}`:''}${t.head?' ★':''}</li>`).join('');
+    return `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
+  }).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Resultado del Sorteo</title>
   <style>
-    body { font-family: system-ui; background: #ffffff; color: #000000; margin: 0; padding: 20px; }
-    .container { max-width: 1100px; margin: 0 auto; }
-    h1 { margin-bottom: 16px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    .chip { background: #ffffff; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-    .zone { background: #ffffff; border: 2px solid #223046; border-radius: 6px; padding: 10px; }
-    .zone h4 { margin: 4px 0 8px 0; }
-    .zone ol { margin: 0; padding-left: 18px; }
-    .muted { color: #94a3b8; }
-    .pill { display: inline-flex; padding: 3px 8px; border: 1px solid #2b3b55; border-radius: 999px; background: #0b1220; font-size: 12px; }
-    .btn { background: #ffffff; color: #000000; border: 1px solid #223046; padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-    .btn:hover { border-color: #3b82f6; }
-    .btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); border: 0; color: #ffffff; }
-    .controls { margin: 20px 0; }
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
+    .zone h4{margin:4px 0 8px 0}
+    .zone ol{margin:0;padding-left:18px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-</head>
-<body>
-  <div class="container">
-    <h1>🎲 Resultado del Sorteo</h1>
-    <div class="chips">${chipsHTML}</div>
-    <div class="grid">${zonesHTML}</div>
-    <div class="controls">
+  </head><body>
+    <div class="container">
+      <h1>🎲 Resultado del Sorteo</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div class="grid">${zonesHTML}</div>
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
     </div>
-  </div>
-  <script>
-    function exportPDF() {
-      try {
-        if (!window.jspdf || !window.html2canvas) {
-          alert('Librerías de PDF no cargadas. Intenta recargar la página.');
-          return;
-        }
-
-        const sheet = document.createElement('div');
-        sheet.style.width = '794px';
-        sheet.style.height = '1123px';
-        sheet.style.background = '#ffffff';
-        sheet.style.color = '#0f172a';
-        sheet.style.position = 'fixed';
-        sheet.style.left = '-9999px';
-        sheet.style.top = '0';
-        sheet.style.display = 'flex';
-        sheet.style.flexDirection = 'column';
-        sheet.style.fontFamily = 'system-ui, sans-serif';
-        sheet.style.padding = '20px';
-
-        // Header
-        const header = document.createElement('div');
-        header.innerHTML = '<h1 style="margin: 0 0 16px 0; font-size: 24px;">Resultado del Sorteo</h1>';
-        sheet.appendChild(header);
-
-        // Chips
-        const chips = document.createElement('div');
-        chips.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;';
-        chips.innerHTML = '${chipsHTML.replace(/'/g, "\\'")}';
-        sheet.appendChild(chips);
-
-        // Zones grid
-        const grid = document.createElement('div');
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 0;';
-        grid.innerHTML = '${zonesHTML.replace(/'/g, "\\'")}';
-        sheet.appendChild(grid);
-
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
         document.body.appendChild(sheet);
-
-        html2canvas(sheet, { 
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true 
-        }).then(canvas => {
-          const imgData = canvas.toDataURL('image/png');
-          document.body.removeChild(sheet);
-
-          const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'pt',
-            format: 'a4'
-          });
-
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          pdf.save('sorteo_${new Date().toISOString().slice(0,10)}.pdf');
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
         });
-
-      } catch (error) {
-        console.error('Error generando PDF:', error);
-        alert('Error al generar PDF: ' + error.message);
       }
-    }
-  <\/script>
-</body>
-</html>`;
-  
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+    <\/script>
+  </body></html>`;
+
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
-// ====================== EXPORTACIÓN ======================
-function exportGroupsCSV(groups) {
-  let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
-  groups.forEach((arr, gi) => {
-    arr.forEach((t, i) => {
-      csv += `${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}",` +
-             `"${(t.province || '').replace(/"/g, '""')}",` +
-             `${t.head ? 'si' : 'no'}\n`;
+/* ====================== Export CSV ====================== */
+function exportGroupsCSV(groups){
+  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
+  groups.forEach((arr,gi)=>{ arr.forEach((t,i)=>{ csv+=`${gi+1},${i+1},"${t.name.replace(/"/g,'""')}","${(t.province||'').replace(/"/g,'""')}",${t.head?'si':'no'}\n` }) });
+  downloadText(csv,'sorteo_zonas.csv');
+}
+function exportSimpleCSV(list){ let csv='Posicion,Equipo\n'; list.forEach((n,i)=>{ csv+=`${i+1},"${n.replace(/"/g,'""')}"\n` }); downloadText(csv,'sorteo_simple.csv') }
+
+/* ====================== Estado UI ====================== */
+function getFormat(){ const r=document.querySelector('input[name="format"]:checked'); return r?r.value:'custom' }
+function currentZones(){ const fmt=getFormat(); if(fmt==='8x3') return 8; if(fmt==='4x6') return 4; return parseInt(document.getElementById('zones').value)||1 }
+function updateCapInfo(){
+  const teams=getActiveTeamsLive().length; const z=currentZones(); const fmt=getFormat();
+  let msg=`Equipos: ${teams} · Zonas: ${z}`;
+  if(fmt==='4x6'){ if(teams<=24){ const caps=capacitiesFourBySix(teams); msg+=` — Distribución: ${caps.join('-')}` } else { msg+=' — Distribución pareja' } }
+  else if(fmt==='8x3'){ if(teams<=24){ const caps=capacitiesEightByThree(teams); msg+=` — Distribución: ${caps.join('-')}`; if(teams<16) msg+=' — <span class="warnText">Considere cambiar de sistema</span>'; } else { msg+=' — Distribución pareja' } }
+  else { const avg=(teams/z).toFixed(2); msg+=` — Promedio: ${avg} por zona` }
+  document.getElementById('capInfo').innerHTML=msg;
+}
+
+/* ====================== DOM Ready ====================== */
+document.addEventListener('DOMContentLoaded',function(){
+  // Tabs app
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabcontent').forEach(c=>c.classList.add('hidden'));
+      btn.classList.add('active'); document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
     });
   });
-  downloadText(csv, 'sorteo_zonas.csv');
-}
 
-function exportSimpleCSV(list) {
-  let csv = 'Posicion,Equipo\n';
-  list.forEach((name, i) => {
-    csv += `${i + 1},"${name.replace(/"/g, '""')}"\n`;
-  });
-  downloadText(csv, 'sorteo_simple.csv');
-}
-
-// ====================== GESTIÓN DE ESTADO ======================
-function getFormat() {
-  const selected = document.querySelector('input[name="format"]:checked');
-  return selected ? selected.value : 'custom';
-}
-
-function currentZones() {
-  const fmt = getFormat();
-  if (fmt === '8x3') return 8;
-  if (fmt === '4x6') return 4;
-  return parseInt(document.getElementById('zones').value) || 1;
-}
-
-function updateCapInfo() {
-  const teams = getActiveTeamsLive().length;
-  const z = currentZones();
-  const fmt = getFormat();
-  
-  let msg = `Equipos: ${teams} · Zonas: ${z}`;
-  
-  if (fmt === '4x6') {
-    if (teams <= 24) {
-      const caps = capacitiesFourBySix(teams);
-      msg += ` — Distribución: ${caps.join('-')}`;
-    } else {
-      msg += ' — Distribución pareja';
-    }
-  } else if (fmt === '8x3') {
-    if (teams <= 24) {
-      const caps = capacitiesEightByThree(teams);
-      msg += ` — Distribución: ${caps.join('-')}`;
-      if (teams < 16) msg += ' — <span class="warnText">Considere cambiar de sistema</span>';
-    } else {
-      msg += ' — Distribución pareja';
-    }
-  } else {
-    const avg = (teams / z).toFixed(2);
-    msg += ` — Promedio: ${avg} por zona`;
-  }
-  
-  document.getElementById('capInfo').innerHTML = msg;
-}
-
-// ====================== INICIALIZACIÓN ======================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Sorteador v2.3 cargado');
-  
-  // Tabs
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabName = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-    });
-  });
-  
-  // Formato de zonas
-  document.querySelectorAll('input[name="format"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const zonesInput = document.getElementById('zones');
-      if (radio.value === '8x3') {
-        zonesInput.value = '8';
-        zonesInput.disabled = true;
-      } else if (radio.value === '4x6') {
-        zonesInput.value = '4';
-        zonesInput.disabled = true;
-      } else {
-        zonesInput.disabled = false;
-      }
+  // Formato
+  document.querySelectorAll('input[name="format"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const elZones=document.getElementById('zones');
+      if(r.value==='8x3'){ elZones.value='8'; elZones.disabled=true }
+      else if(r.value==='4x6'){ elZones.value='4'; elZones.disabled=true }
+      else { elZones.disabled=false }
       updateCapInfo();
     });
   });
-  
-  // Lista de checks
+
+  // Panel checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', () => selectAll('.chkInactive'));
-  
-  // Importación de equipos CSV
-  document.getElementById('csvFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importTeamsCSV(reader.result);
-        
-        if (result.teams.length === 0) {
-          toast('CSV vacío o no se detectaron equipos');
-          return;
-        }
-        
-        // Actualizar textarea
-        document.getElementById('teamsInput').value = result.teams
-          .map(t => `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`)
-          .join('\n');
-        
+  document.getElementById('btnSelectAllActive').addEventListener('click', ()=>selectAll('.chkActive'));
+  document.getElementById('btnSelectAllInactive').addEventListener('click', ()=>selectAll('.chkInactive'));
+
+  // CSV Equipos
+  document.getElementById('csvFile').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const result=importTeamsCSV(reader.result||'');
+        if(result.teams.length===0){ toast('CSV vacío o sin equipos'); return }
+        document.getElementById('teamsInput').value=result.teams.map(t=>`${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('\n');
         buildListsFromTextarea();
-        
-        // Mostrar info
-        const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('csvInfo').innerHTML = info;
-        toast('CSV de equipos cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
+        const info=`CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter==='\t'?'TAB':result.delimiter}${result.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('csvInfo').innerHTML=info; toast('CSV de equipos cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsText(file,'UTF-8');
   });
 
-  // Importación de disciplinas CSV
-  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importDisciplinesCSV(reader.result);
-        disciplines = result.items;
-        refreshDisciplineSelects();
-        
-        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('discCSVInfo').innerHTML = info;
-        toast('CSV de disciplinas cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
+  // CSV Disciplinas
+  document.getElementById('csvDisciplines').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const res=importDisciplinesCSV(reader.result||''); disciplines=res.items; refreshDisciplineSelects();
+        const info=`CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('discCSVInfo').innerHTML=info; toast('CSV de disciplinas cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsText(file,'UTF-8');
   });
 
-  // Importación de categorías CSV
-  document.getElementById('csvCategories').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const result = importCategoriesCSV(reader.result);
-        categories = result.items;
-        refreshCategorySelects();
-        
-        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('catCSVInfo').innerHTML = info;
-        toast('CSV de categorías cargado correctamente');
-        
-      } catch (error) {
-        console.error(error);
-        alert('Error: ' + error.message);
-      }
+  // CSV Categorías
+  document.getElementById('csvCategories').addEventListener('change',function(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const res=importCategoriesCSV(reader.result||''); categories=res.items; refreshCategorySelects();
+        const info=`CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
+        document.getElementById('catCSVInfo').innerHTML=info; toast('CSV de categorías cargado');
+      }catch(err){ console.error(err); alert('Error: '+err.message) }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsText(file,'UTF-8');
   });
 
-  // Demo disciplinas
-  document.getElementById('btnDiscDemo').addEventListener('click', () => {
-    disciplines = [
-      {name: 'Fútbol', seed: 'futbol'},
-      {name: 'Básquet', seed: 'basquet'},
-      {name: 'Vóley', seed: 'voley'},
-      {name: 'Hockey', seed: 'hockey'}
-    ];
-    refreshDisciplineSelects();
-    document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
-    toast('Disciplinas demo cargadas');
+  // Demos
+  document.getElementById('btnDiscDemo').addEventListener('click',()=>{
+    disciplines=[{name:'Fútbol',seed:'futbol'},{name:'Básquet',seed:'basquet'},{name:'Vóley',seed:'voley'},{name:'Hockey',seed:'hockey'}];
+    refreshDisciplineSelects(); document.getElementById('discCSVInfo').innerHTML='Demo: 4 disciplinas cargadas'; toast('Disciplinas demo cargadas');
+  });
+  document.getElementById('btnCatDemo').addEventListener('click',()=>{
+    categories=[{name:'Sub-15',seed:'sub15'},{name:'Sub-17',seed:'sub17'},{name:'Senior',seed:'senior'},{name:'Libre',seed:'libre'}];
+    refreshCategorySelects(); document.getElementById('catCSVInfo').innerHTML='Demo: 4 categorías cargadas'; toast('Categorías demo cargadas');
   });
 
-  // Demo categorías
-  document.getElementById('btnCatDemo').addEventListener('click', () => {
-    categories = [
-      {name: 'Sub-15', seed: 'sub15'},
-      {name: 'Sub-17', seed: 'sub17'},
-      {name: 'Senior', seed: 'senior'},
-      {name: 'Libre', seed: 'libre'}
-    ];
-    refreshCategorySelects();
-    document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
-    toast('Categorías demo cargadas');
-  });
-  
-  // Ejemplo y limpiar
-  document.getElementById('btnExample').addEventListener('click', () => {
-    const example = `River Plate; CABA; *
+  // Utilidad
+  document.getElementById('btnExample').addEventListener('click',()=>{
+    const sample=`River Plate; CABA; *
 Boca Juniors; CABA; *
 Newell's; Santa Fe
 Rosario Central; Santa Fe
@@ -1264,154 +765,134 @@ Talleres; Córdoba
 Belgrano; Córdoba
 Godoy Cruz; Mendoza
 Atl. Tucumán; Tucumán`;
-    document.getElementById('teamsInput').value = example;
-    updateCapInfo();
+    document.getElementById('teamsInput').value=sample; updateCapInfo();
   });
-  
-  document.getElementById('btnClear').addEventListener('click', () => {
-    document.getElementById('teamsInput').value = '';
-    document.getElementById('resultGroups').innerHTML = '';
-    document.getElementById('status').innerHTML = '';
-    activeTeams = [];
-    inactiveTeams = [];
+  document.getElementById('btnClear').addEventListener('click',()=>{
+    document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[];
     document.getElementById('checkLists').classList.add('hidden');
-    updateCapInfo();
+    document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
   });
-  
-  // Sorteo de zonas
-  document.getElementById('btnDrawGroups').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    if (teams.length === 0) {
-      document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
-      return;
-    }
-    
-    const z = currentZones();
-    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
-    const headsAsFirst = document.getElementById('headsAsFirst').checked;
-    const format = getFormat();
-    
-    const result = drawGroups(teams, z, headsAsFirst, seed, format);
-    renderGroups(document.getElementById('resultGroups'), result);
-    
-    if (!result.error) {
-      // Abrir en nueva pestaña
+
+  // Sorteos
+  document.getElementById('btnDrawGroups').addEventListener('click',()=>{
+    const teams=getActiveTeamsLive(); if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos</span>'; return }
+    const z=currentZones(); const seed=document.getElementById('disciplineSelect').value||'sorteo'; const headsAsFirst=document.getElementById('headsAsFirst').checked; const fmt=getFormat();
+    const result=drawGroups(teams,z,headsAsFirst,seed,fmt);
+    renderGroups(document.getElementById('resultGroups'),result);
+    if(!result.error){
       openResultInNewTab(result);
-      
-      // Actualizar historial
-      const now = new Date().toLocaleString();
-      const item = document.createElement('div');
-      item.className = 'item';
-      item.textContent = `${now} — ${teams.length} equipos · ${z} zonas`;
+      const now=new Date().toLocaleString(); const item=document.createElement('div'); item.className='item'; item.textContent=`${now} — ${teams.length} equipos · ${z} zonas`;
       document.getElementById('history').prepend(item);
-      
-      if (format === '8x3' && teams.length < 16) {
-        document.getElementById('status').innerHTML += ' · <span class="warnText">Considere cambiar de sistema</span>';
-      }
+      if(fmt==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>' }
     }
   });
-  
-  // Exportar y compartir
-  document.getElementById('btnExportCSV').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    const z = currentZones();
-    const seed = document.getElementById('disciplineSelect').value || 'sorteo';
-    const headsAsFirst = document.getElementById('headsAsFirst').checked;
-    const format = getFormat();
-    
-    const result = drawGroups(teams, z, headsAsFirst, seed, format);
-    if (result.error) {
-      toast('Generá el sorteo primero');
-      return;
-    }
-    
-    exportGroupsCSV(result.groups);
+  document.getElementById('btnExportCSV').addEventListener('click',()=>{
+    const teams=getActiveTeamsLive(); const z=currentZones(); const seed=document.getElementById('disciplineSelect').value||'sorteo'; const headsAsFirst=document.getElementById('headsAsFirst').checked; const fmt=getFormat();
+    const result=drawGroups(teams,z,headsAsFirst,seed,fmt); if(result.error){ toast('Generá el sorteo primero'); return } exportGroupsCSV(result.groups);
   });
-  
-  document.getElementById('btnCopy').addEventListener('click', () => {
-    const zones = document.querySelectorAll('#resultGroups .zone');
-    if (zones.length === 0) {
-      toast('No hay resultado para copiar');
-      return;
-    }
-    
-    let text = '';
-    zones.forEach((zone, i) => {
-      text += `Zona ${i + 1}\n`;
-      zone.querySelectorAll('li').forEach((li, j) => {
-        text += `${j + 1}. ${li.textContent}\n`;
-      });
-      text += '\n';
-    });
-    
-    copyText(text);
+  document.getElementById('btnCopy').addEventListener('click',()=>{
+    const zones=document.querySelectorAll('#resultGroups .zone'); if(!zones.length){ toast('No hay resultado para copiar'); return }
+    let txt=''; zones.forEach((zone,zi)=>{ txt+=`Zona ${zi+1}\n`; zone.querySelectorAll('li').forEach((li,i)=>{ txt+=`${i+1}. ${li.textContent}\n` }); txt+='\n' });
+    copyText(txt);
   });
 
-  // Sorteo simple - Usar lista del tab Grupos
-  document.getElementById('btnUseFromGroups').addEventListener('click', () => {
-    const teams = getActiveTeamsLive();
-    const teamNames = teams.map(t => t.name);
-    document.getElementById('simpleInput').value = teamNames.join('\n');
-    toast('Lista copiada al tab Sorteo simple');
+  // Simple
+  document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
+    const names=getActiveTeamsLive().map(t=>t.name); document.getElementById('simpleInput').value=names.join('\n'); toast('Lista copiada al tab Sorteo simple');
+  });
+  document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
+  document.getElementById('btnDrawSimple').addEventListener('click',()=>{
+    const seed=document.getElementById('disciplineSelectSimple').value||'sorteo';
+    const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">No hay equipos</span>'; return }
+    const rand=rngFromSeed(seed); const list=shuffle(names,rand);
+    document.getElementById('resultSimple').innerHTML=list.map((n,i)=>`<div>${i+1}. <b>${escapeHtml(n)}</b></div>`).join('');
+    document.getElementById('statusSimple').textContent='Sorteo realizado';
+  });
+  document.getElementById('btnExportSimple').addEventListener('click',()=>{
+    const names=document.getElementById('resultSimple').textContent.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean);
+    if(!names.length){ toast('No hay resultado para exportar'); return } exportSimpleCSV(names);
   });
 
-  // Sorteo simple - Limpiar
-  document.getElementById('btnClearSimple').addEventListener('click', () => {
-    document.getElementById('simpleInput').value = '';
-    document.getElementById('resultSimple').innerHTML = '';
+  // Bracket
+  document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{ document.getElementById('bracketInput').value=getActiveTeamsLive().map(t=>t.name).join('\n') });
+  document.getElementById('btnClearBracket').addEventListener('click',()=>{ document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML='' });
+  function nextPow2(x){let p=1;while(p<x)p<<=1;return p}
+  function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
+  function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML=`<h4>Partido ${i+1}</h4><ol><li><b>${escapeHtml(m[0])}</b></li><li><b>${escapeHtml(m[1])}</b></li></ol>`;grid.appendChild(card)});target.appendChild(grid)}
+  document.getElementById('btnDrawBracket').addEventListener('click',()=>{
+    const seed=document.getElementById('disciplineSelectBracket').value||'sorteo';
+    const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
+    const matches=buildBracket(names,seed); renderBracket(document.getElementById('resultBracket'),matches);
+    document.getElementById('statusBracket').textContent='Llaves generadas (ronda 1).';
+  });
+  document.getElementById('btnExportBracket').addEventListener('click',()=>{
+    const boxes=document.querySelectorAll('#resultBracket .zone'); if(!boxes.length){ toast('Generá las llaves primero'); return }
+    const matches=[]; boxes.forEach(b=>{ const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText, lis[1].innerText]); }); let csv='Llave,Partido,Equipo A,Equipo B\n';
+    matches.forEach((m,i)=>{ csv+=`Ronda 1,${i+1},"${m[0]}","${m[1]}"\n` }); downloadText(csv,'llaves.csv');
   });
 
-  // Sorteo simple - Sortear
-  document.getElementById('btnDrawSimple').addEventListener('click', () => {
-    const seed = document.getElementById('disciplineSelectSimple').value || 'sorteo';
-    const names = document.getElementById('simpleInput').value.split('\n')
-      .map(name => name.trim())
-      .filter(name => name.length > 0);
-    
-    if (names.length === 0) {
-      document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
-      return;
-    }
-    
-    const rand = rngFromSeed(seed);
-    const shuffled = shuffle(names, rand);
-    
-    const resultHTML = shuffled.map((name, index) => 
-      `<div>${index + 1}. <b>${escapeHtml(name)}</b></div>`
-    ).join('');
-    
-    document.getElementById('resultSimple').innerHTML = resultHTML;
-    document.getElementById('statusSimple').innerHTML = 'Sorteo realizado';
-  });
-
-  // Sorteo simple - Exportar CSV
-  document.getElementById('btnExportSimple').addEventListener('click', () => {
-    const names = document.getElementById('resultSimple').textContent
-      .split('\n')
-      .map(line => line.replace(/^\d+\.\s*/, '').trim())
-      .filter(name => name.length > 0);
-    
-    if (names.length === 0) {
-      toast('No hay resultado para exportar');
-      return;
-    }
-    
-    exportSimpleCSV(names);
-  });
-
-  // Sorteo simple - Copiar
-  document.getElementById('btnCopySimple').addEventListener('click', () => {
-    const text = document.getElementById('resultSimple').textContent;
-    if (!text.trim()) {
-      toast('No hay resultado para copiar');
-      return;
-    }
-    
-    copyText(text);
-  });
-  
-  // Inicialización
   updateCapInfo();
+});
+
+/* ====================== Auth UI y eventos ====================== */
+// Tabs auth
+document.querySelectorAll('.authTab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.authTab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab+'Form').classList.remove('hidden');
+  });
+});
+
+// Registro
+document.getElementById('registerForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const name=document.getElementById('registerName').value.trim();
+  const email=document.getElementById('registerEmail').value.trim();
+  const pass=document.getElementById('registerPassword').value;
+  const pass2=document.getElementById('registerConfirmPassword').value;
+  if(pass!==pass2){ toast('Las contraseñas no coinciden'); return }
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:name});
+    toast('Cuenta creada exitosamente');
+  }catch(err){ toast('Error: '+err.message) }
+});
+
+// Login
+document.getElementById('loginForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+    toast('Sesión iniciada');
+  }catch(err){ toast('Error: '+err.message) }
+});
+
+// Logout
+document.getElementById('logoutBtn').addEventListener('click',async()=>{
+  try{ await auth.signOut(); toast('Sesión cerrada') } catch{ toast('Error al cerrar sesión') }
+});
+
+// Cambios de sesión
+auth.onAuthStateChanged((user)=>{
+  const authSection=document.getElementById('authSection');
+  const appSection=document.getElementById('appSection');
+  const userInfo=document.getElementById('userInfo');
+  if(user){
+    authSection.classList.add('hidden');
+    appSection.classList.remove('hidden');
+    userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
+  }else{
+    appSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+    userInfo.textContent = '';
+  }
 });
 </script>
 </body>
