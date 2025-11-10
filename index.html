@@ -7,6 +7,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <style>
     * {
@@ -125,6 +127,11 @@
 
     .btn-secondary {
       background: #64748b;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #ef4444;
       color: white;
     }
 
@@ -379,6 +386,39 @@
     .text-center {
       text-align: center;
     }
+
+    .font-semibold {
+      font-weight: 600;
+    }
+
+    /* Estilos para sorteos guardados */
+    .saved-draw-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+
+    .saved-draw-info {
+      flex: 1;
+    }
+
+    .saved-draw-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 2px 8px;
+    }
   </style>
 </head>
 <body>
@@ -456,14 +496,6 @@
             <button class="tab-button active" data-tab="grupos">
               <span>🏆</span>
               Zonas / Grupos
-            </button>
-            <button class="tab-button" data-tab="simple">
-              <span>🎲</span>
-              Sorteo Simple
-            </button>
-            <button class="tab-button" data-tab="bracket">
-              <span>⚔️</span>
-              Eliminación Directa
             </button>
             <button class="tab-button" data-tab="saved">
               <span>📊</span>
@@ -548,32 +580,22 @@ Newell's; Santa Fe
             </div>
           </div>
 
-          <!-- TAB SIMPLE -->
-          <div class="tab-content hidden" id="tab-simple">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Sorteo Simple</h3>
-                <p class="card-subtitle">Próximamente...</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB ELIMINATORIAS -->
-          <div class="tab-content hidden" id="tab-bracket">
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Eliminación Directa</h3>
-                <p class="card-subtitle">Próximamente...</p>
-              </div>
-            </div>
-          </div>
-
           <!-- TAB GUARDADOS -->
           <div class="tab-content hidden" id="tab-saved">
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Sorteos Guardados</h3>
-                <p class="card-subtitle">Próximamente...</p>
+                <h3 class="card-title">📊 Sorteos Realizados <span class="tag" id="savedCount">0</span></h3>
+                <p class="card-subtitle">Tus sorteos guardados y sincronizados</p>
+              </div>
+              
+              <div class="controls mb-4">
+                <button class="btn btn-danger" id="btnClearAllSaved">🗑️ Eliminar todos</button>
+              </div>
+              
+              <div id="savedDrawsList">
+                <div class="text-center text-muted p-4">
+                  No hay sorteos guardados
+                </div>
               </div>
             </div>
           </div>
@@ -698,6 +720,9 @@ Newell's; Santa Fe
         document.getElementById('userName').textContent = user.displayName || user.email;
         document.getElementById('userEmail').textContent = user.email;
         document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+        
+        // Cargar sorteos guardados
+        renderSavedDraws();
       } else {
         // Usuario desconectado
         authSection.classList.remove('hidden');
@@ -717,6 +742,10 @@ Newell's; Santa Fe
         document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
         button.classList.add('active');
         document.getElementById('tab-' + tabName).classList.remove('hidden');
+        
+        if (tabName === 'saved') {
+          renderSavedDraws();
+        }
       });
     });
 
@@ -786,6 +815,189 @@ Atl. Tucumán; Tucumán`;
       return {groups: groups};
     }
 
+    // FUNCIÓN PARA MOSTRAR RESULTADO EN NUEVA PESTAÑA CON PDF
+    function showResultInNewTab(resultData) {
+      const newWindow = window.open('', '_blank');
+      if (!newWindow) {
+        showToast('Permite ventanas emergentes para ver el resultado', 'warning');
+        return;
+      }
+      
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Resultado del Sorteo - ${resultData.date}</title>
+          <meta charset="utf-8">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px; 
+              max-width: 1200px; 
+              margin: 0 auto; 
+              background: #f5f5f5;
+            }
+            .result-page { 
+              background: white; 
+              padding: 2rem; 
+              border-radius: 12px; 
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .result-header { 
+              text-align: center; 
+              margin-bottom: 2rem; 
+              padding-bottom: 1rem; 
+              border-bottom: 2px solid #eee; 
+            }
+            .result-actions { 
+              display: flex; 
+              justify-content: center; 
+              gap: 1rem; 
+              margin: 2rem 0; 
+              flex-wrap: wrap;
+            }
+            .btn { 
+              padding: 0.75rem 1.5rem; 
+              border: none; 
+              border-radius: 8px; 
+              cursor: pointer; 
+              font-weight: 500;
+              text-decoration: none;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .btn-primary { 
+              background: #2563eb; 
+              color: white; 
+            }
+            .btn-outline { 
+              background: transparent; 
+              color: #2563eb; 
+              border: 1px solid #2563eb; 
+            }
+            .results-grid { 
+              display: grid; 
+              grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+              gap: 1rem; 
+              margin-top: 1.5rem; 
+            }
+            .zone-card { 
+              background: #f8fafc; 
+              border: 1px solid #e2e8f0; 
+              border-radius: 8px; 
+              padding: 1rem; 
+            }
+            .zone-header { 
+              display: flex; 
+              align-items: center; 
+              margin-bottom: 0.75rem; 
+            }
+            .zone-title { 
+              font-weight: 600; 
+              color: #0f172a; 
+            }
+            .team-list { 
+              list-style: none; 
+              padding: 0; 
+            }
+            .team-item { 
+              display: flex; 
+              align-items: center; 
+              gap: 8px; 
+              padding: 0.5rem 0; 
+              border-bottom: 1px solid #e2e8f0; 
+            }
+            .team-item:last-child { border-bottom: none; }
+            .team-position { 
+              font-weight: 600; 
+              color: #64748b; 
+              min-width: 20px; 
+            }
+            .team-name { flex: 1; color: #0f172a; }
+            .team-badge { 
+              font-size: 0.75rem; 
+              padding: 2px 6px; 
+              border-radius: 12px; 
+              background: #10b981; 
+              color: white; 
+            }
+            .text-xs { font-size: 0.75rem; }
+            .text-muted { color: #64748b; }
+            @media print {
+              .result-actions { display: none; }
+              body { background: white; }
+              .result-page { box-shadow: none; padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="result-page">
+            <div class="result-header">
+              <h1>Resultado del Sorteo</h1>
+              <p><strong>Fecha:</strong> ${resultData.date}</p>
+              ${resultData.parameters.discipline ? `<p><strong>Disciplina:</strong> ${resultData.parameters.discipline}</p>` : ''}
+              <p><strong>Equipos:</strong> ${resultData.parameters.teams} • <strong>Zonas:</strong> ${resultData.parameters.zones}</p>
+            </div>
+            
+            <div class="results-grid">
+              ${resultData.result.groups.map((group, index) => `
+                <div class="zone-card">
+                  <div class="zone-header">
+                    <h3 class="zone-title">Zona ${index + 1}</h3>
+                  </div>
+                  <ol class="team-list">
+                    ${group.map((team, pos) => `
+                      <li class="team-item">
+                        <span class="team-position">${pos + 1}.</span>
+                        <span class="team-name">${team.name}</span>
+                        ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
+                        ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+                      </li>
+                    `).join('')}
+                  </ol>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="result-actions">
+              <button class="btn btn-primary" onclick="window.print()">
+                🖨️ Imprimir
+              </button>
+              <button class="btn btn-outline" onclick="generatePDF()">
+                📄 Exportar PDF
+              </button>
+              <button class="btn btn-outline" onclick="window.close()">
+                ❌ Cerrar
+              </button>
+            </div>
+          </div>
+
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+          <script>
+            function generatePDF() {
+              const { jsPDF } = window.jspdf;
+              const doc = new jsPDF();
+              const element = document.querySelector('.result-page');
+              
+              doc.html(element, {
+                callback: function(doc) {
+                  doc.save('resultado-sorteo-${resultData.date.replace(/[/:\\]/g, '-')}.pdf');
+                },
+                x: 10,
+                y: 10,
+                width: 190,
+                windowWidth: 1200
+              });
+            }
+          </script>
+        </body>
+        </html>
+      `);
+      
+      newWindow.document.close();
+    }
+
     // Realizar sorteo
     document.getElementById('btnDrawGroups').addEventListener('click', () => {
       const teamsText = document.getElementById('teamsInput').value;
@@ -816,7 +1028,23 @@ Atl. Tucumán; Tucumán`;
         return;
       }
 
-      // Mostrar resultados
+      // Crear objeto de resultado
+      const resultData = {
+        type: 'grupos',
+        parameters: {
+          discipline: discipline,
+          zones: zones,
+          teams: teams.length,
+          headsAsFirst: headsAsFirst
+        },
+        result: result,
+        date: new Date().toLocaleString()
+      };
+
+      // Mostrar resultados en nueva pestaña
+      showResultInNewTab(resultData);
+      
+      // También mostrar en la misma página
       const resultsContainer = document.getElementById('resultGroups');
       resultsContainer.innerHTML = '';
       
@@ -844,19 +1072,17 @@ Atl. Tucumán; Tucumán`;
       document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
       showToast('Sorteo realizado correctamente', 'success');
 
-      // Guardar en Firebase si hay usuario autenticado
-      if (auth.currentUser) {
-        saveDraw('grupos', {
-          discipline: discipline,
-          zones: zones,
-          teams: teams.length,
-          headsAsFirst: headsAsFirst
-        }, result);
-      }
+      // Guardar en Firebase
+      saveDraw('grupos', {
+        discipline: discipline,
+        zones: zones,
+        teams: teams.length,
+        headsAsFirst: headsAsFirst
+      }, result, resultData.date);
     });
 
     // Guardar sorteo en Firebase
-    async function saveDraw(type, parameters, result) {
+    async function saveDraw(type, parameters, result, date) {
       if (!auth.currentUser) return;
       
       const drawId = 'draw_' + Date.now();
@@ -865,7 +1091,7 @@ Atl. Tucumán; Tucumán`;
         type,
         parameters,
         result,
-        date: new Date().toLocaleString(),
+        date: date,
         userId: auth.currentUser.uid,
         userName: auth.currentUser.displayName || auth.currentUser.email
       };
@@ -875,16 +1101,171 @@ Atl. Tucumán; Tucumán`;
           ...draw,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-        showToast('Sorteo guardado en la nube', 'success');
       } catch (error) {
         console.error('Error guardando en Firebase:', error);
         // Guardar localmente como fallback
         const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
         savedDraws.push(draw);
         localStorage.setItem('savedDraws', JSON.stringify(savedDraws));
-        showToast('Sorteo guardado localmente', 'info');
       }
     }
+
+    // Renderizar sorteos guardados
+    async function renderSavedDraws() {
+      const container = document.getElementById('savedDrawsList');
+      
+      try {
+        let draws = [];
+        
+        if (auth.currentUser) {
+          try {
+            const snapshot = await db.collection('draws')
+              .where('userId', '==', auth.currentUser.uid)
+              .orderBy('timestamp', 'desc')
+              .get();
+            
+            snapshot.forEach(doc => draws.push(doc.data()));
+          } catch (error) {
+            console.error('Error cargando de Firebase:', error);
+          }
+        }
+        
+        // También cargar desde localStorage
+        const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        
+        // Combinar y eliminar duplicados
+        const allDraws = [...draws, ...localDraws];
+        const uniqueDraws = allDraws.filter((draw, index, self) => 
+          index === self.findIndex(d => d.id === draw.id)
+        );
+        
+        // Ordenar por fecha
+        uniqueDraws.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        document.getElementById('savedCount').textContent = uniqueDraws.length;
+        
+        if (uniqueDraws.length === 0) {
+          container.innerHTML = '<div class="text-center text-muted p-4">No hay sorteos guardados</div>';
+          return;
+        }
+        
+        container.innerHTML = uniqueDraws.map(draw => `
+          <div class="saved-draw-item">
+            <div class="saved-draw-info">
+              <div class="font-semibold">
+                🏆 Zonas
+                <span class="text-xs text-muted">• ${draw.userName}</span>
+              </div>
+              <div class="text-xs text-muted">
+                ${draw.parameters.discipline ? draw.parameters.discipline + ' • ' : ''}
+                ${draw.date}
+              </div>
+              <div class="text-xs">
+                ${draw.result.groups.length} zonas • ${draw.result.groups.flat().length} equipos
+              </div>
+            </div>
+            <div class="saved-draw-actions">
+              <button class="btn btn-sm btn-outline" onclick="openSavedDraw('${draw.id}')">Abrir</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteDraw('${draw.id}')">Eliminar</button>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Error cargando sorteos:', error);
+        container.innerHTML = '<div class="text-center text-muted p-4">Error cargando sorteos</div>';
+      }
+    }
+
+    // Eliminar todos los sorteos
+    document.getElementById('btnClearAllSaved').addEventListener('click', async () => {
+      if (confirm('¿Estás seguro de que quieres eliminar todos los sorteos guardados?')) {
+        try {
+          // Eliminar de Firebase
+          if (auth.currentUser) {
+            const snapshot = await db.collection('draws')
+              .where('userId', '==', auth.currentUser.uid)
+              .get();
+            
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+              batch.delete(doc.ref);
+            });
+            await batch.commit();
+          }
+          
+          // Eliminar de localStorage
+          localStorage.removeItem('savedDraws');
+          
+          showToast('Todos los sorteos han sido eliminados', 'success');
+          renderSavedDraws();
+        } catch (error) {
+          showToast('Error eliminando sorteos', 'error');
+        }
+      }
+    });
+
+    // Funciones globales para los botones de los sorteos guardados
+    window.openSavedDraw = async function(id) {
+      try {
+        let draw = null;
+        
+        // Buscar en Firebase
+        if (auth.currentUser) {
+          try {
+            const doc = await db.collection('draws').doc(id).get();
+            if (doc.exists) {
+              draw = doc.data();
+            }
+          } catch (error) {
+            console.log('No se pudo cargar desde Firebase, buscando localmente');
+          }
+        }
+        
+        // Si no se encontró en Firebase, buscar localmente
+        if (!draw) {
+          const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          draw = savedDraws.find(d => d.id === id);
+        }
+        
+        if (!draw) {
+          showToast('No se pudo encontrar el sorteo', 'error');
+          return;
+        }
+        
+        // Usar la función para mostrar en pestaña
+        showResultInNewTab(draw);
+        
+      } catch (error) {
+        console.error('Error abriendo sorteo:', error);
+        showToast('Error al abrir el sorteo', 'error');
+      }
+    };
+
+    window.deleteDraw = async function(id) {
+      if (confirm('¿Eliminar este sorteo?')) {
+        try {
+          // Intentar eliminar de Firebase
+          if (auth.currentUser) {
+            try {
+              await db.collection('draws').doc(id).delete();
+            } catch (error) {
+              console.log('No se pudo eliminar de Firebase, eliminando localmente');
+            }
+          }
+          
+          // Eliminar localmente
+          const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+          const filteredDraws = savedDraws.filter(draw => draw.id !== id);
+          localStorage.setItem('savedDraws', JSON.stringify(filteredDraws));
+          
+          showToast('Sorteo eliminado', 'success');
+          renderSavedDraws();
+        } catch (error) {
+          showToast('Error eliminando sorteo', 'error');
+        }
+      }
+    };
 
     // Inicializar
     updateCapInfo();
