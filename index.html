@@ -6,6 +6,7 @@
   <title>Sorteador Deportivo Pro</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   
   <style>
     * {
@@ -22,9 +23,119 @@
     }
 
     .container {
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .header {
+      background: white;
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #2563eb, #10b981);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-weight: 500;
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #2563eb;
+      border: 1px solid #2563eb;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #64748b;
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .btn-lg {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
     }
 
     .auth-section {
@@ -32,6 +143,8 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       padding: 30px;
+      max-width: 400px;
+      margin: 50px auto;
     }
 
     .auth-tabs {
@@ -70,7 +183,7 @@
       font-weight: 500;
     }
 
-    .form-input {
+    .form-input, .form-textarea, .form-select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
@@ -78,22 +191,9 @@
       font-size: 16px;
     }
 
-    .btn {
-      padding: 12px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .btn-primary {
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #1d4ed8;
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
     }
 
     .hidden {
@@ -109,56 +209,380 @@
       border-radius: 5px;
       padding: 15px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    /* Estilos para la aplicación principal */
+    .main-content {
+      padding: 2rem 0;
+    }
+
+    .tabs-navigation {
+      display: flex;
+      gap: 4px;
+      background: #f8fafc;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-button:hover {
+      background: #f1f5f9;
+    }
+
+    .tab-button.active {
+      background: white;
+      color: #2563eb;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: box-shadow 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .card-header {
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-subtitle {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .zone-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .zone-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .zone-title {
+      font-weight: 600;
+    }
+
+    .team-list {
+      list-style: none;
+    }
+
+    .team-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .team-item:last-child {
+      border-bottom: none;
+    }
+
+    .team-position {
+      font-weight: 600;
+      color: #64748b;
+      min-width: 20px;
+    }
+
+    .team-name {
+      flex: 1;
+    }
+
+    .team-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 12px;
+      background: #10b981;
+      color: white;
+    }
+
+    .text-xs {
+      font-size: 0.75rem;
+    }
+
+    .text-muted {
+      color: #64748b;
+    }
+
+    .mt-4 {
+      margin-top: 1rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+
+    .text-center {
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <section class="auth-section" id="authSection">
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
-        <button class="auth-tab" data-tab="register">Registrarse</button>
+  <div class="app-container">
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo">
+            <div class="logo-icon">🏆</div>
+            <span>Sorteador Pro</span>
+          </div>
+          
+          <div class="header-actions">
+            <div class="user-menu hidden" id="userMenu">
+              <div class="user-avatar" id="userAvatar">U</div>
+              <div class="user-info">
+                <div class="user-name" id="userName">Usuario</div>
+                <div class="user-email text-xs" id="userEmail">usuario@ejemplo.com</div>
+              </div>
+              <button class="btn btn-outline btn-sm" id="logoutBtn">Cerrar Sesión</button>
+            </div>
+            
+            <div class="auth-buttons" id="authButtons">
+              <button class="btn btn-outline btn-sm" id="loginBtn">Iniciar Sesión</button>
+              <button class="btn btn-primary btn-sm" id="registerBtn">Registrarse</button>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <form class="auth-form" id="loginForm">
-        <div class="form-group">
-          <label class="form-label" for="loginEmail">Email</label>
-          <input type="email" class="form-input" id="loginEmail" required placeholder="tu@email.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="loginPassword">Contraseña</label>
-          <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
-        </div>
-        <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
-      </form>
-      
-      <form class="auth-form hidden" id="registerForm">
-        <div class="form-group">
-          <label class="form-label" for="registerName">Nombre</label>
-          <input type="text" class="form-input" id="registerName" required placeholder="Tu nombre">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="registerEmail">Email</label>
-          <input type="email" class="form-input" id="registerEmail" required placeholder="tu@email.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="registerPassword">Contraseña</label>
-          <input type="password" class="form-input" id="registerPassword" required placeholder="••••••••" minlength="6">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="registerConfirmPassword">Confirmar Contraseña</label>
-          <input type="password" class="form-input" id="registerConfirmPassword" required placeholder="••••••••">
-        </div>
-        <button type="submit" class="btn btn-primary">Crear Cuenta</button>
-      </form>
-    </section>
+    </header>
 
-    <section class="app-section hidden" id="appSection">
-      <h1>¡Bienvenido al Sorteador Pro!</h1>
-      <p>Has iniciado sesión correctamente.</p>
-      <button id="logoutBtn" class="btn btn-primary">Cerrar Sesión</button>
-    </section>
+    <main class="main-content">
+      <div class="container">
+        <section class="auth-section" id="authSection">
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+            <button class="auth-tab" data-tab="register">Registrarse</button>
+          </div>
+          
+          <form class="auth-form" id="loginForm">
+            <div class="form-group">
+              <label class="form-label" for="loginEmail">Email</label>
+              <input type="email" class="form-input" id="loginEmail" required placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Contraseña</label>
+              <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+          </form>
+          
+          <form class="auth-form hidden" id="registerForm">
+            <div class="form-group">
+              <label class="form-label" for="registerName">Nombre</label>
+              <input type="text" class="form-input" id="registerName" required placeholder="Tu nombre">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="registerEmail">Email</label>
+              <input type="email" class="form-input" id="registerEmail" required placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="registerPassword">Contraseña</label>
+              <input type="password" class="form-input" id="registerPassword" required placeholder="••••••••" minlength="6">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="registerConfirmPassword">Confirmar Contraseña</label>
+              <input type="password" class="form-input" id="registerConfirmPassword" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+          </form>
+        </section>
+
+        <section class="app-section hidden" id="appSection">
+          <div class="tabs-navigation">
+            <button class="tab-button active" data-tab="grupos">
+              <span>🏆</span>
+              Zonas / Grupos
+            </button>
+            <button class="tab-button" data-tab="simple">
+              <span>🎲</span>
+              Sorteo Simple
+            </button>
+            <button class="tab-button" data-tab="bracket">
+              <span>⚔️</span>
+              Eliminación Directa
+            </button>
+            <button class="tab-button" data-tab="saved">
+              <span>📊</span>
+              Sorteos Guardados
+            </button>
+          </div>
+
+          <!-- TAB GRUPOS -->
+          <div class="tab-content active" id="tab-grupos">
+            <div class="grid grid-2">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Lista de Equipos</h3>
+                  <p class="card-subtitle">Ingresá los equipos, uno por línea. Opcional: provincia y cabeza de serie</p>
+                </div>
+                
+                <div class="form-group">
+                  <textarea class="form-textarea" id="teamsInput" placeholder="Ejemplo:
+River Plate; CABA; *
+Boca Juniors; CABA
+Newell's; Santa Fe
+..."></textarea>
+                </div>
+                
+                <div class="controls">
+                  <button class="btn btn-secondary" id="btnExample">Cargar Ejemplo</button>
+                  <button class="btn btn-outline" id="btnClear">Limpiar</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Configuración del Sorteo</h3>
+                  <p class="card-subtitle">Definí los parámetros para el sorteo</p>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label" for="zones">Número de Zonas</label>
+                  <input type="number" class="form-input" id="zones" value="8" min="1">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="disciplineSelect">Disciplina</label>
+                  <select class="form-select" id="disciplineSelect">
+                    <option value="">— Seleccionar —</option>
+                    <option value="futbol">Fútbol</option>
+                    <option value="basquet">Básquet</option>
+                    <option value="voley">Vóley</option>
+                    <option value="hockey">Hockey</option>
+                    <option value="tenis">Tenis</option>
+                    <option value="rugby">Rugby</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" id="headsAsFirst" checked>
+                    Cabezas de serie primero
+                  </label>
+                </div>
+                
+                <div class="controls mt-4">
+                  <button class="btn btn-primary btn-lg" id="btnDrawGroups">
+                    <span>🎯</span>
+                    Realizar Sorteo
+                  </button>
+                </div>
+                
+                <div class="text-xs text-muted mt-4" id="capInfo">
+                  Equipos: 0 • Zonas: 8
+                </div>
+                <div id="status" class="text-xs mt-2"></div>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header">
+                <h3 class="card-title">Resultado del Sorteo</h3>
+                <p class="card-subtitle" id="drawStatus">Listo para realizar el sorteo</p>
+              </div>
+              <div class="results-grid" id="resultGroups"></div>
+            </div>
+          </div>
+
+          <!-- TAB SIMPLE -->
+          <div class="tab-content hidden" id="tab-simple">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Sorteo Simple</h3>
+                <p class="card-subtitle">Próximamente...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB ELIMINATORIAS -->
+          <div class="tab-content hidden" id="tab-bracket">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Eliminación Directa</h3>
+                <p class="card-subtitle">Próximamente...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB GUARDADOS -->
+          <div class="tab-content hidden" id="tab-saved">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Sorteos Guardados</h3>
+                <p class="card-subtitle">Próximamente...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
+
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
     // Configuración de Firebase
@@ -174,12 +598,14 @@
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     // Mostrar notificación
-    function showToast(message) {
+    function showToast(message, type = 'info') {
       const toast = document.createElement('div');
       toast.className = 'toast';
-      toast.textContent = message;
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
@@ -208,16 +634,16 @@
       const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
       if (password !== confirmPassword) {
-        showToast('Las contraseñas no coinciden');
+        showToast('Las contraseñas no coinciden', 'error');
         return;
       }
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         await userCredential.user.updateProfile({ displayName: name });
-        showToast('Cuenta creada exitosamente');
+        showToast('Cuenta creada exitosamente', 'success');
       } catch (error) {
-        showToast('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
       }
     });
 
@@ -230,9 +656,9 @@
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        showToast('Sesión iniciada correctamente');
+        showToast('Sesión iniciada correctamente', 'success');
       } catch (error) {
-        showToast('Error: ' + error.message);
+        showToast('Error: ' + error.message, 'error');
       }
     });
 
@@ -240,27 +666,228 @@
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       try {
         await auth.signOut();
-        showToast('Sesión cerrada');
+        showToast('Sesión cerrada', 'success');
       } catch (error) {
-        showToast('Error al cerrar sesión');
+        showToast('Error al cerrar sesión', 'error');
       }
+    });
+
+    // Botones auth header
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      document.querySelector('.auth-tab[data-tab="login"]').click();
+    });
+
+    document.getElementById('registerBtn').addEventListener('click', () => {
+      document.querySelector('.auth-tab[data-tab="register"]').click();
     });
 
     // Escuchar cambios de autenticación
     auth.onAuthStateChanged((user) => {
       const authSection = document.getElementById('authSection');
       const appSection = document.getElementById('appSection');
+      const authButtons = document.getElementById('authButtons');
+      const userMenu = document.getElementById('userMenu');
       
       if (user) {
         // Usuario conectado
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
+        authButtons.classList.add('hidden');
+        userMenu.classList.remove('hidden');
+
+        document.getElementById('userName').textContent = user.displayName || user.email;
+        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
       } else {
         // Usuario desconectado
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
+        authButtons.classList.remove('hidden');
+        userMenu.classList.add('hidden');
       }
     });
+
+    // ==================== LÓGICA DE LA APLICACIÓN ====================
+
+    // Tabs principales
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        button.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.remove('hidden');
+      });
+    });
+
+    // Ejemplo de equipos
+    document.getElementById('btnExample').addEventListener('click', () => {
+      const example = `River Plate; CABA; *
+Boca Juniors; CABA; *
+Newell's; Santa Fe
+Rosario Central; Santa Fe
+San Lorenzo; CABA
+Racing; Buenos Aires
+Independiente; Buenos Aires
+Estudiantes; Buenos Aires
+Talleres; Córdoba
+Belgrano; Córdoba
+Godoy Cruz; Mendoza
+Atl. Tucumán; Tucumán`;
+      document.getElementById('teamsInput').value = example;
+      updateCapInfo();
+    });
+
+    // Limpiar
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('teamsInput').value = '';
+      document.getElementById('resultGroups').innerHTML = '';
+      document.getElementById('drawStatus').textContent = 'Listo para realizar el sorteo';
+      updateCapInfo();
+    });
+
+    // Actualizar información de equipos y zonas
+    function updateCapInfo() {
+      const teams = document.getElementById('teamsInput').value.split('\n').filter(line => line.trim()).length;
+      const zones = document.getElementById('zones').value;
+      document.getElementById('capInfo').textContent = `Equipos: ${teams} • Zonas: ${zones}`;
+    }
+
+    document.getElementById('teamsInput').addEventListener('input', updateCapInfo);
+    document.getElementById('zones').addEventListener('input', updateCapInfo);
+
+    // Función de sorteo de grupos
+    function drawGroups(teams, z, headsAsFirst) {
+      const n = teams.length;
+      
+      if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
+      if (n < z) return {error: 'Hay menos equipos que zonas.'};
+      
+      // Mezclar equipos
+      const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+      const heads = shuffledTeams.filter(t => t.head);
+      const others = shuffledTeams.filter(t => !t.head);
+      
+      const groups = Array.from({length: z}, () => []);
+      
+      // Colocar cabezas de serie si está activado
+      if (headsAsFirst && heads.length) {
+        for (let i = 0; i < groups.length && i < heads.length; i++) {
+          groups[i].push(heads[i]);
+        }
+      }
+      
+      // Distribuir el resto de equipos
+      const pool = headsAsFirst ? others : shuffledTeams;
+      pool.forEach((team, index) => {
+        groups[index % z].push(team);
+      });
+
+      return {groups: groups};
+    }
+
+    // Realizar sorteo
+    document.getElementById('btnDrawGroups').addEventListener('click', () => {
+      const teamsText = document.getElementById('teamsInput').value;
+      const teams = teamsText.split('\n').filter(line => line.trim()).map((line, index) => {
+        const parts = line.split(';').map(part => part.trim());
+        return {
+          id: index,
+          name: parts[0] || '',
+          province: parts[1] || '',
+          head: parts[2] === '*' || parts[0].includes('*')
+        };
+      }).filter(team => team.name);
+
+      if (teams.length === 0) {
+        showToast('Ingresa al menos un equipo', 'error');
+        return;
+      }
+
+      const zones = parseInt(document.getElementById('zones').value) || 8;
+      const headsAsFirst = document.getElementById('headsAsFirst').checked;
+      const discipline = document.getElementById('disciplineSelect').value;
+
+      const result = drawGroups(teams, zones, headsAsFirst);
+      
+      if (result.error) {
+        document.getElementById('drawStatus').textContent = result.error;
+        showToast(result.error, 'error');
+        return;
+      }
+
+      // Mostrar resultados
+      const resultsContainer = document.getElementById('resultGroups');
+      resultsContainer.innerHTML = '';
+      
+      result.groups.forEach((group, index) => {
+        const zoneCard = document.createElement('div');
+        zoneCard.className = 'zone-card';
+        zoneCard.innerHTML = `
+          <div class="zone-header">
+            <h4 class="zone-title">Zona ${index + 1}</h4>
+          </div>
+          <ol class="team-list">
+            ${group.map((team, pos) => `
+              <li class="team-item">
+                <span class="team-position">${pos + 1}.</span>
+                <span class="team-name">${team.name}</span>
+                ${team.province ? `<span class="text-xs text-muted">${team.province}</span>` : ''}
+                ${team.head ? '<span class="team-badge">Cabeza</span>' : ''}
+              </li>
+            `).join('')}
+          </ol>
+        `;
+        resultsContainer.appendChild(zoneCard);
+      });
+
+      document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
+      showToast('Sorteo realizado correctamente', 'success');
+
+      // Guardar en Firebase si hay usuario autenticado
+      if (auth.currentUser) {
+        saveDraw('grupos', {
+          discipline: discipline,
+          zones: zones,
+          teams: teams.length,
+          headsAsFirst: headsAsFirst
+        }, result);
+      }
+    });
+
+    // Guardar sorteo en Firebase
+    async function saveDraw(type, parameters, result) {
+      if (!auth.currentUser) return;
+      
+      const drawId = 'draw_' + Date.now();
+      const draw = {
+        id: drawId,
+        type,
+        parameters,
+        result,
+        date: new Date().toLocaleString(),
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName || auth.currentUser.email
+      };
+
+      try {
+        await db.collection('draws').doc(drawId).set({
+          ...draw,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Sorteo guardado en la nube', 'success');
+      } catch (error) {
+        console.error('Error guardando en Firebase:', error);
+        // Guardar localmente como fallback
+        const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
+        savedDraws.push(draw);
+        localStorage.setItem('savedDraws', JSON.stringify(savedDraws));
+        showToast('Sorteo guardado localmente', 'info');
+      }
+    }
+
+    // Inicializar
+    updateCapInfo();
   </script>
 </body>
 </html>
