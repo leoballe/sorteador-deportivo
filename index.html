@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
   <style>
     * {
@@ -637,7 +636,6 @@ Newell's; Santa Fe
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
         
-        // Actualizar pestañas activas
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.auth-form').forEach(form => form.classList.add('hidden'));
         
@@ -711,7 +709,6 @@ Newell's; Santa Fe
       const userMenu = document.getElementById('userMenu');
       
       if (user) {
-        // Usuario conectado
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         authButtons.classList.add('hidden');
@@ -721,10 +718,8 @@ Newell's; Santa Fe
         document.getElementById('userEmail').textContent = user.email;
         document.getElementById('userAvatar').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
         
-        // Cargar sorteos guardados
         renderSavedDraws();
       } else {
-        // Usuario desconectado
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
         authButtons.classList.remove('hidden');
@@ -792,21 +787,18 @@ Atl. Tucumán; Tucumán`;
       if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
       if (n < z) return {error: 'Hay menos equipos que zonas.'};
       
-      // Mezclar equipos
       const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
       const heads = shuffledTeams.filter(t => t.head);
       const others = shuffledTeams.filter(t => !t.head);
       
       const groups = Array.from({length: z}, () => []);
       
-      // Colocar cabezas de serie si está activado
       if (headsAsFirst && heads.length) {
         for (let i = 0; i < groups.length && i < heads.length; i++) {
           groups[i].push(heads[i]);
         }
       }
       
-      // Distribuir el resto de equipos
       const pool = headsAsFirst ? others : shuffledTeams;
       pool.forEach((team, index) => {
         groups[index % z].push(team);
@@ -815,7 +807,7 @@ Atl. Tucumán; Tucumán`;
       return {groups: groups};
     }
 
-    // FUNCIÓN PARA MOSTRAR RESULTADO EN NUEVA PESTAÑA CON PDF
+    // FUNCIÓN CORREGIDA: Mostrar resultado en nueva pestaña
     function showResultInNewTab(resultData) {
       const newWindow = window.open('', '_blank');
       if (!newWindow) {
@@ -823,7 +815,8 @@ Atl. Tucumán; Tucumán`;
         return;
       }
       
-      newWindow.document.write(`
+      // Crear el HTML para la nueva ventana
+      const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -982,7 +975,7 @@ Atl. Tucumán; Tucumán`;
               
               doc.html(element, {
                 callback: function(doc) {
-                  doc.save('resultado-sorteo-${resultData.date.replace(/[/:\\]/g, '-')}.pdf');
+                  doc.save('resultado-sorteo-${resultData.date.replace(/[/:\\\\]/g, '-')}.pdf');
                 },
                 x: 10,
                 y: 10,
@@ -993,8 +986,9 @@ Atl. Tucumán; Tucumán`;
           </script>
         </body>
         </html>
-      `);
+      `;
       
+      newWindow.document.write(htmlContent);
       newWindow.document.close();
     }
 
@@ -1028,7 +1022,6 @@ Atl. Tucumán; Tucumán`;
         return;
       }
 
-      // Crear objeto de resultado
       const resultData = {
         type: 'grupos',
         parameters: {
@@ -1041,10 +1034,8 @@ Atl. Tucumán; Tucumán`;
         date: new Date().toLocaleString()
       };
 
-      // Mostrar resultados en nueva pestaña
       showResultInNewTab(resultData);
       
-      // También mostrar en la misma página
       const resultsContainer = document.getElementById('resultGroups');
       resultsContainer.innerHTML = '';
       
@@ -1072,7 +1063,6 @@ Atl. Tucumán; Tucumán`;
       document.getElementById('drawStatus').textContent = `Sorteo realizado - ${teams.length} equipos en ${zones} zonas`;
       showToast('Sorteo realizado correctamente', 'success');
 
-      // Guardar en Firebase
       saveDraw('grupos', {
         discipline: discipline,
         zones: zones,
@@ -1103,7 +1093,6 @@ Atl. Tucumán; Tucumán`;
         });
       } catch (error) {
         console.error('Error guardando en Firebase:', error);
-        // Guardar localmente como fallback
         const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
         savedDraws.push(draw);
         localStorage.setItem('savedDraws', JSON.stringify(savedDraws));
@@ -1130,16 +1119,12 @@ Atl. Tucumán; Tucumán`;
           }
         }
         
-        // También cargar desde localStorage
         const localDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
-        
-        // Combinar y eliminar duplicados
         const allDraws = [...draws, ...localDraws];
         const uniqueDraws = allDraws.filter((draw, index, self) => 
           index === self.findIndex(d => d.id === draw.id)
         );
         
-        // Ordenar por fecha
         uniqueDraws.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         document.getElementById('savedCount').textContent = uniqueDraws.length;
@@ -1181,7 +1166,6 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('btnClearAllSaved').addEventListener('click', async () => {
       if (confirm('¿Estás seguro de que quieres eliminar todos los sorteos guardados?')) {
         try {
-          // Eliminar de Firebase
           if (auth.currentUser) {
             const snapshot = await db.collection('draws')
               .where('userId', '==', auth.currentUser.uid)
@@ -1194,9 +1178,7 @@ Atl. Tucumán; Tucumán`;
             await batch.commit();
           }
           
-          // Eliminar de localStorage
           localStorage.removeItem('savedDraws');
-          
           showToast('Todos los sorteos han sido eliminados', 'success');
           renderSavedDraws();
         } catch (error) {
@@ -1205,12 +1187,11 @@ Atl. Tucumán; Tucumán`;
       }
     });
 
-    // Funciones globales para los botones de los sorteos guardados
+    // Funciones globales
     window.openSavedDraw = async function(id) {
       try {
         let draw = null;
         
-        // Buscar en Firebase
         if (auth.currentUser) {
           try {
             const doc = await db.collection('draws').doc(id).get();
@@ -1222,7 +1203,6 @@ Atl. Tucumán; Tucumán`;
           }
         }
         
-        // Si no se encontró en Firebase, buscar localmente
         if (!draw) {
           const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
           draw = savedDraws.find(d => d.id === id);
@@ -1233,7 +1213,6 @@ Atl. Tucumán; Tucumán`;
           return;
         }
         
-        // Usar la función para mostrar en pestaña
         showResultInNewTab(draw);
         
       } catch (error) {
@@ -1245,7 +1224,6 @@ Atl. Tucumán; Tucumán`;
     window.deleteDraw = async function(id) {
       if (confirm('¿Eliminar este sorteo?')) {
         try {
-          // Intentar eliminar de Firebase
           if (auth.currentUser) {
             try {
               await db.collection('draws').doc(id).delete();
@@ -1254,7 +1232,6 @@ Atl. Tucumán; Tucumán`;
             }
           }
           
-          // Eliminar localmente
           const savedDraws = JSON.parse(localStorage.getItem('savedDraws') || '[]');
           const filteredDraws = savedDraws.filter(draw => draw.id !== id);
           localStorage.setItem('savedDraws', JSON.stringify(filteredDraws));
