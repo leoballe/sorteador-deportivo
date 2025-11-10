@@ -8,6 +8,7 @@
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <!-- Utilidades PDF en la pestaña de resultado -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
@@ -71,37 +72,28 @@
     .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b}
     .itemRow:last-child{border-bottom:none}
     .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px}
-
-    /* Auth (login/registro) */
-    .authWrap{max-width:460px;margin:48px auto}
-    .authBrand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
-    .authCard{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
-    .authTabs{display:flex;border-bottom:1px solid #223046;margin-bottom:14px}
-    .authTab{flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent}
-    .authTab.active{border-bottom-color:#22c55e;color:#22c55e}
-    .authForm .formGroup{margin-bottom:12px}
   </style>
 </head>
 <body>
 
   <!-- ============ Sección de Autenticación ============ -->
-  <section id="authSection" class="authWrap">
-    <div class="authBrand">
+  <section id="authSection" class="authWrap" style="max-width:460px;margin:48px auto">
+    <div class="authBrand" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">
       <h1 style="margin:0">🎲 Sorteador Deportivo Pro</h1>
     </div>
-    <div class="authCard">
-      <div class="authTabs">
-        <button class="authTab active" data-tab="login">Iniciar Sesión</button>
-        <button class="authTab" data-tab="register">Registrarse</button>
+    <div class="card" style="background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px">
+      <div class="authTabs" style="display:flex;border-bottom:1px solid #223046;margin-bottom:14px">
+        <button class="authTab active" data-tab="login" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid #22c55e">Iniciar Sesión</button>
+        <button class="authTab" data-tab="register" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent">Registrarse</button>
       </div>
 
       <!-- Login -->
       <form class="authForm" id="loginForm">
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="loginEmail">Email</label>
           <input type="email" id="loginEmail" required placeholder="tu@email.com">
         </div>
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="loginPassword">Contraseña</label>
           <input type="password" id="loginPassword" required placeholder="••••••••">
         </div>
@@ -110,19 +102,19 @@
 
       <!-- Registro -->
       <form class="authForm hidden" id="registerForm">
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="registerName">Nombre</label>
           <input type="text" id="registerName" required placeholder="Tu nombre">
         </div>
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="registerEmail">Email</label>
           <input type="email" id="registerEmail" required placeholder="tu@email.com">
         </div>
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="registerPassword">Contraseña</label>
           <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
         </div>
-        <div class="formGroup">
+        <div class="formGroup" style="margin-bottom:12px">
           <label for="registerConfirmPassword">Confirmar Contraseña</label>
           <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
         </div>
@@ -143,7 +135,7 @@
         <div class="userBox">
           <span class="pill" id="userInfo" title="Usuario"></span>
           <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-          <span class="badge">v2.4 Pro (Auth)</span>
+          <span class="badge">v2.5 Pro (Auth + Cloud)</span>
         </div>
       </header>
 
@@ -265,6 +257,11 @@ Newell's; Santa Fe
             <h3>Historial (local)</h3>
             <div class="history" id="history"></div>
           </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Mis sorteos (en la nube)</h3>
+            <div class="history" id="cloudHistory"></div>
+          </div>
         </div>
 
         <div id="tab-simple" class="tabcontent hidden">
@@ -345,7 +342,7 @@ Newell's; Santa Fe
 <script>
 'use strict';
 
-/* ====================== Firebase Auth ====================== */
+/* ====================== Firebase ====================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
   authDomain: "sorteador-53cb5.firebaseapp.com",
@@ -356,6 +353,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db   = firebase.firestore();
 
 /* ====================== Utils ====================== */
 function toast(msg){
@@ -377,6 +375,8 @@ function copyText(text){ navigator.clipboard.writeText(text).then(()=>toast('Cop
 /* ====================== Estado ====================== */
 let activeTeams=[], inactiveTeams=[];
 let disciplines=[], categories=[];
+let lastResult=null; // guarda el último sorteo renderizado
+let cloudUnsub=null; // suscripción a historial cloud
 
 /* ====================== CSV genérico ====================== */
 function parseCSVLine(line, delimiter){
@@ -392,8 +392,8 @@ function parseCSVLine(line, delimiter){
 function parseCSV(text){
   if(!text.trim()) return {headers:[],rows:[],delimiter:','};
   const firstLine=text.split(/\r?\n/)[0]||'';
-  const candidates=[',',';','\t']; let best=',', max=0;
-  for(const d of candidates){ const c=(firstLine.match(new RegExp('\\'+(d==='\t'?'t':d),'g'))||[]).length; if(c>max){max=c;best=d} }
+  const counts={',':(firstLine.match(/,/g)||[]).length,';':(firstLine.match(/;/g)||[]).length,'\t':(firstLine.match(/\t/g)||[]).length};
+  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||',';
   const lines=text.split(/\r?\n/).filter(l=>l.trim()); const headers=parseCSVLine(lines[0],best);
   const rows=lines.slice(1).map(l=>parseCSVLine(l,best)); return {headers,rows,delimiter:best};
 }
@@ -535,7 +535,7 @@ function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({
 function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24; if(n>=total) return caps; let deficits=total-n; const order=[3,1,2,0]; let i=0; while(deficits>0){const idx=order[i%order.length]; if(caps[idx]>0){caps[idx]--; deficits--} i++} return caps}
 function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24; if(n>=total) return caps; const d=total-n; const zeros=Math.floor(d/3); const twos=d%3; const order=[7,6,5,4,3,2,1,0]; for(let i=0;i<zeros;i++) caps[order[i]]=0; let k=zeros; for(let j=0;j<twos&&k<order.length;j++,k++){ if(caps[order[k]]===3) caps[order[k]]=2 } return caps}
 
-/* ====================== Sorteo (sin restricción por provincia) ====================== */
+/* ====================== Sorteo (siempre nuevo) ====================== */
 function drawGroups(teams,z,headsAsFirst,seed,format){
   const rand=rngFromSeed(seed); const n=teams.length;
   if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
@@ -563,9 +563,9 @@ function drawGroups(teams,z,headsAsFirst,seed,format){
   return {error:'No se pudo asignar después de varios intentos'};
 }
 
-/* ====================== Render y apertura en nueva pestaña ====================== */
+/* ====================== Render + Pestaña nueva ====================== */
 function renderGroups(target,result){
-  if(result.error){ target.innerHTML=`<div class="errorText">${result.error}</div>`; return }
+  if(result.error){ target.innerHTML=`<div class="errorText">${result.error}</div>`; lastResult=null; return }
   const grid=document.createElement('div'); grid.className='grid';
   result.groups.forEach((arr,gi)=>{
     const card=document.createElement('div'); card.className='zone';
@@ -581,6 +581,7 @@ function renderGroups(target,result){
   target.innerHTML=''; target.appendChild(grid);
   const attempts=result.attempt!=null? ` (intentos: ${result.attempt+1})` : '';
   document.getElementById('status').innerHTML=`Sorteo realizado${attempts}`;
+  lastResult=result;
 }
 function openResultInNewTab(result){
   const w=window.open('about:blank','_blank'); if(!w){ toast('Permití pop-ups para ver el resultado'); return }
@@ -664,6 +665,49 @@ function updateCapInfo(){
   else if(fmt==='8x3'){ if(teams<=24){ const caps=capacitiesEightByThree(teams); msg+=` — Distribución: ${caps.join('-')}`; if(teams<16) msg+=' — <span class="warnText">Considere cambiar de sistema</span>'; } else { msg+=' — Distribución pareja' } }
   else { const avg=(teams/z).toFixed(2); msg+=` — Promedio: ${avg} por zona` }
   document.getElementById('capInfo').innerHTML=msg;
+}
+
+/* ====================== Guardar y listar en Firestore ====================== */
+async function saveDrawToCloud(result, meta){
+  const user=auth.currentUser;
+  if(!user) return; // si no hay login, no guardamos en nube
+  const payload={
+    ...meta,
+    groups: result.groups.map(arr=>arr.map(t=>({name:t.name, province:t.province||'', head:!!t.head}))),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    await db.collection('users').doc(user.uid).collection('draws').add(payload);
+  }catch(e){ console.error(e); toast('No se pudo guardar en la nube'); }
+}
+function subscribeCloudHistory(){
+  const user=auth.currentUser; const listEl=document.getElementById('cloudHistory');
+  if(cloudUnsub){ cloudUnsub(); cloudUnsub=null; }
+  if(!user){ listEl.innerHTML='<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; return; }
+  cloudUnsub = db.collection('users').doc(user.uid).collection('draws').orderBy('createdAt','desc').limit(50)
+  .onSnapshot(snap=>{
+    listEl.innerHTML='';
+    if(snap.empty){ listEl.innerHTML='<div class="tiny">No hay sorteos guardados aún.</div>'; return; }
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const when=d.createdAt?.toDate? d.createdAt.toDate().toLocaleString() : '—';
+      const title=`${when} — ${d.teamsCount||'-'} equipos · ${d.zones||'-'} zonas${d.format? ' · '+d.format:''}${d.discipline? ' · '+d.discipline:''}${d.category? ' · '+d.category:''}${d.gender? ' · '+d.gender:''}`;
+      const item=document.createElement('div'); item.className='item'; item.textContent=title;
+
+      const btns=document.createElement('div'); btns.style.marginTop='6px';
+      const openBtn=document.createElement('button'); openBtn.className='btn tiny'; openBtn.textContent='Abrir';
+      openBtn.addEventListener('click',()=>{
+        const res={groups:(d.groups||[]).map(arr=>arr.map(t=>({name:t.name, province:t.province, head:!!t.head})))};
+        openResultInNewTab(res);
+      });
+      btns.appendChild(openBtn);
+      item.appendChild(btns);
+      listEl.appendChild(item);
+    });
+  },err=>{
+    console.error(err);
+    listEl.innerHTML='<div class="tiny errorText">Error al leer historial.</div>';
+  });
 }
 
 /* ====================== DOM Ready ====================== */
@@ -771,28 +815,52 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[];
     document.getElementById('checkLists').classList.add('hidden');
     document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
+    lastResult=null;
   });
 
-  // Sorteos
-  document.getElementById('btnDrawGroups').addEventListener('click',()=>{
+  // Sorteos (siempre nuevo)
+  document.getElementById('btnDrawGroups').addEventListener('click',async()=>{
     const teams=getActiveTeamsLive(); if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos</span>'; return }
-    const z=currentZones(); const seed=document.getElementById('disciplineSelect').value||'sorteo'; const headsAsFirst=document.getElementById('headsAsFirst').checked; const fmt=getFormat();
-    const result=drawGroups(teams,z,headsAsFirst,seed,fmt);
+    const z=currentZones(); const fmt=getFormat();
+    // semilla única por click: disciplina + timestamp + random
+    const base=(document.getElementById('disciplineSelect').value||'sorteo');
+    const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const headsAsFirst=document.getElementById('headsAsFirst').checked;
+
+    const result=drawGroups(teams,z,headsAsFirst,runSeed,fmt);
     renderGroups(document.getElementById('resultGroups'),result);
     if(!result.error){
       openResultInNewTab(result);
-      const now=new Date().toLocaleString(); const item=document.createElement('div'); item.className='item'; item.textContent=`${now} — ${teams.length} equipos · ${z} zonas`;
+      const now=new Date().toLocaleString();
+      const item=document.createElement('div'); item.className='item';
+      const discTxt=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
+      const cat=(document.getElementById('categorySelect').value)||'';
+      const gen=(document.getElementById('genderSelect').value)||'';
+      item.textContent=`${now} — ${teams.length} equipos · ${z} zonas${fmt? ' · '+fmt:''}${discTxt? ' · '+discTxt:''}${cat? ' · '+cat:''}${gen? ' · '+gen:''}`;
       document.getElementById('history').prepend(item);
-      if(fmt==='8x3' && teams.length<16){ document.getElementById('status').innerHTML+=' · <span class="warnText">Considere cambiar de sistema</span>' }
+
+      // Guardar en la nube (multidispositivo)
+      const meta={
+        teamsCount: teams.length,
+        zones: z,
+        format: fmt,
+        discipline: discTxt,
+        disciplineSeed: base,
+        category: cat,
+        gender: gen,
+      };
+      await saveDrawToCloud(result, meta);
     }
   });
+
+  // Export/Copy usan el último sorteo (no recalculan)
   document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    const teams=getActiveTeamsLive(); const z=currentZones(); const seed=document.getElementById('disciplineSelect').value||'sorteo'; const headsAsFirst=document.getElementById('headsAsFirst').checked; const fmt=getFormat();
-    const result=drawGroups(teams,z,headsAsFirst,seed,fmt); if(result.error){ toast('Generá el sorteo primero'); return } exportGroupsCSV(result.groups);
+    if(!lastResult || lastResult.error){ toast('Generá el sorteo primero'); return }
+    exportGroupsCSV(lastResult.groups);
   });
   document.getElementById('btnCopy').addEventListener('click',()=>{
-    const zones=document.querySelectorAll('#resultGroups .zone'); if(!zones.length){ toast('No hay resultado para copiar'); return }
-    let txt=''; zones.forEach((zone,zi)=>{ txt+=`Zona ${zi+1}\n`; zone.querySelectorAll('li').forEach((li,i)=>{ txt+=`${i+1}. ${li.textContent}\n` }); txt+='\n' });
+    if(!lastResult || lastResult.error){ toast('No hay resultado'); return }
+    let txt=''; lastResult.groups.forEach((arr,zi)=>{ txt+=`Zona ${zi+1}\n`; arr.forEach((t,i)=>{ txt+=`${i+1}. ${t.name}${t.province? ' — '+t.province:''}${t.head?' (Cabeza)':''}\n`}); txt+='\n' });
     copyText(txt);
   });
 
@@ -802,7 +870,7 @@ Atl. Tucumán; Tucumán`;
   });
   document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
   document.getElementById('btnDrawSimple').addEventListener('click',()=>{
-    const seed=document.getElementById('disciplineSelectSimple').value||'sorteo';
+    const seed=document.getElementById('disciplineSelectSimple').value||`simple-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">No hay equipos</span>'; return }
     const rand=rngFromSeed(seed); const list=shuffle(names,rand);
@@ -821,16 +889,11 @@ Atl. Tucumán; Tucumán`;
   function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
   function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML=`<h4>Partido ${i+1}</h4><ol><li><b>${escapeHtml(m[0])}</b></li><li><b>${escapeHtml(m[1])}</b></li></ol>`;grid.appendChild(card)});target.appendChild(grid)}
   document.getElementById('btnDrawBracket').addEventListener('click',()=>{
-    const seed=document.getElementById('disciplineSelectBracket').value||'sorteo';
+    const seed=(document.getElementById('disciplineSelectBracket').value||`bracket-${Date.now()}-${Math.random().toString(36).slice(2,8)}`);
     const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
     const matches=buildBracket(names,seed); renderBracket(document.getElementById('resultBracket'),matches);
     document.getElementById('statusBracket').textContent='Llaves generadas (ronda 1).';
-  });
-  document.getElementById('btnExportBracket').addEventListener('click',()=>{
-    const boxes=document.querySelectorAll('#resultBracket .zone'); if(!boxes.length){ toast('Generá las llaves primero'); return }
-    const matches=[]; boxes.forEach(b=>{ const lis=b.querySelectorAll('li'); matches.push([lis[0].innerText, lis[1].innerText]); }); let csv='Llave,Partido,Equipo A,Equipo B\n';
-    matches.forEach((m,i)=>{ csv+=`Ronda 1,${i+1},"${m[0]}","${m[1]}"\n` }); downloadText(csv,'llaves.csv');
   });
 
   updateCapInfo();
@@ -888,10 +951,12 @@ auth.onAuthStateChanged((user)=>{
     authSection.classList.add('hidden');
     appSection.classList.remove('hidden');
     userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
+    subscribeCloudHistory();
   }else{
     appSection.classList.add('hidden');
     authSection.classList.remove('hidden');
     userInfo.textContent = '';
+    if(cloudUnsub){ cloudUnsub(); cloudUnsub=null; }
   }
 });
 </script>
