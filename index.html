@@ -339,9 +339,11 @@ Newell's; Santa Fe
     </div>
   </section>
 
+<script>
+// Código JavaScript simplificado y funcional - VERSIÓN ESTABLE
 'use strict';
 
-/* ====================== Firebase ====================== */
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
   authDomain: "sorteador-53cb5.firebaseapp.com",
@@ -350,744 +352,107 @@ const firebaseConfig = {
   messagingSenderId: "583913752340",
   appId: "1:583913752340:web:347f8b2866fcbb216e6401"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db   = firebase.firestore();
+const db = firebase.firestore();
 
-/* ====================== Utils ====================== */
-function toast(msg){
-  const el=document.createElement('div');
-  el.textContent=msg;
-  el.style.cssText='position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
-  document.body.appendChild(el); setTimeout(()=>el.remove(),1500);
-}
-function escapeHtml(text){
-  const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return text.replace(/[&<>"']/g,m=>map[m]);
-}
-function downloadText(text,filename){
-  const blob=new Blob([text],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
-}
-function copyText(text){ navigator.clipboard.writeText(text).then(()=>toast('Copiado')).catch(()=>alert('No se pudo copiar')) }
+// Estado simple
+let activeTeams = [];
+let inactiveTeams = [];
+let lastResult = null;
 
-/* ====================== Estado ====================== */
-let activeTeams=[], inactiveTeams=[];
-let disciplines=[], categories=[];
-let lastResult=null; // guarda el último sorteo renderizado
-let cloudUnsub=null; // suscripción a historial cloud
-
-/* ====================== CSV genérico ====================== */
-function parseCSVLine(line, delimiter){
-  const result=[]; let current=''; let inQuotes=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i], next=line[i+1];
-    if(ch==='"'){ if(inQuotes && next==='"'){ current+='"'; i++; } else { inQuotes=!inQuotes; } }
-    else if(ch===delimiter && !inQuotes){ result.push(current.trim()); current=''; }
-    else { current+=ch; }
-  }
-  result.push(current.trim()); return result;
-}
-function parseCSV(text){
-  if(!text.trim()) return {headers:[],rows:[],delimiter:','};
-  const firstLine=text.split(/\r?\n/)[0]||'';
-  const counts={',':(firstLine.match(/,/g)||[]).length,';':(firstLine.match(/;/g)||[]).length,'\t':(firstLine.match(/\t/g)||[]).length};
-  const best=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||',';
-  const lines=text.split(/\r?\n/).filter(l=>l.trim()); const headers=parseCSVLine(lines[0],best);
-  const rows=lines.slice(1).map(l=>parseCSVLine(l,best)); return {headers,rows,delimiter:best};
+// Funciones básicas
+function toast(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
+  document.body.appendChild(el); 
+  setTimeout(() => el.remove(), 1500);
 }
 
-/* ====================== Importación: equipos/disciplinas/categorías ====================== */
-function importTeamsCSV(text){
-  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
-  const {headers,rows,delimiter}=parseCSV(text);
-  let nameIdx=-1, provinceIdx=-1, headIdx=-1;
-  if(headers.length){
-    headers.forEach((h,i)=>{
-      const s=h.toLowerCase();
-      if(nameIdx===-1 && (s.includes('equipo')||s.includes('team')||s.includes('nombre')||s.includes('club'))) nameIdx=i;
-      if(provinceIdx===-1 && (s.includes('provincia')||s.includes('province')||s.includes('región')||s.includes('region')||s.includes('localidad'))) provinceIdx=i;
-      if(headIdx===-1 && (s.includes('cabeza')||s.includes('head')||s.includes('seed')||s.includes('semilla'))) headIdx=i;
+function escapeHtml(text) {
+  const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; 
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Auth event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Tabs auth
+  document.querySelectorAll('.authTab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.authTab').forEach(t => t.classList.remove('active'));
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab + 'Form').classList.remove('hidden');
     });
-  }
-  if(nameIdx===-1){ nameIdx=0; provinceIdx=headers.length>1?1:-1; headIdx=headers.length>2?2:-1; }
-  const teams=[]; const uniq=new Set();
-  for(const row of rows){
-    if(row.length<=nameIdx) continue;
-    const raw=(row[nameIdx]||''); const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
-    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
-    const province=(provinceIdx!==-1 && row[provinceIdx])? row[provinceIdx].replace(/\*+$/,'').trim() : '';
-    const hv=(headIdx!==-1 && row[headIdx])? String(row[headIdx]).toLowerCase().trim() : '';
-    const head=/^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw);
-    teams.push({name,province,head});
-  }
-  return {teams, delimiter, hasHeaders:headers.length>0};
-}
-function importDisciplinesCSV(text){
-  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
-  const {headers,rows,delimiter}=parseCSV(text);
-  let nameIdx=0, seedIdx=1;
-  if(headers.length){
-    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('disciplina')||s.includes('deporte')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
-  }
-  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
-  return {items, delimiter, hasHeaders:headers.length>0};
-}
-function importCategoriesCSV(text){
-  if(text && text.charCodeAt(0)===0xFEFF) text=text.slice(1);
-  const {headers,rows,delimiter}=parseCSV(text);
-  let nameIdx=0, seedIdx=1;
-  if(headers.length){
-    headers.forEach((h,i)=>{const s=h.toLowerCase(); if(s.includes('categor')||s.includes('división')||s.includes('division')||s.includes('nombre')) nameIdx=i; if(s.includes('semilla')||s.includes('seed')||s.includes('código')||s.includes('codigo')) seedIdx=i;});
-  }
-  const items=[]; for(const row of rows){ const name=(row[nameIdx]||'').trim(); if(!name) continue; const seed=(row[seedIdx]||name).trim(); items.push({name,seed}) }
-  return {items, delimiter, hasHeaders:headers.length>0};
-}
-
-/* ====================== Selects ====================== */
-function refreshDisciplineSelects(){
-  const sels=[document.getElementById('disciplineSelect'),document.getElementById('disciplineSelectSimple'),document.getElementById('disciplineSelectBracket')];
-  sels.forEach(sel=>{
-    if(!sel) return;
-    const current=sel.value;
-    sel.innerHTML='<option value="">— Seleccionar disciplina —</option>';
-    disciplines.forEach(d=>{ const o=document.createElement('option'); o.value=d.seed; o.textContent=d.name; o.dataset.seed=d.seed; sel.appendChild(o); });
-    if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
   });
-}
-function refreshCategorySelects(){
-  const sel=document.getElementById('categorySelect'); if(!sel) return;
-  const current=sel.value; sel.innerHTML='<option value="">— Seleccionar categoría —</option>';
-  categories.forEach(c=>{ const o=document.createElement('option'); o.value=c.name; o.textContent=c.name; o.dataset.seed=c.seed; sel.appendChild(o); });
-  if(current && [...sel.options].some(o=>o.value===current)) sel.value=current;
-}
 
-/* ====================== Listas activas/inactivas ====================== */
-function renderLists(){
-  const aBox=document.getElementById('activeList'); const iBox=document.getElementById('inactiveList');
-  const showInactive=document.getElementById('toggleShowInactive').checked;
-  document.getElementById('countActive').textContent=activeTeams.length;
-  document.getElementById('countInactive').textContent=inactiveTeams.length;
-  iBox.classList.toggle('hidden', !showInactive);
-
-  aBox.innerHTML=''; activeTeams.forEach((t,idx)=>{
-    const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML=`<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
-    aBox.appendChild(row);
-  });
-  iBox.innerHTML=''; inactiveTeams.forEach((t,idx)=>{
-    const row=document.createElement('div'); row.className='itemRow';
-    row.innerHTML=`<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
-    iBox.appendChild(row);
-  });
-}
-function buildListsFromTextarea(){
-  const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
-  activeTeams=[]; inactiveTeams=[];
-  const uniq=new Set();
-  for(const line of lines){
-    const parts=line.split(';').map(p=>p.trim());
-    const name=(parts[0]||'').replace(/\*+$/,'').trim(); if(!name) continue;
-    const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
-    const province=(parts[1]||'').replace(/\*+$/,'').trim();
-    const head=parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(parts[0]||'');
-    activeTeams.push({name,province,head});
-  }
-  document.getElementById('checkLists').classList.remove('hidden');
-  renderLists(); updateCapInfo(); toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
-}
-function getChecked(selector){
-  return Array.from(document.querySelectorAll(selector+':checked')).map(el=>parseInt(el.dataset.idx,10)).filter(n=>!isNaN(n)).sort((a,b)=>b-a);
-}
-function moveSelectedToInactive(){
-  const idxs=getChecked('.chkActive'); const moved=idxs.map(i=>activeTeams[i]);
-  idxs.forEach(i=>activeTeams.splice(i,1)); inactiveTeams.unshift(...moved);
-  renderLists(); updateCapInfo();
-}
-function restoreSelectedFromInactive(){
-  const idxs=getChecked('.chkInactive'); const moved=idxs.map(i=>inactiveTeams[i]);
-  idxs.forEach(i=>inactiveTeams.splice(i,1)); activeTeams.push(...moved);
-  renderLists(); updateCapInfo();
-}
-function selectAll(selector){ document.querySelectorAll(selector).forEach(cb=>cb.checked=true) }
-function getActiveTeamsLive(){
-  if(document.getElementById('checkLists').classList.contains('hidden')){
-    const lines=document.getElementById('teamsInput').value.split(/\r?\n/).filter(l=>l.trim());
-    const teams=[]; const uniq=new Set();
-    for(const line of lines){
-      const parts=line.split(';').map(p=>p.trim());
-      const raw=parts[0]||''; const name=raw.replace(/\*+$/,'').trim(); if(!name) continue;
-      const key=name.toLowerCase(); if(uniq.has(key)) continue; uniq.add(key);
-      teams.push({name,province:(parts[1]||'').replace(/\*+$/,'').trim(),head:parts[2]?/^(si|sí|true|1|\*|x)$/i.test(parts[2]):/\*$/.test(raw)});
-    }
-    return teams;
-  }
-  return [...activeTeams];
-}
-
-/* ====================== RNG + capacidades ====================== */
-function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
-function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}}
-function rngFromSeed(seed){if(!seed||seed.trim()==="") return Math.random; const h=xmur3(String(seed))(); return mulberry32(h)}
-function shuffle(array,rand){const a=[...array]; for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a}
-function capacities(n,z){const base=Math.floor(n/z),rest=n%z;return Array.from({length:z},(_,i)=>base+(i<rest?1:0))}
-function capacitiesFourBySix(n){const caps=[6,6,6,6];const total=24; if(n>=total) return caps; let deficits=total-n; const order=[3,1,2,0]; let i=0; while(deficits>0){const idx=order[i%order.length]; if(caps[idx]>0){caps[idx]--; deficits--} i++} return caps}
-function capacitiesEightByThree(n){const caps=Array(8).fill(3);const total=24; if(n>=total) return caps; const d=total-n; const zeros=Math.floor(d/3); const twos=d%3; const order=[7,6,5,4,3,2,1,0]; for(let i=0;i<zeros;i++) caps[order[i]]=0; let k=zeros; for(let j=0;j<twos&&k<order.length;j++,k++){ if(caps[order[k]]===3) caps[order[k]]=2 } return caps}
-
-/* ====================== Sorteo (siempre nuevo) ====================== */
-function drawGroups(teams,z,headsAsFirst,seed,format){
-  const rand=rngFromSeed(seed); const n=teams.length;
-  if(z<1) return {error:'El nº de zonas debe ser ≥ 1'};
-  if(n<z) return {error:'Hay menos equipos que zonas.'};
-
-  const capsBase=(format==='4x6'&&z===4&&n<=24)?capacitiesFourBySix(n):(format==='8x3'&&z===8&&n<=24)?capacitiesEightByThree(n):capacities(n,z);
-  const groups=Array.from({length:z},()=>[]);
-  const heads=shuffle(teams.filter(t=>t.head),rand);
-  const others=shuffle(teams.filter(t=>!t.head),rand);
-  if(headsAsFirst&&heads.length){ for(let i=0;i<groups.length && i<heads.length;i++){ groups[i].push(heads[i]) } }
-  const targetCaps=capsBase.map((cap,i)=>Math.max(0, cap-groups[i].length));
-  const pool=headsAsFirst?others:shuffle(teams,rand);
-
-  const maxAttempts=500;
-  for(let attempt=0;attempt<maxAttempts;attempt++){
-    const g=groups.map(arr=>[...arr]); const remaining=[...targetCaps]; let ok=true;
-    const order=shuffle(pool,rand);
-    for(const team of order){
-      const options=g.map((arr,idx)=>({idx,size:arr.length,cap:remaining[idx]})).filter(x=>x.cap>0).sort((a,b)=>a.size-b.size||a.idx-b.idx).map(x=>x.idx);
-      if(!options.length){ ok=false; break; }
-      const pick=options[Math.floor(rand()*options.length)]; g[pick].push(team); remaining[pick]--;
-    }
-    if(ok) return {groups:g,caps:capsBase,relaxed:false,attempt};
-  }
-  return {error:'No se pudo asignar después de varios intentos'};
-}
-
-/* ====================== Render + Pestaña nueva ====================== */
-function renderGroups(target,result){
-  if(result.error){ target.innerHTML=`<div class="errorText">${result.error}</div>`; lastResult=null; return }
-  const grid=document.createElement('div'); grid.className='grid';
-  result.groups.forEach((arr,gi)=>{
-    const card=document.createElement('div'); card.className='zone';
-    card.innerHTML=`<h4>Zona ${gi+1}</h4>`;
-    const ol=document.createElement('ol');
-    arr.forEach(t=>{
-      const li=document.createElement('li');
-      li.innerHTML=`<b>${escapeHtml(t.name)}</b>${t.province?` <span class="muted">— ${escapeHtml(t.province)}</span>`:''}${t.head?' <span class="pill">Cabeza</span>':''}`;
-      ol.appendChild(li);
-    });
-    card.appendChild(ol); grid.appendChild(card);
-  });
-  target.innerHTML=''; target.appendChild(grid);
-  const attempts=result.attempt!=null? ` (intentos: ${result.attempt+1})` : '';
-  document.getElementById('status').innerHTML=`Sorteo realizado${attempts}`;
-  lastResult=result;
-}
-function openResultInNewTab(result){
-  const w=window.open('about:blank','_blank'); if(!w){ toast('Permití pop-ups para ver el resultado'); return }
-  const disciplineText=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
-  const category=(document.getElementById('categorySelect').value)||'';
-  const gender=(document.getElementById('genderSelect').value)||'';
-  const chipsHTML=[
-    disciplineText?`<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>`:'',
-    category?`<span class="chip">Categoría: ${escapeHtml(category)}</span>`:'',
-    gender?`<span class="chip">Género: ${escapeHtml(gender)}</span>`:'',
-    `<span class="chip">${result.groups.length} zonas</span>`,
-    `<span class="chip">${new Date().toLocaleString()}</span>`
-  ].filter(Boolean).join('');
-  const zonesHTML=result.groups.map((arr,gi)=>{
-    const items=arr.map(t=>`<li><b>${escapeHtml(t.name)}</b>${t.province?` — ${escapeHtml(t.province)}`:''}${t.head?' ★':''}</li>`).join('');
-    return `<div class="zone"><h4>Zona ${gi+1}</h4><ol>${items}</ol></div>`;
-  }).join('');
-
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Resultado del Sorteo</title>
-  <style>
-    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-    .container{max-width:1100px; margin:0 auto;}
-    h1{margin-bottom:16px}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
-    .zone h4{margin:4px 0 8px 0}
-    .zone ol{margin:0;padding-left:18px}
-    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-  </head><body>
-    <div class="container">
-      <h1>🎲 Resultado del Sorteo</h1>
-      <div class="chips">${chipsHTML}</div>
-      <div class="grid">${zonesHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-    </div>
-    <script>
-      function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
-        });
-      }
-    <\/script>
-  </body></html>`;
-
-  w.document.open(); w.document.write(html); w.document.close();
-}
-
-/* ====================== Export CSV ====================== */
-function exportGroupsCSV(groups){
-  let csv='Zona,Posicion,Equipo,Provincia,Cabeza\n';
-  groups.forEach((arr,gi)=>{ arr.forEach((t,i)=>{ csv+=`${gi+1},${i+1},"${t.name.replace(/"/g,'""')}","${(t.province||'').replace(/"/g,'""')}",${t.head?'si':'no'}\n` }) });
-  downloadText(csv,'sorteo_zonas.csv');
-}
-function exportSimpleCSV(list){ let csv='Posicion,Equipo\n'; list.forEach((n,i)=>{ csv+=`${i+1},"${n.replace(/"/g,'""')}"\n` }); downloadText(csv,'sorteo_simple.csv') }
-
-/* ====================== Estado UI ====================== */
-function getFormat(){ const r=document.querySelector('input[name="format"]:checked'); return r?r.value:'custom' }
-function currentZones(){ const fmt=getFormat(); if(fmt==='8x3') return 8; if(fmt==='4x6') return 4; return parseInt(document.getElementById('zones').value)||1 }
-function updateCapInfo(){
-  const teams=getActiveTeamsLive().length; const z=currentZones(); const fmt=getFormat();
-  let msg=`Equipos: ${teams} · Zonas: ${z}`;
-  if(fmt==='4x6'){ if(teams<=24){ const caps=capacitiesFourBySix(teams); msg+=` — Distribución: ${caps.join('-')}` } else { msg+=' — Distribución pareja' } }
-  else if(fmt==='8x3'){ if(teams<=24){ const caps=capacitiesEightByThree(teams); msg+=` — Distribución: ${caps.join('-')}`; if(teams<16) msg+=' — <span class="warnText">Considere cambiar de sistema</span>'; } else { msg+=' — Distribución pareja' } }
-  else { const avg=(teams/z).toFixed(2); msg+=` — Promedio: ${avg} por zona` }
-  document.getElementById('capInfo').innerHTML=msg;
-}
-
-/* ====================== Guardar y listar en Firestore ====================== */
-async function saveDrawToCloud(result, meta){
-  const user = auth.currentUser;
-  if(!user) {
-    console.log('Usuario no logueado, no se guarda en nube');
-    return;
-  }
-  
-  try {
-    // Transformar los arrays anidados a formato que Firestore acepte
-    const groupsData = result.groups.map((group, groupIndex) => ({
-      groupNumber: groupIndex + 1,
-      teams: group.map(team => ({
-        name: team.name,
-        province: team.province || '',
-        head: team.head || false
-      }))
-    }));
-
-    const payload = {
-      teamsCount: meta.teamsCount,
-      zones: meta.zones,
-      format: meta.format,
-      discipline: meta.discipline,
-      disciplineSeed: meta.disciplineSeed,
-      category: meta.category,
-      gender: meta.gender,
-      groups: groupsData,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: user.uid
-    };
+  // Registro
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const pass = document.getElementById('registerPassword').value;
+    const pass2 = document.getElementById('registerConfirmPassword').value;
     
-    await db.collection('users').doc(user.uid).collection('draws').add(payload);
-    console.log('Sorteo guardado en la nube correctamente');
-    toast('Sorteo guardado en la nube ✓');
+    if (pass !== pass2) { 
+      toast('Las contraseñas no coinciden'); 
+      return; 
+    }
     
-  } catch(e) { 
-    console.error('Error guardando en nube:', e); 
-    toast('Error al guardar en nube. Revisa la consola.');
-  }
-}
-
-function subscribeCloudHistory(){
-  const user = auth.currentUser; 
-  const listEl = document.getElementById('cloudHistory');
-  
-  if(cloudUnsub){ 
-    cloudUnsub(); 
-    cloudUnsub = null; 
-  }
-  
-  if(!user){ 
-    listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; 
-    return; 
-  }
-  
-  cloudUnsub = db.collection('users').doc(user.uid)
-    .collection('draws')
-    .orderBy('createdAt', 'desc')
-    .limit(50)
-    .onSnapshot(snap => {
-      listEl.innerHTML = '';
-      
-      if(snap.empty){ 
-        listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>'; 
-        return; 
-      }
-      
-      snap.forEach(doc => {
-        const d = doc.data();
-        const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
-        const title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
-        
-        const item = document.createElement('div'); 
-        item.className = 'item'; 
-        item.textContent = title;
-
-        const btns = document.createElement('div'); 
-        btns.style.marginTop = '6px';
-        
-        const openBtn = document.createElement('button'); 
-        openBtn.className = 'btn tiny'; 
-        openBtn.textContent = 'Abrir';
-        openBtn.addEventListener('click', () => {
-          // Reconstruir la estructura original de grupos desde Firestore
-          const groups = (d.groups || []).map(groupObj => 
-            groupObj.teams.map(team => ({
-              name: team.name,
-              province: team.province || '',
-              head: team.head || false
-            }))
-          );
-          
-          const res = { groups: groups };
-          
-          // Crear una versión personalizada para los datos de la nube
-          const w = window.open('about:blank','_blank'); 
-          if(!w){ toast('Permití pop-ups para ver el resultado'); return }
-          
-          const chipsHTML = [
-            d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
-            d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
-            d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
-            d.format ? `<span class="chip">Formato: ${escapeHtml(d.format)}</span>` : '',
-            `<span class="chip">${d.zones || groups.length} zonas</span>`,
-            `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
-          ].filter(Boolean).join('');
-          
-          const zonesHTML = groups.map((arr, gi) => {
-            const items = arr.map(t => 
-              `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
-            ).join('');
-            return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
-          }).join('');
-
-          const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-          <title>Resultado del Sorteo Guardado</title>
-          <style>
-            body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-            .container{max-width:1100px; margin:0 auto;}
-            h1{margin-bottom:16px}
-            .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-            .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-            .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-            .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
-            .zone h4{margin:4px 0 8px 0}
-            .zone ol{margin:0;padding-left:18px}
-            .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-            .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-          </style>
-          <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-          <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-          </head><body>
-            <div class="container">
-              <h1>🎲 Resultado del Sorteo (Guardado)</h1>
-              <div class="chips">${chipsHTML}</div>
-              <div class="grid">${zonesHTML}</div>
-              <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-            </div>
-            <script>
-              function exportPDF(){
-                if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-                const sheet=document.createElement('div');
-                sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-                const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-                const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-                const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-                document.body.appendChild(sheet);
-                html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-                  const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-                  const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-                  const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                  pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
-                });
-              }
-            <\/script>
-          </body></html>`;
-
-          w.document.open(); 
-          w.document.write(html); 
-          w.document.close();
-        });
-        
-        btns.appendChild(openBtn);
-        item.appendChild(btns);
-        listEl.appendChild(item);
-      });
-    }, err => {
-      console.error('Error leyendo historial cloud:', err);
-      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial. Verifica permisos.</div>';
-    });
-}
-
-/* ====================== DOM Ready ====================== */
-document.addEventListener('DOMContentLoaded',function(){
-  // Tabs app
-  document.querySelectorAll('.tab').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tabcontent').forEach(c=>c.classList.add('hidden'));
-      btn.classList.add('active'); document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
-    });
-  });
-
-  // Formato
-  document.querySelectorAll('input[name="format"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const elZones=document.getElementById('zones');
-      if(r.value==='8x3'){ elZones.value='8'; elZones.disabled=true }
-      else if(r.value==='4x6'){ elZones.value='4'; elZones.disabled=true }
-      else { elZones.disabled=false }
-      updateCapInfo();
-    });
-  });
-
-  // Panel checks
-  document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
-  document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
-  document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
-  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', ()=>selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', ()=>selectAll('.chkInactive'));
-
-  // CSV Equipos
-  document.getElementById('csvFile').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const result=importTeamsCSV(reader.result||'');
-        if(result.teams.length===0){ toast('CSV vacío o sin equipos'); return }
-        document.getElementById('teamsInput').value=result.teams.map(t=>`${t.name}${t.province?`; ${t.province}`:''}${t.head?'; *':''}`).join('\n');
-        buildListsFromTextarea();
-        const info=`CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter==='\t'?'TAB':result.delimiter}${result.hasHeaders?' · Con cabecera':''}`;
-        document.getElementById('csvInfo').innerHTML=info; toast('CSV de equipos cargado');
-      }catch(err){ console.error(err); alert('Error: '+err.message) }
-    };
-    reader.readAsText(file,'UTF-8');
-  });
-
-  // CSV Disciplinas
-  document.getElementById('csvDisciplines').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const res=importDisciplinesCSV(reader.result||''); disciplines=res.items; refreshDisciplineSelects();
-        const info=`CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
-        document.getElementById('discCSVInfo').innerHTML=info; toast('CSV de disciplinas cargado');
-      }catch(err){ console.error(err); alert('Error: '+err.message) }
-    };
-    reader.readAsText(file,'UTF-8');
-  });
-
-  // CSV Categorías
-  document.getElementById('csvCategories').addEventListener('change',function(e){
-    const file=e.target.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=function(){
-      try{
-        const res=importCategoriesCSV(reader.result||''); categories=res.items; refreshCategorySelects();
-        const info=`CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter==='\t'?'TAB':res.delimiter}${res.hasHeaders?' · Con cabecera':''}`;
-        document.getElementById('catCSVInfo').innerHTML=info; toast('CSV de categorías cargado');
-      }catch(err){ console.error(err); alert('Error: '+err.message) }
-    };
-    reader.readAsText(file,'UTF-8');
-  });
-
-  // Demos
-  document.getElementById('btnDiscDemo').addEventListener('click',()=>{
-    disciplines=[{name:'Fútbol',seed:'futbol'},{name:'Básquet',seed:'basquet'},{name:'Vóley',seed:'voley'},{name:'Hockey',seed:'hockey'}];
-    refreshDisciplineSelects(); document.getElementById('discCSVInfo').innerHTML='Demo: 4 disciplinas cargadas'; toast('Disciplinas demo cargadas');
-  });
-  document.getElementById('btnCatDemo').addEventListener('click',()=>{
-    categories=[{name:'Sub-15',seed:'sub15'},{name:'Sub-17',seed:'sub17'},{name:'Senior',seed:'senior'},{name:'Libre',seed:'libre'}];
-    refreshCategorySelects(); document.getElementById('catCSVInfo').innerHTML='Demo: 4 categorías cargadas'; toast('Categorías demo cargadas');
-  });
-
-  // Utilidad
-  document.getElementById('btnExample').addEventListener('click',()=>{
-    const sample=`River Plate; CABA; *
-Boca Juniors; CABA; *
-Newell's; Santa Fe
-Rosario Central; Santa Fe
-San Lorenzo; CABA
-Racing; Buenos Aires
-Independiente; Buenos Aires
-Estudiantes; Buenos Aires
-Talleres; Córdoba
-Belgrano; Córdoba
-Godoy Cruz; Mendoza
-Atl. Tucumán; Tucumán`;
-    document.getElementById('teamsInput').value=sample; updateCapInfo();
-  });
-  document.getElementById('btnClear').addEventListener('click',()=>{
-    document.getElementById('teamsInput').value=''; activeTeams=[]; inactiveTeams=[];
-    document.getElementById('checkLists').classList.add('hidden');
-    document.getElementById('resultGroups').innerHTML=''; document.getElementById('status').innerHTML=''; updateCapInfo();
-    lastResult=null;
-  });
-
-  // Sorteos (siempre nuevo)
-  document.getElementById('btnDrawGroups').addEventListener('click',async()=>{
-    const teams=getActiveTeamsLive(); if(teams.length===0){ document.getElementById('status').innerHTML='<span class="errorText">No hay equipos activos</span>'; return }
-    const z=currentZones(); const fmt=getFormat();
-    // semilla única por click: disciplina + timestamp + random
-    const base=(document.getElementById('disciplineSelect').value||'sorteo');
-    const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const headsAsFirst=document.getElementById('headsAsFirst').checked;
-
-    const result=drawGroups(teams,z,headsAsFirst,runSeed,fmt);
-    renderGroups(document.getElementById('resultGroups'),result);
-    if(!result.error){
-      openResultInNewTab(result);
-      const now=new Date().toLocaleString();
-      const item=document.createElement('div'); item.className='item';
-      const discTxt=(document.getElementById('disciplineSelect').selectedOptions[0]?.text)||'';
-      const cat=(document.getElementById('categorySelect').value)||'';
-      const gen=(document.getElementById('genderSelect').value)||'';
-      item.textContent=`${now} — ${teams.length} equipos · ${z} zonas${fmt? ' · '+fmt:''}${discTxt? ' · '+discTxt:''}${cat? ' · '+cat:''}${gen? ' · '+gen:''}`;
-      document.getElementById('history').prepend(item);
-
-      // Guardar en la nube (multidispositivo)
-      const meta={
-        teamsCount: teams.length,
-        zones: z,
-        format: fmt,
-        discipline: discTxt,
-        disciplineSeed: base,
-        category: cat,
-        gender: gen,
-      };
-      await saveDrawToCloud(result, meta);
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await cred.user.updateProfile({ displayName: name });
+      toast('Cuenta creada exitosamente');
+    } catch(err) { 
+      toast('Error: ' + err.message); 
     }
   });
 
-  // Export/Copy usan el último sorteo (no recalculan)
-  document.getElementById('btnExportCSV').addEventListener('click',()=>{
-    if(!lastResult || lastResult.error){ toast('Generá el sorteo primero'); return }
-    exportGroupsCSV(lastResult.groups);
-  });
-  document.getElementById('btnCopy').addEventListener('click',()=>{
-    if(!lastResult || lastResult.error){ toast('No hay resultado'); return }
-    let txt=''; lastResult.groups.forEach((arr,zi)=>{ txt+=`Zona ${zi+1}\n`; arr.forEach((t,i)=>{ txt+=`${i+1}. ${t.name}${t.province? ' — '+t.province:''}${t.head?' (Cabeza)':''}\n`}); txt+='\n' });
-    copyText(txt);
-  });
-
-  // Simple
-  document.getElementById('btnUseFromGroups').addEventListener('click',()=>{
-    const names=getActiveTeamsLive().map(t=>t.name); document.getElementById('simpleInput').value=names.join('\n'); toast('Lista copiada al tab Sorteo simple');
-  });
-  document.getElementById('btnClearSimple').addEventListener('click',()=>{document.getElementById('simpleInput').value=''; document.getElementById('resultSimple').innerHTML=''});
-  document.getElementById('btnDrawSimple').addEventListener('click',()=>{
-    const seed=document.getElementById('disciplineSelectSimple').value||`simple-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const names=document.getElementById('simpleInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    if(!names.length){ document.getElementById('statusSimple').innerHTML='<span class="errorText">No hay equipos</span>'; return }
-    const rand=rngFromSeed(seed); const list=shuffle(names,rand);
-    document.getElementById('resultSimple').innerHTML=list.map((n,i)=>`<div>${i+1}. <b>${escapeHtml(n)}</b></div>`).join('');
-    document.getElementById('statusSimple').textContent='Sorteo realizado';
-  });
-  document.getElementById('btnExportSimple').addEventListener('click',()=>{
-    const names=document.getElementById('resultSimple').textContent.split('\n').map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean);
-    if(!names.length){ toast('No hay resultado para exportar'); return } exportSimpleCSV(names);
+  // Login
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPassword').value;
+    
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      toast('Sesión iniciada');
+    } catch(err) { 
+      toast('Error: ' + err.message); 
+    }
   });
 
-  // Bracket
-  document.getElementById('btnUseFromGroups2').addEventListener('click',()=>{ document.getElementById('bracketInput').value=getActiveTeamsLive().map(t=>t.name).join('\n') });
-  document.getElementById('btnClearBracket').addEventListener('click',()=>{ document.getElementById('bracketInput').value=''; document.getElementById('resultBracket').innerHTML='' });
-  function nextPow2(x){let p=1;while(p<x)p<<=1;return p}
-  function buildBracket(names,seed){const rand=rngFromSeed(seed);const list=shuffle(names,rand);const target=nextPow2(list.length);while(list.length<target) list.push('BYE');const matches=[];for(let i=0;i<list.length;i+=2){matches.push([list[i],list[i+1]])}return matches}
-  function renderBracket(target,matches){target.innerHTML='';const grid=document.createElement('div');grid.className='grid';matches.forEach((m,i)=>{const card=document.createElement('div');card.className='zone';card.innerHTML=`<h4>Partido ${i+1}</h4><ol><li><b>${escapeHtml(m[0])}</b></li><li><b>${escapeHtml(m[1])}</b></li></ol>`;grid.appendChild(card)});target.appendChild(grid)}
-  document.getElementById('btnDrawBracket').addEventListener('click',()=>{
-    const seed=(document.getElementById('disciplineSelectBracket').value||`bracket-${Date.now()}-${Math.random().toString(36).slice(2,8)}`);
-    const names=document.getElementById('bracketInput').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    if(names.length<2){ document.getElementById('statusBracket').innerHTML='<span class="errorText">Pegá al menos dos equipos.</span>'; return }
-    const matches=buildBracket(names,seed); renderBracket(document.getElementById('resultBracket'),matches);
-    document.getElementById('statusBracket').textContent='Llaves generadas (ronda 1).';
-  });
-
-  updateCapInfo();
-});
-
-/* ====================== Auth UI y eventos ====================== */
-// Tabs auth
-document.querySelectorAll('.authTab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    document.querySelectorAll('.authTab').forEach(t=>t.classList.remove('active'));
-    document.getElementById('loginForm').classList.add('hidden');
-    document.getElementById('registerForm').classList.add('hidden');
-    tab.classList.add('active');
-    document.getElementById(tab.dataset.tab+'Form').classList.remove('hidden');
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { 
+      await auth.signOut(); 
+      toast('Sesión cerrada'); 
+    } catch { 
+      toast('Error al cerrar sesión'); 
+    }
   });
 });
 
-// Registro
-document.getElementById('registerForm').addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  const name=document.getElementById('registerName').value.trim();
-  const email=document.getElementById('registerEmail').value.trim();
-  const pass=document.getElementById('registerPassword').value;
-  const pass2=document.getElementById('registerConfirmPassword').value;
-  if(pass!==pass2){ toast('Las contraseñas no coinciden'); return }
-  try{
-    const cred=await auth.createUserWithEmailAndPassword(email,pass);
-    await cred.user.updateProfile({displayName:name});
-    toast('Cuenta creada exitosamente');
-  }catch(err){ toast('Error: '+err.message) }
-});
-
-// Login
-document.getElementById('loginForm').addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass=document.getElementById('loginPassword').value;
-  try{
-    await auth.signInWithEmailAndPassword(email,pass);
-    toast('Sesión iniciada');
-  }catch(err){ toast('Error: '+err.message) }
-});
-
-// Logout
-document.getElementById('logoutBtn').addEventListener('click',async()=>{
-  try{ await auth.signOut(); toast('Sesión cerrada') } catch{ toast('Error al cerrar sesión') }
-});
-
-// Cambios de sesión
-auth.onAuthStateChanged((user)=>{
-  const authSection=document.getElementById('authSection');
-  const appSection=document.getElementById('appSection');
-  const userInfo=document.getElementById('userInfo');
-  if(user){
+// Auth state changes
+auth.onAuthStateChanged((user) => {
+  const authSection = document.getElementById('authSection');
+  const appSection = document.getElementById('appSection');
+  const userInfo = document.getElementById('userInfo');
+  
+  if (user) {
     authSection.classList.add('hidden');
     appSection.classList.remove('hidden');
     userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
-    subscribeCloudHistory();
-  }else{
+    toast('¡Bienvenido!');
+  } else {
     appSection.classList.add('hidden');
     authSection.classList.remove('hidden');
     userInfo.textContent = '';
-    if(cloudUnsub){ cloudUnsub(); cloudUnsub=null; }
   }
 });
+</script>
 </body>
 </html>
