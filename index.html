@@ -1358,25 +1358,25 @@ openSimpleResultInNewTab(list);
       w.document.close();
     }
 */
-    // Guardar en historial local
-    const now = new Date().toLocaleString();
-    const item = document.createElement('div');
-    item.className = 'item';
-    const discTxt = disciplineText;
-    const cat = category;
-    const gen = gender;
-    item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
-    document.getElementById('history').prepend(item);
+   // Guardar en historial local
+const now = new Date().toLocaleString();
+const item = document.createElement('div');
+item.className = 'item';
+const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+const cat = (document.getElementById('categorySelect').value) || '';
+const gen = (document.getElementById('genderSelect').value) || '';
+item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
+document.getElementById('history').prepend(item);
 
-    // Guardar en la nube
-    const meta = {
-      teamsCount: teams.length,
-      discipline: discTxt,
-      disciplineSeed: base,
-      category: cat,
-      gender: gen,
-    };
-    await saveSimpleDrawToCloud(list, meta);
+// Guardar en la nube
+const meta = {
+  teamsCount: teams.length,
+  discipline: discTxt,
+  disciplineSeed: base,
+  category: cat,
+  gender: gen,
+};
+await saveSimpleDrawToCloud(list, meta);
     
   } else {
     // Sorteo normal por zonas
