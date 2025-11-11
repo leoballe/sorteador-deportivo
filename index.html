@@ -1367,7 +1367,7 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('resultSimple').innerHTML = '';
   });
 
-   document.getElementById('btnDrawSimple').addEventListener('click', async () => {
+  document.getElementById('btnDrawSimple').addEventListener('click', async () => {
   const seed = document.getElementById('disciplineSelectSimple').value || `simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   if (!names.length) {
@@ -1383,21 +1383,21 @@ Atl. Tucumán; Tucumán`;
   openSimpleResultInNewTab(list);
 
   // Guardar en la nube
-const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
-const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
-const categoryEl = document.getElementById('categorySelectSimple');
-const genderEl = document.getElementById('genderSelectSimple');
-const category = categoryEl ? categoryEl.value : '';
-const gender = genderEl ? genderEl.value : '';
-const meta = {
-  discipline: discTxt,
-  disciplineSeed: base,
-  category: category,
-  gender: gender
-};
-await saveSimpleDrawToCloud(list, meta);
+  const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+  const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
+  const categoryEl = document.getElementById('categorySelectSimple');
+  const genderEl = document.getElementById('genderSelectSimple');
+  const category = categoryEl ? categoryEl.value : '';
+  const gender = genderEl ? genderEl.value : '';
+  const meta = {
+    discipline: discTxt,
+    disciplineSeed: base,
+    category: category,
+    gender: gender
+  };
+  await saveSimpleDrawToCloud(list, meta);
+});
 
-  updateCapInfo();
 
   // CSV Equipos
   document.getElementById('csvFile').addEventListener('change', function(e) {
