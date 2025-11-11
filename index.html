@@ -147,7 +147,6 @@
       <div class="panel">
         <div class="tabs">
           <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
-          <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
         </div>
 
         <div id="tab-grupos" class="tabcontent">
@@ -193,11 +192,12 @@ Newell's; Santa Fe
 
             <div class="card">
               <h3>Parámetros</h3>
-              <div class="controls" id="formatRow">
-                <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
-                <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
-                <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
-              </div>
+<div class="controls" id="formatRow">
+  <label class="pill"><input type="radio" name="format" value="8x3" checked> 8 zonas de 3</label>
+  <label class="pill"><input type="radio" name="format" value="4x6"> 4 zonas de 6</label>
+  <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
+  <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
+</div>
               <div class="controls">
                 <div style="min-width:160px;flex:1">
                   <label>Nº de zonas / grupos</label>
@@ -273,17 +273,7 @@ Newell's; Santa Fe
   <div class="history" id="cloudHistory"></div>
 </div>
 
-        <div id="tab-simple" class="tabcontent hidden">
-          <div class="row">
-            <div class="card">
-              <h3>Equipos</h3>
-              <label>Usa la lista del tab Grupos (o pegá otra):</label>
-              <textarea id="simpleInput" placeholder="Uno por línea..."></textarea>
-              <div class="controls" style="margin-top:8px">
-                <button class="btn ghost" id="btnUseFromGroups" type="button">Usar lista del tab Grupos</button>
-                <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
-              </div>
-            </div>
+       
           <div class="card">
   <h3>Parámetros</h3>
   <div class="controls">
@@ -1263,11 +1253,17 @@ function currentZones() {
 
 function updateCapInfo() {
   const teams = getActiveTeamsLive().length;
-  const z = currentZones();
   const fmt = getFormat();
-  let msg = `Equipos: ${teams} · Zonas: ${z}`;
-  const avg = (teams / z).toFixed(2);
-  msg += ` — Promedio: ${avg} por zona`;
+  let msg = `Equipos: ${teams}`;
+  
+  if (fmt === 'simple') {
+    msg += ` · Orden de paso`;
+  } else {
+    const z = currentZones();
+    const avg = (teams / z).toFixed(2);
+    msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
+  }
+  
   document.getElementById('capInfo').innerHTML = msg;
 }
 
@@ -1285,20 +1281,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Formato
   document.querySelectorAll('input[name="format"]').forEach(r => {
-    r.addEventListener('change', () => {
-      const elZones = document.getElementById('zones');
-      if (r.value === '8x3') {
-        elZones.value = '8';
-        elZones.disabled = true;
-      } else if (r.value === '4x6') {
-        elZones.value = '4';
-        elZones.disabled = true;
-      } else {
-        elZones.disabled = false;
-      }
-      updateCapInfo();
-    });
+  r.addEventListener('change', () => {
+    const elZones = document.getElementById('zones');
+    if (r.value === '8x3') {
+      elZones.value = '8';
+      elZones.disabled = true;
+    } else if (r.value === '4x6') {
+      elZones.value = '4';
+      elZones.disabled = true;
+    } else if (r.value === 'simple') {
+      elZones.disabled = true;
+    } else {
+      elZones.disabled = false;
+    }
+    updateCapInfo();
   });
+});
 
   // Panel checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
@@ -1339,18 +1337,94 @@ Atl. Tucumán; Tucumán`;
 
   // Sorteos
   document.getElementById('btnDrawGroups').addEventListener('click', async () => {
-    const teams = getActiveTeamsLive();
-    if (teams.length === 0) {
-      document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
-      return;
-    }
-    
-    const z = currentZones();
-    const fmt = getFormat();
-    const base = (document.getElementById('disciplineSelect').value || 'sorteo');
-    const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const headsAsFirst = document.getElementById('headsAsFirst').checked;
+  const teams = getActiveTeamsLive();
+  if (teams.length === 0) {
+    document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
+    return;
+  }
+  
+  const fmt = getFormat();
+  const base = (document.getElementById('disciplineSelect').value || 'sorteo');
+  const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const headsAsFirst = document.getElementById('headsAsFirst').checked;
 
+  // Si es orden de paso, hacer sorteo simple
+  if (fmt === 'simple') {
+    const rand = rngFromSeed(runSeed);
+    const teamNames = teams.map(t => t.name);
+    const list = shuffle(teamNames, rand);
+    
+    // Mostrar resultado
+    document.getElementById('resultGroups').innerHTML = list.map((n, i) => 
+      `<div style="margin-bottom: 8px;">${i + 1}. <b>${escapeHtml(n)}</b></div>`
+    ).join('');
+    
+    document.getElementById('status').textContent = 'Sorteo de orden de paso realizado';
+    
+    // Abrir en nueva pestaña
+    const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+    const category = (document.getElementById('categorySelect').value) || '';
+    const gender = (document.getElementById('genderSelect').value) || '';
+    
+    const w = window.open('about:blank', '_blank');
+    if (w) {
+      const chipsHTML = [
+        disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+        category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+        gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+        `<span class="chip">${list.length} equipos</span>`,
+        `<span class="chip">${new Date().toLocaleString()}</span>`
+      ].filter(Boolean).join('');
+      
+      const listHTML = list.map((name, index) => 
+        `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+      ).join('');
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>Orden de Paso</title>
+      <style>
+        body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+        .container{max-width:1100px; margin:0 auto;}
+        h1{margin-bottom:16px}
+        .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+        .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+      </style>
+      </head><body>
+        <div class="container">
+          <h1>🎲 Orden de Paso</h1>
+          <div class="chips">${chipsHTML}</div>
+          <div>${listHTML}</div>
+        </div>
+      </body></html>`;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+
+    // Guardar en historial local
+    const now = new Date().toLocaleString();
+    const item = document.createElement('div');
+    item.className = 'item';
+    const discTxt = disciplineText;
+    const cat = category;
+    const gen = gender;
+    item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
+    document.getElementById('history').prepend(item);
+
+    // Guardar en la nube
+    const meta = {
+      teamsCount: teams.length,
+      discipline: discTxt,
+      disciplineSeed: base,
+      category: cat,
+      gender: gen,
+    };
+    await saveSimpleDrawToCloud(list, meta);
+    
+  } else {
+    // Sorteo normal por zonas
+    const z = currentZones();
     const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
     renderGroups(document.getElementById('resultGroups'), result);
     
@@ -1377,10 +1451,24 @@ Atl. Tucumán; Tucumán`;
       };
       await saveDrawToCloud(result, meta);
     }
-  });
+  }
+});
 
   // Export/Copy
   document.getElementById('btnExportCSV').addEventListener('click', () => {
+  const fmt = getFormat();
+  
+  if (fmt === 'simple') {
+    // Exportar orden de paso como CSV
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    let csv = 'Posicion,Equipo\n';
+    teamNames.forEach((name, index) => {
+      csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
+    });
+    downloadText(csv, 'orden_paso.csv');
+  } else {
+    // Exportar zonas como CSV (código existente)
     if (!lastResult || lastResult.error) {
       toast('Generá el sorteo primero');
       return;
@@ -1392,9 +1480,21 @@ Atl. Tucumán; Tucumán`;
       });
     });
     downloadText(csv, 'sorteo_zonas.csv');
-  });
+  }
+});
 
-  document.getElementById('btnCopy').addEventListener('click', () => {
+ document.getElementById('btnCopy').addEventListener('click', () => {
+  const fmt = getFormat();
+  
+  if (fmt === 'simple') {
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    let txt = 'Orden de Paso:\n\n';
+    teamNames.forEach((name, index) => {
+      txt += `${index + 1}. ${name}\n`;
+    });
+    copyText(txt);
+  } else {
     if (!lastResult || lastResult.error) {
       toast('No hay resultado');
       return;
@@ -1408,7 +1508,8 @@ Atl. Tucumán; Tucumán`;
       txt += '\n';
     });
     copyText(txt);
-  });
+  }
+});
 
   // Simple
   document.getElementById('btnUseFromGroups').addEventListener('click', () => {
