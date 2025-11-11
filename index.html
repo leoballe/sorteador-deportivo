@@ -983,6 +983,69 @@ async function saveDrawToCloud(result, meta) {
     toast('No se pudo guardar en la nube');
   }
 }
+  function subscribeCloudHistory(){
+  const user = auth.currentUser; 
+  const listEl = document.getElementById('cloudHistory');
+  
+  if(cloudUnsub){ 
+    cloudUnsub(); 
+    cloudUnsub = null; 
+  }
+  
+  if(!user){ 
+    listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; 
+    return; 
+  }
+  
+  cloudUnsub = db.collection('users').doc(user.uid)
+    .collection('draws')
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      listEl.innerHTML = '';
+      
+      if(snap.empty){ 
+        listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>'; 
+        return; 
+      }
+      
+      snap.forEach(doc => {
+        const d = doc.data();
+        const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
+        const title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        
+        const item = document.createElement('div'); 
+        item.className = 'item'; 
+        item.textContent = title;
+
+        const btns = document.createElement('div'); 
+        btns.style.marginTop = '6px';
+        
+        const openBtn = document.createElement('button'); 
+        openBtn.className = 'btn tiny'; 
+        openBtn.textContent = 'Abrir';
+        openBtn.addEventListener('click', () => {
+          const groups = (d.groups || []).map(groupObj => 
+            groupObj.teams.map(team => ({
+              name: team.name,
+              province: team.province || '',
+              head: team.head || false
+            }))
+          );
+          
+          const res = { groups: groups };
+          openResultInNewTab(res);
+        });
+        
+        btns.appendChild(openBtn);
+        item.appendChild(btns);
+        listEl.appendChild(item);
+      });
+    }, err => {
+      console.error('Error leyendo historial cloud:', err);
+      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial.</div>';
+    });
+}
 async function saveSimpleDrawToCloud(list, meta) {
   const user = auth.currentUser;
   if (!user) {
