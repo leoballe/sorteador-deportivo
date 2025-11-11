@@ -881,7 +881,69 @@ function openResultInNewTab(result) {
   w.document.write(html);
   w.document.close();
 }
+function openSimpleResultInNewTab(list) {
+  const w = window.open('about:blank', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado');
+    return;
+  }
+  
+  const disciplineText = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+  
+  const chipsHTML = [
+    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    `<span class="chip">${list.length} equipos</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  
+  const listHTML = list.map((name, index) => 
+    `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+  ).join('');
 
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Resultado del Sorteo Simple</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+  </head><body>
+    <div class="container">
+      <h1>🎲 Resultado del Sorteo Simple</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div>${listHTML}</div>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+        document.body.appendChild(sheet);
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_'+new Date().toISOString().slice(0,10)+'.pdf');
+        });
+      }
+    <\/script>
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 /* ====================== Guardar en Firestore ====================== */
 async function saveDrawToCloud(result, meta) {
   const user = auth.currentUser;
@@ -1206,7 +1268,7 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('resultSimple').innerHTML = '';
   });
 
-  document.getElementById('btnDrawSimple').addEventListener('click', () => {
+    document.getElementById('btnDrawSimple').addEventListener('click', () => {
     const seed = document.getElementById('disciplineSelectSimple').value || `simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (!names.length) {
@@ -1217,6 +1279,9 @@ Atl. Tucumán; Tucumán`;
     const list = shuffle(names, rand);
     document.getElementById('resultSimple').innerHTML = list.map((n, i) => `<div>${i + 1}. <b>${escapeHtml(n)}</b></div>`).join('');
     document.getElementById('statusSimple').textContent = 'Sorteo realizado';
+    
+    // Abrir en nueva pestaña
+    openSimpleResultInNewTab(list);
   });
 
   updateCapInfo();
