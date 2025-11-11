@@ -1385,8 +1385,10 @@ Atl. Tucumán; Tucumán`;
   // Guardar en la nube
 const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
 const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
-const category = (document.getElementById('categorySelectSimple').value) || '';
-const gender = (document.getElementById('genderSelectSimple').value) || '';
+const categoryEl = document.getElementById('categorySelectSimple');
+const genderEl = document.getElementById('genderSelectSimple');
+const category = categoryEl ? categoryEl.value : '';
+const gender = genderEl ? genderEl.value : '';
 const meta = {
   discipline: discTxt,
   disciplineSeed: base,
