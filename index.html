@@ -1236,8 +1236,28 @@ if (d.type === 'simple') {
 });
         
         btns.appendChild(openBtn);
-        item.appendChild(btns);
-        listEl.appendChild(item);
+        const deleteBtn = document.createElement('button');
+deleteBtn.className = 'btn tiny warn';
+deleteBtn.textContent = 'Eliminar';
+deleteBtn.addEventListener('click', async () => {
+  if (confirm('¿Estás seguro de que querés eliminar este sorteo?')) {
+    try {
+      await db.collection('users').doc(user.uid).collection('draws').doc(doc.id).delete();
+      toast('Sorteo eliminado');
+    } catch (err) {
+      console.error('Error eliminando sorteo:', err);
+      toast('Error al eliminar el sorteo');
+    }
+  }
+});
+const btns = document.createElement('div');
+btns.style.marginTop = '6px';
+        
+btns.appendChild(openBtn);
+btns.appendChild(deleteBtn);
+item.appendChild(btns);
+listEl.appendChild(item);
+        
       });
     }, err => {
       console.error('Error leyendo historial cloud:', err);
