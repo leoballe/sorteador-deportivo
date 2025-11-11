@@ -560,7 +560,7 @@ function refreshCategorySelects() {
   ];
   
   sels.forEach(sel => {
-    if (!sel) return;
+    if (!sel) return; // Esto evita el error si el elemento no existe
     const current = sel.value;
     sel.innerHTML = '<option value="">— Seleccionar categoría —</option>';
     categories.forEach(c => {
@@ -1490,7 +1490,9 @@ await saveSimpleDrawToCloud(list, meta);
     document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
     toast('Categorías demo cargadas');
   });
-  
+  // Inicializar los selects del tab simple (si existen)
+refreshDisciplineSelects();
+refreshCategorySelects();
 });
 
 /* ====================== Auth ====================== */
