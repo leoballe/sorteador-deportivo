@@ -310,16 +310,34 @@ Newell's; Santa Fe
                 <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
               </div>
             </div>
-            <div class="card">
-              <h3>Parámetros</h3>
-              <div class="controls">
-                <div style="min-width:220px;flex:1">
-                  <label>Disciplina</label>
-                  <select id="disciplineSelectBracket">
-                    <option value="">— Seleccionar disciplina —</option>
-                  </select>
-                </div>
-              </div>
+           <div class="card">
+  <h3>Parámetros</h3>
+  <div class="controls">
+    <div style="min-width:220px;flex:1">
+      <label>Disciplina</label>
+      <select id="disciplineSelectSimple">
+        <option value="">— Seleccionar disciplina —</option>
+      </select>
+    </div>
+    <div style="min-width:220px;flex:1">
+      <label>Categoría</label>
+      <select id="categorySelectSimple">
+        <option value="">— Seleccionar categoría —</option>
+      </select>
+    </div>
+  </div>
+  <div class="controls">
+    <div style="min-width:220px;flex:1">
+      <label>Género</label>
+      <select id="genderSelectSimple">
+        <option value="">— Seleccionar género —</option>
+        <option value="Masculino">Masculino</option>
+        <option value="Femenino">Femenino</option>
+        <option value="Mixto">Mixto</option>
+        <option value="No Aplica">No Aplica</option>
+      </select>
+    </div>
+  </div>
               <div class="controls" style="margin-top:10px">
                 <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
                 <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
@@ -536,18 +554,24 @@ function refreshDisciplineSelects() {
 }
 
 function refreshCategorySelects() {
-  const sel = document.getElementById('categorySelect');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— Seleccionar categoría —</option>';
-  categories.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.name;
-    o.textContent = c.name;
-    o.dataset.seed = c.seed;
-    sel.appendChild(o);
+  const sels = [
+    document.getElementById('categorySelect'),
+    document.getElementById('categorySelectSimple')
+  ];
+  
+  sels.forEach(sel => {
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar categoría —</option>';
+    categories.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.name;
+      o.textContent = c.name;
+      o.dataset.seed = c.seed;
+      sel.appendChild(o);
+    });
+    if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
   });
-  if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
 }
 /* ====================== Estado ====================== */
 let activeTeams = [], inactiveTeams = [];
@@ -996,6 +1020,8 @@ async function saveSimpleDrawToCloud(list, meta) {
       teamsCount: list.length,
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
+      category: meta.category,
+      gender: meta.gender,
       list: list,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       userId: user.uid
@@ -1040,7 +1066,7 @@ function subscribeCloudHistory() {
         const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
        let title = '';
 if (d.type === 'simple') {
-  title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}`;
+  title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
 } else {
   title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
 }
@@ -1064,11 +1090,13 @@ if (d.type === 'simple') {
       return;
     }
     
-    const chipsHTML = [
-      d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
-      `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
-      `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
-    ].filter(Boolean).join('');
+   const chipsHTML = [
+  d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
+  d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
+  d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+  `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
+  `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
+].filter(Boolean).join('');
     
     const listHTML = d.list.map((name, index) => 
       `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
@@ -1355,14 +1383,17 @@ Atl. Tucumán; Tucumán`;
   openSimpleResultInNewTab(list);
 
   // Guardar en la nube
-  const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
-  const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
-  const meta = {
-    discipline: discTxt,
-    disciplineSeed: base,
-  };
-  await saveSimpleDrawToCloud(list, meta);
-});
+const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
+const category = (document.getElementById('categorySelectSimple').value) || '';
+const gender = (document.getElementById('genderSelectSimple').value) || '';
+const meta = {
+  discipline: discTxt,
+  disciplineSeed: base,
+  category: category,
+  gender: gender
+};
+await saveSimpleDrawToCloud(list, meta);
 
   updateCapInfo();
 
