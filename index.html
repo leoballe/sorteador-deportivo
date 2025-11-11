@@ -1321,11 +1321,8 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('status').textContent = 'Sorteo de orden de paso realizado';
     
     // Abrir en nueva pestaña
-    const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
-    const category = (document.getElementById('categorySelect').value) || '';
-    const gender = (document.getElementById('genderSelect').value) || '';
-    
-    const w = window.open('about:blank', '_blank');
+openSimpleResultInNewTab(list);
+
     if (w) {
       const chipsHTML = [
         disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
