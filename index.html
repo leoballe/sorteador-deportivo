@@ -876,9 +876,13 @@ function openSimpleResultInNewTab(list) {
   }
   
   const disciplineText = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+  const category = (document.getElementById('categorySelectSimple').value) || '';
+  const gender = (document.getElementById('genderSelectSimple').value) || '';
   
   const chipsHTML = [
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
     `<span class="chip">${list.length} equipos</span>`,
     `<span class="chip">${new Date().toLocaleString()}</span>`
   ].filter(Boolean).join('');
