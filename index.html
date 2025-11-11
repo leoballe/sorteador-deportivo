@@ -1306,7 +1306,7 @@ Atl. Tucumán; Tucumán`;
     document.getElementById('resultSimple').innerHTML = '';
   });
 
-      document.getElementById('btnDrawSimple').addEventListener('click', async () => {
+      document.getElementById('btnDrawSimple').addEventListener('click', () => {
     const seed = document.getElementById('disciplineSelectSimple').value || `simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (!names.length) {
@@ -1326,7 +1326,7 @@ Atl. Tucumán; Tucumán`;
       discipline: (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '',
       disciplineSeed: document.getElementById('disciplineSelectSimple').value || '',
     };
-    await saveSimpleDrawToCloud(list, meta);
+    saveSimpleDrawToCloud(list, meta);
   });
 
   updateCapInfo();
@@ -1428,6 +1428,7 @@ Atl. Tucumán; Tucumán`;
 });
 
 /* ====================== Auth ====================== */
+// Tabs auth
 document.querySelectorAll('.authTab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.authTab').forEach(t => t.classList.remove('active'));
@@ -1438,6 +1439,7 @@ document.querySelectorAll('.authTab').forEach(tab => {
   });
 });
 
+// Registro
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('registerName').value.trim();
@@ -1459,6 +1461,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   }
 });
 
+// Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
@@ -1472,6 +1475,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
 });
 
+// Logout
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   try {
     await auth.signOut();
@@ -1481,6 +1485,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   }
 });
 
+// Cambios de sesión
 auth.onAuthStateChanged((user) => {
   const authSection = document.getElementById('authSection');
   const appSection = document.getElementById('appSection');
@@ -1501,6 +1506,33 @@ auth.onAuthStateChanged((user) => {
     }
   }
 });
+  async function saveSimpleDrawToCloud(list, meta) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('Usuario no logueado, no se guarda en nube');
+    return;
+  }
+  
+  try {
+    const payload = {
+      type: 'simple',
+      teamsCount: list.length,
+      discipline: meta.discipline,
+      disciplineSeed: meta.disciplineSeed,
+      list: list,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: user.uid
+    };
+    
+    await db.collection('users').doc(user.uid).collection('draws').add(payload);
+    toast('Sorteo simple guardado en la nube ✓');
+    
+  } catch(e) {
+    console.error('Error guardando sorteo simple en nube:', e);
+    toast('No se pudo guardar el sorteo simple en la nube');
+  }
+}
+
 </script>
 </body>
 </html>
