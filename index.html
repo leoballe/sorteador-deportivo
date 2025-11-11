@@ -1217,26 +1217,6 @@ function updateCapInfo() {
   
   if (fmt === 'simple') {
     msg += ` · Orden de paso`;
-    
-    // Guardar en historial local
-    const now = new Date().toLocaleString();
-    const item = document.createElement('div');
-    item.className = 'item';
-    const discTxt = disciplineText;
-    const cat = category;
-    const gen = gender;
-    item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
-    document.getElementById('history').prepend(item);
-
-    // Guardar en la nube
-    const meta = {
-      teamsCount: teams.length,
-      discipline: discTxt,
-      disciplineSeed: base,
-      category: cat,
-      gender: gen,
-    };
-    await saveSimpleDrawToCloud(list, meta);
   } else {
     const z = currentZones();
     const avg = (teams / z).toFixed(2);
@@ -1378,7 +1358,25 @@ openSimpleResultInNewTab(list);
       w.document.close();
     }
 */
-    
+    // Guardar en historial local
+    const now = new Date().toLocaleString();
+    const item = document.createElement('div');
+    item.className = 'item';
+    const discTxt = disciplineText;
+    const cat = category;
+    const gen = gender;
+    item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
+    document.getElementById('history').prepend(item);
+
+    // Guardar en la nube
+    const meta = {
+      teamsCount: teams.length,
+      discipline: discTxt,
+      disciplineSeed: base,
+      category: cat,
+      gender: gen,
+    };
+    await saveSimpleDrawToCloud(list, meta);
     
   } else {
     // Sorteo normal por zonas
@@ -1561,7 +1559,50 @@ openSimpleResultInNewTab(list);
   }
 });
 
+  // Simple
+ /* document.getElementById('btnUseFromGroups').addEventListener('click', () => {
+    const names = getActiveTeamsLive().map(t => t.name);
+    document.getElementById('simpleInput').value = names.join('\n');
+    toast('Lista copiada al tab Sorteo simple');
+  });
+
+  document.getElementById('btnClearSimple').addEventListener('click', () => {
+    document.getElementById('simpleInput').value = '';
+    document.getElementById('resultSimple').innerHTML = '';
+  });
+
+  document.getElementById('btnDrawSimple').addEventListener('click', async () => {
+  const seed = document.getElementById('disciplineSelectSimple').value || `simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (!names.length) {
+    document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
+    return;
+  }
+  const rand = rngFromSeed(seed);
+  const list = shuffle(names, rand);
+  document.getElementById('resultSimple').innerHTML = list.map((n, i) => `<div>${i + 1}. <b>${escapeHtml(n)}</b></div>`).join('');
+  document.getElementById('statusSimple').textContent = 'Sorteo realizado';
   
+  // Abrir en nueva pestaña
+  openSimpleResultInNewTab(list);
+
+  // Guardar en la nube
+  const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+  const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
+  const categoryEl = document.getElementById('categorySelectSimple');
+  const genderEl = document.getElementById('genderSelectSimple');
+  const category = categoryEl ? categoryEl.value : '';
+  const gender = genderEl ? genderEl.value : '';
+  const meta = {
+    discipline: discTxt,
+    disciplineSeed: base,
+    category: category,
+    gender: gender
+  };
+  await saveSimpleDrawToCloud(list, meta);
+});
+*/
+
   // Inicializar los selects del tab simple (si existen)
 // Seleccionar todos los sorteos en la nube
 document.getElementById('selectAllCloud').addEventListener('change', function(e) {
