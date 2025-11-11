@@ -1031,12 +1031,12 @@ function subscribeCloudHistory() {
       snap.forEach(doc => {
         const d = doc.data();
         const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
-       let title = '';
-if (d.type === 'simple') {
-  title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
-} else {
-  title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
-}
+        let title = '';
+        if (d.type === 'simple') {
+          title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        } else {
+          title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        }
         
         const item = document.createElement('div');
         item.className = 'item';
@@ -1049,215 +1049,172 @@ if (d.type === 'simple') {
         openBtn.className = 'btn tiny';
         openBtn.textContent = 'Abrir';
         openBtn.addEventListener('click', () => {
-  if (d.type === 'simple') {
-    // Abrir sorteo simple
-    const w = window.open('about:blank', '_blank');
-    if (!w) {
-      toast('Permití pop-ups para ver el resultado');
-      return;
-    }
-    
-   const chipsHTML = [
-  d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
-  d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
-  d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
-  `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
-  `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
-].filter(Boolean).join('');
-    
-    const listHTML = d.list.map((name, index) => 
-      `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
-    ).join('');
+          if (d.type === 'simple') {
+            // Abrir sorteo simple
+            const w = window.open('about:blank', '_blank');
+            if (!w) {
+              toast('Permití pop-ups para ver el resultado');
+              return;
+            }
+            
+            const chipsHTML = [
+              d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
+              d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
+              d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+              `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
+              `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
+            ].filter(Boolean).join('');
+            
+            const listHTML = d.list.map((name, index) => 
+              `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+            ).join('');
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Resultado del Sorteo Simple Guardado</title>
-<style>
-  body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-  .container{max-width:1100px; margin:0 auto;}
-  h1{margin-bottom:16px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-  .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-  .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-  .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-</head><body>
-  <div class="container">
-    <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
-    <div class="chips">${chipsHTML}</div>
-    <div>${listHTML}</div>
-    <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-  </div>
-  <script>
-    function exportPDF(){
-      if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-      const sheet=document.createElement('div');
-      sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-      sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-      const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
-      const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-      const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
-      document.body.appendChild(sheet);
-      html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-        const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-        const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-        const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-        pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
-      });
-    }
-  <\/script>
-</body></html>`;
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+            <title>Resultado del Sorteo Simple Guardado</title>
+            <style>
+              body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+              .container{max-width:1100px; margin:0 auto;}
+              h1{margin-bottom:16px}
+              .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+              .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+              .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+              .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+            </head><body>
+              <div class="container">
+                <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
+                <div class="chips">${chipsHTML}</div>
+                <div>${listHTML}</div>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+              </div>
+              <script>
+                function exportPDF(){
+                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+                  const sheet=document.createElement('div');
+                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+                  const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+                  document.body.appendChild(sheet);
+                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                  });
+                }
+              <\/script>
+            </body></html>`;
 
-/*    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-    <title>Resultado del Sorteo Simple Guardado</title>
-    <style>
-      body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-      .container{max-width:1100px; margin:0 auto;}
-      h1{margin-bottom:16px}
-      .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-      .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-    </style>
-    </head><body>
-      <div class="container">
-        <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
-        <div class="chips">${chipsHTML}</div>
-        <div>${listHTML}</div>
-      </div>
-    </body></html>`; */
-    
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+          } else {
+            // Código existente para sorteos de zonas (no modificar)
+            const groups = (d.groups || []).map(groupObj =>
+              groupObj.teams.map(team => ({
+                name: team.name,
+                province: team.province || '',
+                head: team.head || false
+              }))
+            );
+            
+            const res = { groups: groups };
+            
+            const w = window.open('about:blank', '_blank');
+            if (!w) {
+              toast('Permití pop-ups para ver el resultado');
+              return;
+            }
+            
+            const chipsHTML = [
+              d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
+              d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
+              d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+              d.format ? `<span class="chip">Formato: ${escapeHtml(d.format)}</span>` : '',
+              `<span class="chip">${d.zones || groups.length} zonas</span>`,
+              `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
+            ].filter(Boolean).join('');
+            
+            const zonesHTML = groups.map((arr, gi) => {
+              const items = arr.map(t =>
+                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+              ).join('');
+              return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+            }).join('');
 
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-  } else {
-    // Código existente para sorteos de zonas (no modificar)
-    const groups = (d.groups || []).map(groupObj =>
-      groupObj.teams.map(team => ({
-        name: team.name,
-        province: team.province || '',
-        head: team.head || false
-      }))
-    );
-    
-    const res = { groups: groups };
-    
-    const w = window.open('about:blank', '_blank');
-    if (!w) {
-      toast('Permití pop-ups para ver el resultado');
-      return;
-    }
-    
-    const chipsHTML = [
-      d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
-      d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
-      d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
-      d.format ? `<span class="chip">Formato: ${escapeHtml(d.format)}</span>` : '',
-      `<span class="chip">${d.zones || groups.length} zonas</span>`,
-      `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
-    ].filter(Boolean).join('');
-    
-    const zonesHTML = groups.map((arr, gi) => {
-      const items = arr.map(t =>
-        `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
-      ).join('');
-      return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
-    }).join('');
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+            <title>Resultado del Sorteo Guardado</title>
+            <style>
+              body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+              .container{max-width:1100px; margin:0 auto;}
+              h1{margin-bottom:16px}
+              .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+              .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+              .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+              .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
+              .zone h4{margin:4px 0 8px 0}
+              .zone ol{margin:0;padding-left:18px}
+              .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+              .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+            </head><body>
+              <div class="container">
+                <h1>🎲 Resultado del Sorteo (Guardado)</h1>
+                <div class="chips">${chipsHTML}</div>
+                <div class="grid">${zonesHTML}</div>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+              </div>
+              <script>
+                function exportPDF(){
+                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+                  const sheet=document.createElement('div');
+                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+                  document.body.appendChild(sheet);
+                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                  });
+                }
+              <\/script>
+            </body></html>`;
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Resultado del Sorteo Guardado</title>
-<style>
-  body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-  .container{max-width:1100px; margin:0 auto;}
-  h1{margin-bottom:16px}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-  .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
-  .zone h4{margin:4px 0 8px 0}
-  .zone ol{margin:0;padding-left:18px}
-  .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-  .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-</head><body>
-  <div class="container">
-    <h1>🎲 Resultado del Sorteo (Guardado)</h1>
-    <div class="chips">${chipsHTML}</div>
-    <div class="grid">${zonesHTML}</div>
-    <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-  </div>
-  <script>
-    function exportPDF(){
-      if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-      const sheet=document.createElement('div');
-      sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-      sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-      const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
-      const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-      const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-      document.body.appendChild(sheet);
-      html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-        const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-        const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-        const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-        pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
-      });
-    }
-  <\/script>
-</body></html>`;
-
-   /* const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-    <title>Resultado del Sorteo Guardado</title>
-    <style>
-      body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-      .container{max-width:1100px; margin:0 auto;}
-      h1{margin-bottom:16px}
-      .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-      .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-      .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-      .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
-      .zone h4{margin:4px 0 8px 0}
-      .zone ol{margin:0;padding-left:18px}
-    </style>
-    </head><body>
-      <div class="container">
-        <h1>🎲 Resultado del Sorteo (Guardado)</h1>
-        <div class="chips">${chipsHTML}</div>
-        <div class="grid">${zonesHTML}</div>
-      </div>
-    </body></html>`; */
-
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-  }
-});
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+          }
+        });
         
-        btns.appendChild(openBtn);
         const deleteBtn = document.createElement('button');
-deleteBtn.className = 'btn tiny warn';
-deleteBtn.textContent = 'Eliminar';
-deleteBtn.addEventListener('click', async () => {
-  if (confirm('¿Estás seguro de que querés eliminar este sorteo?')) {
-    try {
-      await db.collection('users').doc(user.uid).collection('draws').doc(doc.id).delete();
-      toast('Sorteo eliminado');
-    } catch (err) {
-      console.error('Error eliminando sorteo:', err);
-      toast('Error al eliminar el sorteo');
-    }
-  }
-});
-const btns = document.createElement('div');
-btns.style.marginTop = '6px';
-        
-btns.appendChild(openBtn);
-btns.appendChild(deleteBtn);
-item.appendChild(btns);
-listEl.appendChild(item);
-        
+        deleteBtn.className = 'btn tiny warn';
+        deleteBtn.textContent = 'Eliminar';
+        deleteBtn.addEventListener('click', async () => {
+          if (confirm('¿Estás seguro de que querés eliminar este sorteo?')) {
+            try {
+              await db.collection('users').doc(user.uid).collection('draws').doc(doc.id).delete();
+              toast('Sorteo eliminado');
+            } catch (err) {
+              console.error('Error eliminando sorteo:', err);
+              toast('Error al eliminar el sorteo');
+            }
+          }
+        });
+
+        btns.appendChild(openBtn);
+        btns.appendChild(deleteBtn);
+        item.appendChild(btns);
+        listEl.appendChild(item);
       });
     }, err => {
       console.error('Error leyendo historial cloud:', err);
