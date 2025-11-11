@@ -143,7 +143,6 @@
         <div class="tabs">
           <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
           <button class="tab" data-tab="simple" type="button">Sorteo simple</button>
-          <button class="tab" data-tab="bracket" type="button">Eliminación directa (beta)</button>
         </div>
 
         <div id="tab-grupos" class="tabcontent">
@@ -275,42 +274,7 @@ Newell's; Santa Fe
                 <button class="btn ghost" id="btnClearSimple" type="button">Limpiar</button>
               </div>
             </div>
-            <div class="card">
-              <h3>Parámetros</h3>
-              <div class="controls">
-                <div style="min-width:220px;flex:1">
-                  <label>Disciplina</label>
-                  <select id="disciplineSelectSimple">
-                    <option value="">— Seleccionar disciplina —</option>
-                  </select>
-                </div>
-              </div>
-              <div class="controls" style="margin-top:10px">
-                <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
-                <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
-                <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
-              </div>
-              <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
-            </div>
-          </div>
-          <div class="card" style="margin-top:12px">
-            <h3>Resultado</h3>
-            <div id="resultSimple"></div>
-          </div>
-        </div>
-
-        <div id="tab-bracket" class="tabcontent hidden">
-          <div class="row">
-            <div class="card">
-              <h3>Equipos</h3>
-              <label>Usa la lista del tab Grupos (o pegá otra):</label>
-              <textarea id="bracketInput" placeholder="Uno por línea..."></textarea>
-              <div class="controls" style="margin-top:8px">
-                <button class="btn ghost" id="btnUseFromGroups2" type="button">Usar lista del tab Grupos</button>
-                <button class="btn ghost" id="btnClearBracket" type="button">Limpiar</button>
-              </div>
-            </div>
-           <div class="card">
+          <div class="card">
   <h3>Parámetros</h3>
   <div class="controls">
     <div style="min-width:220px;flex:1">
@@ -338,20 +302,20 @@ Newell's; Santa Fe
       </select>
     </div>
   </div>
-              <div class="controls" style="margin-top:10px">
-                <button class="btn primary" id="btnDrawBracket" type="button">🥊 Generar llaves</button>
-                <button class="btn" id="btnExportBracket" type="button">⬇️ Exportar CSV</button>
-                <div class="tiny">Si el nº de equipos no es potencia de 2, se completa con BYE.</div>
-              </div>
-              <div id="statusBracket" class="tiny" style="margin-top:8px"></div>
-            </div>
+  <div class="controls" style="margin-top:10px">
+    <button class="btn primary" id="btnDrawSimple" type="button">🎲 SORTEAR ORDEN</button>
+    <button class="btn" id="btnExportSimple" type="button">⬇️ Exportar CSV</button>
+    <button class="btn" id="btnCopySimple" type="button">📋 Copiar</button>
+  </div>
+  <div id="statusSimple" class="tiny" style="margin-top:8px"></div>
+</div>
           </div>
           <div class="card" style="margin-top:12px">
             <h3>Resultado</h3>
-            <div id="resultBracket" class="grid"></div>
+            <div id="resultSimple"></div>
           </div>
         </div>
-      </div>
+        </div>
 
       <div class="tiny" style="margin-top:12px">Hecho con ❤️. Todo ocurre del lado del cliente. Podés guardar y compartir con "🔗 Compartir".</div>
     </div>
@@ -534,8 +498,7 @@ function importCategoriesCSV(text) {
 function refreshDisciplineSelects() {
   const sels = [
     document.getElementById('disciplineSelect'),
-    document.getElementById('disciplineSelectSimple'), 
-    document.getElementById('disciplineSelectBracket')
+    document.getElementById('disciplineSelectSimple')
   ];
   
   sels.forEach(sel => {
@@ -1493,8 +1456,7 @@ Atl. Tucumán; Tucumán`;
     toast('Categorías demo cargadas');
   });
   // Inicializar los selects del tab simple (si existen)
-refreshDisciplineSelects();
-refreshCategorySelects();
+
 });
 
 /* ====================== Auth ====================== */
