@@ -703,7 +703,38 @@ function capacities(n, z) {
   const base = Math.floor(n / z), rest = n % z;
   return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0));
 }
-
+function capacitiesFourBySix(n) {
+  const caps = [6, 6, 6, 6];
+  const total = 24;
+  if (n >= total) return caps;
+  let deficits = total - n;
+  const order = [3, 1, 2, 0]; // Zona4, Zona2, Zona3, Zona1
+  let i = 0;
+  while (deficits > 0) {
+    const idx = order[i % order.length];
+    if (caps[idx] > 0) {
+      caps[idx]--;
+      deficits--;
+    }
+    i++;
+  }
+  return caps;
+}
+  function capacitiesEightByThree(n) {
+  const caps = Array(8).fill(3);
+  const total = 24;
+  if (n >= total) return caps;
+  const d = total - n;
+  const zeros = Math.floor(d / 3);
+  const twos = d % 3;
+  const order = [7, 6, 5, 4, 3, 2, 1, 0];
+  for (let i = 0; i < zeros; i++) caps[order[i]] = 0;
+  let k = zeros;
+  for (let j = 0; j < twos && k < order.length; j++, k++) {
+    if (caps[order[k]] === 3) caps[order[k]] = 2;
+  }
+  return caps;
+}
 function drawGroups(teams, z, headsAsFirst, seed, format) {
   const rand = rngFromSeed(seed);
   const n = teams.length;
@@ -711,7 +742,7 @@ function drawGroups(teams, z, headsAsFirst, seed, format) {
   if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
   if (n < z) return {error: 'Hay menos equipos que zonas.'};
 
-  const capsBase = capacities(n, z);
+  const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) : (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) : capacities(n, z);
   const groups = Array.from({length: z}, () => []);
   const heads = shuffle(teams.filter(t => t.head), rand);
   const others = shuffle(teams.filter(t => !t.head), rand);
