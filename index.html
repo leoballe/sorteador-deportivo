@@ -243,11 +243,11 @@ Newell's; Santa Fe
   <label class="pill"><input type="radio" name="format" value="custom"> Personalizado</label>
   <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
 </div>
-              <div class="controls">
-                <div style="min-width:160px;flex:1">
-                  <label>Nº de zonas / grupos</label>
-                  <input type="number" id="zones" min="1" value="8" />
-                </div>
+           <div class="controls">
+  <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
+    <label>Nº de zonas / grupos</label>
+    <input type="number" id="zones" min="1" value="8" />
+  </div>
                 <div style="min-width:220px;flex:1">
                   <label>Disciplina</label>
                   <select id="disciplineSelect">
@@ -1287,16 +1287,22 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[name="format"]').forEach(r => {
   r.addEventListener('change', () => {
     const elZones = document.getElementById('zones');
+    const customZonesContainer = document.getElementById('customZonesContainer');
+    
     if (r.value === '8x3') {
       elZones.value = '8';
       elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
     } else if (r.value === '4x6') {
       elZones.value = '4';
       elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
     } else if (r.value === 'simple') {
       elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
     } else {
       elZones.disabled = false;
+      customZonesContainer.classList.remove('hidden');
     }
     updateCapInfo();
   });
@@ -1698,7 +1704,9 @@ document.querySelectorAll('.authTab').forEach(tab => {
     document.getElementById(tab.dataset.tab + 'Form').classList.remove('hidden');
   });
 });
-
+// Mostrar/ocultar campo de zonas según formato inicial
+document.querySelector('input[name="format"]:checked').dispatchEvent(new Event('change'));
+  
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('registerName').value.trim();
