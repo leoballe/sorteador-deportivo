@@ -245,44 +245,51 @@ Newell's; Santa Fe
   <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label>
   <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
 </div>
-           <div class="controls">
+        <!-- Selector de zonas (solo se muestra con Personalizado) -->
+<div class="controls">
   <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
     <label>Nº de zonas / grupos</label>
     <input type="number" id="zones" min="1" value="8" />
   </div>
-                <div style="min-width:220px;flex:1">
-                  <label>Disciplina</label>
-                  <select id="disciplineSelect">
-                    <option value="">— Seleccionar disciplina —</option>
-                  </select>
-                </div>
-              </div>
-              <div class="controls">
-                <div style="min-width:220px;flex:1">
-                  <label>Categoría</label>
-                  <select id="categorySelect">
-                    <option value="">— Seleccionar categoría —</option>
-                  </select>
-                </div>
-                <div style="min-width:220px;flex:1">
-                  <label>Género</label>
-                  <select id="genderSelect">
-                    <option value="">— Seleccionar género —</option>
-                    <option value="Masculino">Masculino</option>
-                    <option value="Femenino">Femenino</option>
-                    <option value="Mixto">Mixto</option>
-                    <option value="No Aplica">No Aplica</option>
-                  </select>
-                </div>
-              </div>
-              <div class="controls">
-                <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
-                <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
-                <button class="btn ghost hidden" id="btnDiscDemo" type="button">Cargar disciplinas demo</button>
-                <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
-                <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
-                <button class="btn ghost hidden" id="btnCatDemo" type="button">Cargar categorías demo</button>
-              </div>
+</div>
+
+<!-- Fila: Importar disciplinas + Selector de disciplinas -->
+<div class="controls">
+  <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+  <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+  <div style="min-width:220px;flex:1">
+    <label>Disciplina</label>
+    <select id="disciplineSelect">
+      <option value="">— Seleccionar disciplina —</option>
+    </select>
+  </div>
+</div>
+
+<!-- Fila: Importar categorías + Selector de categorías -->
+<div class="controls">
+  <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+  <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
+  <div style="min-width:220px;flex:1">
+    <label>Categoría</label>
+    <select id="categorySelect">
+      <option value="">— Seleccionar categoría —</option>
+    </select>
+  </div>
+</div>
+
+<!-- Fila: Selector de género -->
+<div class="controls">
+  <div style="min-width:220px;flex:1">
+    <label>Género</label>
+    <select id="genderSelect">
+      <option value="">— Seleccionar género —</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Femenino">Femenino</option>
+      <option value="Mixto">Mixto</option>
+      <option value="No Aplica">No Aplica</option>
+    </select>
+  </div>
+</div>
               <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
               <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
 
