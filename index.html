@@ -227,7 +227,9 @@ Newell's; Santa Fe
                   <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
                   <div class="controls" style="margin-bottom:6px">
                     <label class="pill"><input type="checkbox" id="toggleShowInactive" checked> Mostrar descartados</label>
-                    <button class="btn tiny" id="btnSelectAllInactive" type="button">Seleccionar todo</button>
+                   <label class="pill">
+  <input type="checkbox" id="selectAllInactive"> Seleccionar todos
+</label>
                     <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
                   </div>
                   <div id="inactiveList" class="hidden"></div>
@@ -1310,7 +1312,23 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
   document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
-  document.getElementById('btnSelectAllInactive').addEventListener('click', () => selectAll('.chkInactive'));
+
+  // Checkbox para seleccionar todos los descartados
+document.getElementById('selectAllInactive').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.chkInactive');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
+
+// Actualizar el checkbox "Seleccionar todos" cuando cambien checkboxes individuales
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('chkInactive')) {
+    const allChecked = document.querySelectorAll('.chkInactive:checked').length;
+    const allCheckboxes = document.querySelectorAll('.chkInactive').length;
+    document.getElementById('selectAllInactive').checked = allChecked === allCheckboxes && allCheckboxes > 0;
+  }
+});
 
   // Utilidad
   document.getElementById('btnExample').addEventListener('click', () => {
