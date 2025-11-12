@@ -1582,7 +1582,7 @@ await saveSimpleDrawToCloud(list, meta);
       const cat = (document.getElementById('categorySelect').value) || '';
       const gen = (document.getElementById('genderSelect').value) || '';
       item.textContent = `${now} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
-      document.getElementById('history').prepend(item);
+      document.getElementById('cloudHistoryList').prepend(item);
 
       // Guardar en la nube
       const meta = {
