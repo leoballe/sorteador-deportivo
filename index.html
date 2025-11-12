@@ -1558,6 +1558,9 @@ openSimpleResultInNewTab(list);
 
 
 // Guardar en la nube
+const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+const cat = (document.getElementById('categorySelect').value) || '';
+const gen = (document.getElementById('genderSelect').value) || '';
 const meta = {
   teamsCount: teams.length,
   discipline: discTxt,
