@@ -302,10 +302,6 @@ Newell's; Santa Fe
             <div id="resultGroups" class="grid"></div>
           </div>
 
-          <div class="card" style="margin-top:12px">
-            <h3>Historial (local)</h3>
-            <div class="history" id="history"></div>
-          </div>
 
       <div class="card" style="margin-top:12px">
   <h3>Mis sorteos (en la nube)</h3>
@@ -1409,15 +1405,7 @@ openSimpleResultInNewTab(list);
       w.document.close();
     }
 */
-   // Guardar en historial local
-const now = new Date().toLocaleString();
-const item = document.createElement('div');
-item.className = 'item';
-const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
-const cat = (document.getElementById('categorySelect').value) || '';
-const gen = (document.getElementById('genderSelect').value) || '';
-item.textContent = `${now} — ORDEN DE PASO — ${teams.length} equipos${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
-document.getElementById('history').prepend(item);
+
 
 // Guardar en la nube
 const meta = {
