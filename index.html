@@ -439,14 +439,14 @@ Newell's; Santa Fe
 
 
       <div class="card" style="margin-top:12px">
-  <h3>Mis sorteos (en la nube)</h3>
+  <h3>Historial de sorteos guardados</h3>
   <div class="controls" style="margin-bottom:12px">
     <label class="pill">
       <input type="checkbox" id="selectAllCloud"> Seleccionar todos
     </label>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
-  <div class="history" id="cloudHistory"></div>
+<div id="cloudHistoryList" class="history"></div>
 </div>
 
         </div>
@@ -1139,7 +1139,7 @@ async function saveSimpleDrawToCloud(list, meta) {
 }
 function subscribeCloudHistory() {
   const user = auth.currentUser;
-  const listEl = document.getElementById('cloudHistory');
+  const listEl = document.getElementById('cloudHistoryList');
   
   if (cloudUnsub) {
     cloudUnsub();
