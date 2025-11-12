@@ -1804,9 +1804,19 @@ document.getElementById('selectAllCloud').addEventListener('change', function(e)
   });
 });
 
+// Delegación de eventos para checkboxes dinámicos
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('cloud-draw-checkbox')) {
+    const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+    const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+    document.getElementById('selectAllCloud').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length;
+  }
+});
+
 // Eliminar sorteos seleccionados en la nube
 document.getElementById('deleteSelectedCloud').addEventListener('click', async function() {
-const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');  if (checkboxes.length === 0) {
+const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+ if (checkboxes.length === 0) {
     toast('No hay sorteos seleccionados');
     return;
   }
