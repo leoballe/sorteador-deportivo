@@ -118,6 +118,47 @@
     .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b}
     .itemRow:last-child{border-bottom:none}
     .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px}
+   
+    
+    /* Variables para tema claro */
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --card: #f8fafc;
+  --muted: #64748b;
+  --text: #1e293b;
+  --accent: #22c55e;
+  --accent2: #38bdf8;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+}
+
+[data-theme="light"] .btn {
+  background: #e2e8f0;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .btn.primary {
+  background-color: #94E5F2;
+  color: #052e16;
+}
+
+[data-theme="light"] .btn.warn {
+  background-color: #8A0002;
+  color: #FFFFFF;
+}
+
+[data-theme="light"] input[type=text],
+[data-theme="light"] input[type=number],
+[data-theme="light"] input[type=email],
+[data-theme="light"] input[type=password],
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
   </style>
 </head>
 <body>
@@ -183,10 +224,12 @@
           <div class="tiny">Juegos Nacionales</div>
         </div>
         <div class="userBox">
-          <span class="pill" id="userInfo" title="Usuario"></span>
-          <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-          <span class="badge">v3.0 </span>
-        </div>
+  <span class="pill" id="userInfo" title="Usuario"></span>
+  <button id="themeToggle" class="btn ghost">🌙 Tema</button>
+  <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
+  <span class="badge">v3.0 </span>
+</div>
+        
       </header>
 
       <div class="panel">
@@ -1783,6 +1826,26 @@ auth.onAuthStateChanged((user) => {
     }
   }
 });
+  // Toggle de tema
+const themeToggle = document.getElementById('themeToggle');
+const currentTheme = localStorage.getItem('theme') || 'dark';
+
+// Aplicar el tema guardado al cargar
+document.documentElement.setAttribute('data-theme', currentTheme);
+updateThemeButton();
+
+themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeButton();
+});
+
+function updateThemeButton() {
+  const current = document.documentElement.getAttribute('data-theme');
+  themeToggle.textContent = current === 'light' ? '🌙 Tema' : '☀️ Tema';
+}
 </script>
 </body>
 </html>
