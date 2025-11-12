@@ -159,14 +159,99 @@
   color: #1e293b;
   border: 1px solid #cbd5e1;
 }
+[data-theme="light"] h1 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .card h3 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .tiny {
+  color: #1B315E;
+}
+	  [data-theme="light"] .pill {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+[data-theme="light"] .tab.active {
+  background-color: #1B315E;
+  border-color: #1B315E;
+  color: #94E5F2;
+}
+
+[data-theme="light"] .tab {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+[data-theme="light"] .tag {
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+	  [data-theme="light"] .listBox {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+}
+
+[data-theme="light"] .listBox h4 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .itemRow {
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+[data-theme="light"] .itemRow:last-child {
+  border-bottom: none;
+}
+
+[data-theme="light"] .zone {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .zone h4 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .history .item {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+}
+
+[data-theme="light"] .card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+	  [data-theme="light"] .cloud-draw-checkbox {
+  accent-color: #1B315E;
+}
+
+[data-theme="light"] .item {
+  color: #1e293b;
+}
+	  [data-theme="light"] .tag {
+  background: #e2e8f0;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
   </style>
 </head>
 <body>
 
   <!-- ============ Sección de Autenticación ============ -->
-  <section id="authSection" class="authWrap hidden" style="max-width:460px;margin:48px auto">
+  <section id="authSection" style="display: none !important;"> <!--reemplazar "display: none !important;" por "max-width:460px;margin:48px auto">-->
  <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
-  <img src="logo.png" alt="Logo" style="height: 50px; width: auto;">
+  <img src="logo-dark.png" alt="Logo" class="logo" style="height: 50px; width: auto;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
 </div>
     <div class="card" style="background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px">
@@ -212,9 +297,9 @@
       </section>
 
   <!-- ============ Aplicación (se muestra tras login) ============ -->
-  <section id="appSection" >
+  <section id="appSection" style="display: block !important;"> <!--borrar style="display: block !important;"-->
      <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
-  <img src="logo.png" alt="Logo" style="height: 150px; width: auto; padding-top: 40px;">
+  <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
 </div>
     <div class="container">
@@ -233,9 +318,7 @@
       </header>
 
       <div class="panel">
-        <div class="tabs">
-          <button class="tab active" data-tab="grupos" type="button">Zonas / Grupos</button>
-        </div>
+        
 
         <div id="tab-grupos" class="tabcontent">
           <div class="row">
@@ -1327,7 +1410,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
       btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
     });
   });
 
@@ -1828,24 +1910,45 @@ auth.onAuthStateChanged((user) => {
 });
   // Toggle de tema
 const themeToggle = document.getElementById('themeToggle');
-const currentTheme = localStorage.getItem('theme') || 'dark';
+const currentTheme = localStorage.getItem('theme') || 'light';
 
 // Aplicar el tema guardado al cargar
 document.documentElement.setAttribute('data-theme', currentTheme);
+
+// Cambiar logos según el tema inicial
+const logos = document.querySelectorAll('.logo');
+logos.forEach(logo => {
+  if (currentTheme === 'light') {
+    logo.src = 'logo-light.png';
+  } else {
+    logo.src = 'logo.png';  // O si renombraste: 'logo-dark.png'
+  }
+});
+
 updateThemeButton();
 
-themeToggle.addEventListener('click', () => {
+function updateThemeButton() {
+  const current = document.documentElement.getAttribute('data-theme');
+  themeToggle.textContent = current === 'light' ? '🌙 Tema Oscuro' : '☀️ Tema Claro';
+  
+  // Cambiar logos
+  const logos = document.querySelectorAll('.logo');
+  logos.forEach(logo => {
+    if (current === 'light') {
+      logo.src = 'logo-light.png';
+    } else {
+      logo.src = 'logo-dark.png';
+    }
+  });
+}
+
+	themeToggle.addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme');
   const newTheme = current === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', newTheme);
   localStorage.setItem('theme', newTheme);
   updateThemeButton();
-});
-
-function updateThemeButton() {
-  const current = document.documentElement.getAttribute('data-theme');
-  themeToggle.textContent = current === 'light' ? '🌙 Tema' : '☀️ Tema';
-}
+});	
 </script>
 </body>
 </html>
