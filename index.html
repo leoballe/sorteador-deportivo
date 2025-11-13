@@ -340,29 +340,36 @@ Newell's, Santa Fe
               <div class="tiny hidden">CSV de equipos:.</div>
               <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
 
-              <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
-                <div class="listBox">
-                  <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
-<div class="controls" style="margin-bottom:6px">
-  <label class="pill">
-    <input type="checkbox" id="selectAllActive">
-    Seleccionar todos
-  </label>
-  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+             <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
+  <div class="listBox">
+    <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
+    <div class="controls" style="margin-bottom:6px">
+      <label class="pill">
+        <input type="checkbox" id="selectAllActive">
+        Seleccionar todos
+      </label>
+      <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+    </div>
+    <div id="activeList"></div>
+  </div>
+
+  <div class="listBox">
+    <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
+    <div class="controls" style="margin-bottom:6px">
+      <label class="pill">
+        <input type="checkbox" id="toggleShowInactive" checked>
+        Mostrar descartados
+      </label>
+      <label class="pill">
+        <input type="checkbox" id="selectAllInactive">
+        Seleccionar todos
+      </label>
+      <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+    </div>
+    <div id="inactiveList" class="hidden"></div>
+  </div>
 </div>
-                <div class="listBox">
-                  <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
-                  <div class="controls" style="margin-bottom:6px">
-                    <label class="pill"><input type="checkbox" id="toggleShowInactive" checked> Mostrar descartados</label>
-                   <label class="pill">
-  <input type="checkbox" id="selectAllInactive"> Seleccionar todos
-</label>
-                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
-                  </div>
-                  <div id="inactiveList" class="hidden"></div>
-                </div>
-              </div>
-            </div>
+
 
             <div class="card">
               <h3>Parámetros</h3>
@@ -1480,23 +1487,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
   // Panel checks
-  document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
-  document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
-  document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
-  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-//  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive')); //
+document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
+document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
+document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
+document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
 
-  // Checkbox para seleccionar todos los descartados
-document.getElementById('selectAllInactive').addEventListener('change', function() {
-  const checkboxes = document.querySelectorAll('.chkInactive');
+// Checkbox para seleccionar todos los ACTIVOS
+document.getElementById('selectAllActive').addEventListener('change', function () {
+  const checkboxes = document.querySelectorAll('.chkActive');
   checkboxes.forEach(checkbox => {
     checkbox.checked = this.checked;
   });
 });
 
-// Checkbox para seleccionar todos los activos
-document.getElementById('selectAllActive').addEventListener('change', function() {
-  const checkboxes = document.querySelectorAll('.chkActive');
+// Checkbox para seleccionar todos los DESCARTADOS
+document.getElementById('selectAllInactive').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.chkInactive');
   checkboxes.forEach(checkbox => {
     checkbox.checked = this.checked;
   });
@@ -1519,6 +1525,7 @@ document.addEventListener('change', function(e) {
     document.getElementById('selectAllActive').checked =
       (allCheckedA === allCheckboxesA && allCheckboxesA > 0);
   }
+});
 });
 
 
@@ -1677,9 +1684,12 @@ await saveSimpleDrawToCloud(list, meta);
           `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`
         ).join('\n');
         buildListsFromTextarea();
-        const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('csvInfo').innerHTML = info;
-        toast('CSV de equipos cargado');
+const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+const csvInfoEl = document.getElementById('csvInfo');
+if (csvInfoEl) {
+  csvInfoEl.innerHTML = info;
+}
+toast('CSV de equipos cargado');
       } catch(err) {
         console.error(err);
         alert('Error: ' + err.message);
