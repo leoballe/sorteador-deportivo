@@ -1443,11 +1443,14 @@ function updateCapInfo() {
     msg += ` · Orden de paso`;
   } else {
     const z = currentZones();
-    const avg = (teams / z).toFixed(2);
+    const avg = z ? (teams / z).toFixed(2) : '0';
     msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
   }
-  
-  document.getElementById('capInfo').innerHTML = msg;
+
+  const capInfoEl = document.getElementById('capInfo');
+  if (capInfoEl) {
+    capInfoEl.innerHTML = msg;
+  }
 }
 
 /* ====================== DOM Ready ====================== */
@@ -1924,7 +1927,6 @@ document.addEventListener('click', function(e) {
         toast('Error al eliminar los sorteos');
       });
   }
-});
 });
 
 /* ====================== Auth ====================== */
