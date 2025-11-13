@@ -343,12 +343,13 @@ Newell's, Santa Fe
               <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
                 <div class="listBox">
                   <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
-                  <div class="controls" style="margin-bottom:6px">
-                    <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
-                    <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
-                  </div>
-                  <div id="activeList"></div>
-                </div>
+<div class="controls" style="margin-bottom:6px">
+  <label class="pill">
+    <input type="checkbox" id="selectAllActive">
+    Seleccionar todos
+  </label>
+  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+</div>
                 <div class="listBox">
                   <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
                   <div class="controls" style="margin-bottom:6px">
@@ -1483,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
+//  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive')); //
 
   // Checkbox para seleccionar todos los descartados
 document.getElementById('selectAllInactive').addEventListener('change', function() {
@@ -1493,14 +1494,33 @@ document.getElementById('selectAllInactive').addEventListener('change', function
   });
 });
 
-// Actualizar el checkbox "Seleccionar todos" cuando cambien checkboxes individuales
+// Checkbox para seleccionar todos los activos
+document.getElementById('selectAllActive').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.chkActive');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
+
+// Actualizar los checkboxes "Seleccionar todos" cuando cambien los individuales
 document.addEventListener('change', function(e) {
+  // DESCARTADOS
   if (e.target.classList.contains('chkInactive')) {
     const allChecked = document.querySelectorAll('.chkInactive:checked').length;
     const allCheckboxes = document.querySelectorAll('.chkInactive').length;
-    document.getElementById('selectAllInactive').checked = allChecked === allCheckboxes && allCheckboxes > 0;
+    document.getElementById('selectAllInactive').checked =
+      (allChecked === allCheckboxes && allCheckboxes > 0);
+  }
+
+  // ACTIVOS
+  if (e.target.classList.contains('chkActive')) {
+    const allCheckedA = document.querySelectorAll('.chkActive:checked').length;
+    const allCheckboxesA = document.querySelectorAll('.chkActive').length;
+    document.getElementById('selectAllActive').checked =
+      (allCheckedA === allCheckboxesA && allCheckboxesA > 0);
   }
 });
+
 
   // Utilidad
   document.getElementById('btnExample').addEventListener('click', () => {
