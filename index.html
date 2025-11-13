@@ -933,30 +933,33 @@ function capacities(n, z) {
 	function capacitiesWithTeamsPerZone(n, z, teamsPerZone) {
   const totalCapacity = z * teamsPerZone;
   
-  // Si hay más equipos que la capacidad total, redistribuir
+  // Si hay más equipos que la capacidad total, usar distribución normal
   if (n > totalCapacity) {
-    return capacities(n, z); // Usar la distribución normal
+    return capacities(n, z);
   }
   
-  // Si hay menos equipos, redistribuir según el criterio especificado
+  // Calcular cuántos equipos faltan para llenar todas las zonas
+  const teamsToRemove = totalCapacity - n;
+  
+  // Si al quitar los equipos sobrantes alguna zona queda con 2 equipos,
+  // reducimos la cantidad de zonas y recalculamos
   let caps = Array(z).fill(teamsPerZone);
-  let teamsToRemove = totalCapacity - n;
-  let currentZone = z - 1; // Empezar desde la última zona
+  let currentZone = z - 1;
+  let remainingToRemove = teamsToRemove;
   
-  while (teamsToRemove > 0 && currentZone >= 0) {
-    if (caps[currentZone] > 2) {
-      caps[currentZone]--;
-      teamsToRemove--;
-    } else {
-      currentZone--;
-      // Si todas las zonas tienen 2 equipos, redistribuir en menos zonas
-      if (currentZone < 0 && teamsToRemove > 0) {
-        const newZoneCount = Math.ceil(n / teamsPerZone);
-        return capacitiesWithTeamsPerZone(n, newZoneCount, teamsPerZone);
-      }
+  // Primero verificamos si la distribución dejaría alguna zona con 2 equipos
+  for (let i = 0; i < teamsToRemove; i++) {
+    if (caps[currentZone] <= 3) {
+      // Si esta zona quedaría con 2 equipos al quitar uno más, reducimos zonas
+      const newZoneCount = Math.max(1, Math.ceil(n / teamsPerZone));
+      return capacitiesWithTeamsPerZone(n, newZoneCount, teamsPerZone);
     }
+    caps[currentZone]--;
+    currentZone--;
+    if (currentZone < 0) currentZone = z - 1;
   }
   
+  // Si llegamos aquí, la distribución es válida (ninguna zona con 2 equipos)
   return caps;
 }
 function capacitiesFourBySix(n) {
@@ -1009,7 +1012,8 @@ if (format === 'custom') {
 } else {
   capsBase = capacities(n, z);
 }
-  const groups = Array.from({length: z}, () => []);
+  const actualZones = (format === 'custom') ? capsBase.length : z;
+const groups = Array.from({length: actualZones}, () => []);
   const heads = shuffle(teams.filter(t => t.head), rand);
   const others = shuffle(teams.filter(t => !t.head), rand);
   
@@ -1545,8 +1549,15 @@ function updateCapInfo() {
     msg += ` · Orden de paso`;
   } else {
     const z = currentZones();
-    const avg = (teams / z).toFixed(2);
-    msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
+    if (fmt === 'custom') {
+      const teamsPerZone = parseInt(document.getElementById('teamsPerZone').value) || 4;
+      const caps = capacitiesWithTeamsPerZone(teams, z, teamsPerZone);
+      const actualZones = caps.length;
+      msg += ` · Zonas: ${actualZones} (de ${z} definidas)`;
+    } else {
+      const avg = (teams / z).toFixed(2);
+      msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
+    }
   }
   
   document.getElementById('capInfo').innerHTML = msg;
