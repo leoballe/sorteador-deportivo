@@ -1184,12 +1184,6 @@ checkbox.type = 'checkbox';
 checkbox.className = 'cloud-draw-checkbox';
 checkbox.dataset.docId = doc.id;
 
-checkbox.addEventListener('change', function() {
-  const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox');
-  const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked');
-  document.getElementById('selectAllCloudBtn').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length;
-});
-
 const titleSpan = document.createElement('span');
 titleSpan.textContent = title;
 titleSpan.style.flex = '1';
@@ -1812,37 +1806,51 @@ document.addEventListener('change', function(e) {
   }
 });
 
-// Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN
-document.addEventListener('click', function(e) {
-  if (e.target.id === 'deleteSelectedCloud') {
-    const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');
-    if (checkboxes.length === 0) {
-      toast('No hay sorteos seleccionados');
-      return;
-    }
+// Seleccionar todos los sorteos en la nube
+document.getElementById('selectAllCloudBtn').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
 
-    if (!confirm(`¿Estás seguro de que querés eliminar ${checkboxes.length} sorteo(s)?`)) {
-      return;
-    }
+// Actualizar el checkbox "Seleccionar todos" cuando cambien checkboxes individuales
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('cloud-draw-checkbox')) {
+    const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked').length;
+    const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox').length;
+    document.getElementById('selectAllCloudBtn').checked = allChecked === allCheckboxes && allCheckboxes > 0;
+  }
+});
 
-    const user = auth.currentUser;
-    if (!user) {
-      toast('No estás autenticado');
-      return;
-    }
+// Eliminar sorteos seleccionados en la nube
+document.getElementById('deleteSelectedCloud').addEventListener('click', async function() {
+  const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+  if (checkboxes.length === 0) {
+    toast('No hay sorteos seleccionados');
+    return;
+  }
 
+  if (!confirm(`¿Estás seguro de que querés eliminar ${checkboxes.length} sorteo(s)?`)) {
+    return;
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    toast('No estás autenticado');
+    return;
+  }
+
+  try {
     const deletePromises = Array.from(checkboxes).map(checkbox => 
       db.collection('users').doc(user.uid).collection('draws').doc(checkbox.dataset.docId).delete()
     );
-    
-    Promise.all(deletePromises)
-      .then(() => toast(`${checkboxes.length} sorteo(s) eliminado(s)`))
-      .catch(err => {
-        console.error('Error eliminando sorteos:', err);
-        toast('Error al eliminar los sorteos');
-      });
+    await Promise.all(deletePromises);
+    toast(`${checkboxes.length} sorteo(s) eliminado(s)`);
+  } catch (err) {
+    console.error('Error eliminando sorteos:', err);
+    toast('Error al eliminar los sorteos');
   }
-});
 });
 
 /* ====================== Auth ====================== */
