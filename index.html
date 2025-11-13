@@ -1,1 +1,2049 @@
-<!DOCTYPE html> <html lang="es"> <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Sorteador</title> <!-- Firebase (compat) --> <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script> <!-- Utilidades PDF en la pestaña de resultado --> <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script> <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script> <style> :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b} *{box-sizing:border-box} html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif} a{color:var(--accent2)} .container{ max-width: 1100px; margin: 0 auto; padding: 24px; } /* Header app */ header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px} h1{ font-size: clamp(22px,3vw,30px); margin: 0; color: #94E5F2; } .badge{ font-size: 12px; background-color: #94E5F2; opacity: .9; padding: 4px 8px; border-radius: 999px; color: #000000; font-weight: bold; } .userBox{display:flex;align-items:center;gap:8px} .pill{ display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid #1B315E; border-radius: 999px; background: #0b1220; color: #FFFFFF; } .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600} .btn:hover{border-color:#3b82f6} .btn.primary{ border: 0; color: #052e16; background-color: #94E5F2; } .btn.ghost{background:transparent;border-color:#2b3b55} .btn.warn{ border: 0; color: #FFFFFF; background-color: #8A0002; } .tiny{ font-size: 13px; color: #94E5F2; font-weight: bold; } .hidden{display:none} /* Paneles y tarjetas */ .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px} .row{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:900px){.row{grid-template-columns:1fr}} .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px} .card h3{ margin: 0 0 8px 0; font-size: 16px; color: #94E5F2; } label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px} input[type=text],input[type=number],input[type=email],input[type=password],textarea,select{ width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px } textarea{min-height:200px;resize:vertical} .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center} /* Tabs */ .tabs{display:flex;gap:8px;margin-bottom:12px} .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer;color:#e5e7eb} .tab.active{ background-color: #1B315E; border-color: #1B315E; color: #94E5F2; font-weight: bold; } /* Resultado */ .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px} .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px} .zone h4{margin:4px 0 8px 0} .zone ol{margin:0;padding-left:18px} .muted{color:var(--muted)} .warnText{color:var(--warn)} .errorText{color:var(--danger)} /* Listas con checks */ .history{display:grid;gap:8px} .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px} .listWrap{display:grid;grid-template-columns:1fr 1fr; gap:12px} @media (max-width:900px){.listWrap{grid-template-columns:1fr}} .listBox{background:#0b1220;border:1px dashed #2b3b55;border-radius:12px;padding:10px;min-height:120px} .listBox h4{margin:2px 0 8px 0;font-size:14px} .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b} .itemRow:last-child{border-bottom:none} .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px} /* Variables para tema claro */ [data-theme="light"] { --bg: #f1f5f9; --panel: #ffffff; --card: #f8fafc; --muted: #64748b; --text: #1e293b; --accent: #22c55e; --accent2: #38bdf8; --danger: #ef4444; --warn: #f59e0b; } [data-theme="light"] .btn { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; } [data-theme="light"] .btn.primary { background-color: #94E5F2; color: #052e16; } [data-theme="light"] .btn.warn { background-color: #8A0002; color: #FFFFFF; } [data-theme="light"] input[type=text], [data-theme="light"] input[type=number], [data-theme="light"] input[type=email], [data-theme="light"] input[type=password], [data-theme="light"] textarea, [data-theme="light"] select { background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; } [data-theme="light"] h1 { color: #1B315E; } [data-theme="light"] .card h3 { color: #1B315E; } [data-theme="light"] .tiny { color: #1B315E; } [data-theme="light"] .pill { background: #e2e8f0; border-color: #cbd5e1; color: #1e293b; } [data-theme="light"] .tab.active { background-color: #1B315E; border-color: #1B315E; color: #94E5F2; } [data-theme="light"] .tab { background: #e2e8f0; border-color: #cbd5e1; color: #1e293b; } [data-theme="light"] .tag { color: #1e293b; border-color: #cbd5e1; } [data-theme="light"] .listBox { background: #ffffff; border: 1px dashed #cbd5e1; } [data-theme="light"] .listBox h4 { color: #1B315E; } [data-theme="light"] .itemRow { border-bottom: 1px dashed #e2e8f0; } [data-theme="light"] .itemRow:last-child { border-bottom: none; } [data-theme="light"] .zone { background: #ffffff; border: 1px solid #cbd5e1; } [data-theme="light"] .zone h4 { color: #1B315E; } [data-theme="light"] .history .item { background: #ffffff; border: 1px dashed #cbd5e1; } [data-theme="light"] .card { background: #f8fafc; border: 1px solid #e2e8f0; } [data-theme="light"] .panel { background: #ffffff; border: 1px solid #e2e8f0; } [data-theme="light"] .cloud-draw-checkbox { accent-color: #1B315E; } [data-theme="light"] .item { color: #1e293b; } [data-theme="light"] .tag { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; } </style> </head> <body> <!-- ============ Sección de Autenticación ============ --> <section id="authSection" style="max-width:460px;margin:48px auto"> <!--reemplazar "display: none !important;" por "max-width:460px;margin:48px auto">--> <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px"> <img src="logo-dark.png" alt="Logo" class="logo" style="height: 50px; width: auto;"> <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1> </div> <div class="card" style="background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px"> <div class="authTabs" style="display:flex;border-bottom:1px solid #223046;margin-bottom:14px"> <button class="authTab active" data-tab="login" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid #22c55e">Iniciar Sesión</button> <button class="authTab" data-tab="register" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent">Registrarse</button> </div> <!-- Login --> <form class="authForm" id="loginForm"> <div class="formGroup" style="margin-bottom:12px"> <label for="loginEmail">Email</label> <input type="email" id="loginEmail" required placeholder="tu@email.com"> </div> <div class="formGroup" style="margin-bottom:12px"> <label for="loginPassword">Contraseña</label> <input type="password" id="loginPassword" required placeholder="••••••••"> </div> <button type="submit" class="btn primary" style="width:100%">Iniciar Sesión</button> </form> <!-- Registro --> <form class="authForm hidden" id="registerForm"> <div class="formGroup" style="margin-bottom:12px"> <label for="registerName">Nombre</label> <input type="text" id="registerName" required placeholder="Tu nombre"> </div> <div class="formGroup" style="margin-bottom:12px"> <label for="registerEmail">Email</label> <input type="email" id="registerEmail" required placeholder="tu@email.com"> </div> <div class="formGroup" style="margin-bottom:12px"> <label for="registerPassword">Contraseña</label> <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6"> </div> <div class="formGroup" style="margin-bottom:12px"> <label for="registerConfirmPassword">Confirmar Contraseña</label> <input type="password" id="registerConfirmPassword" required placeholder="••••••••"> </div> <button type="submit" class="btn primary" style="width:100%">Crear Cuenta</button> </form> </div> </section> <!-- ============ Aplicación (se muestra tras login) ============ --> <section id="appSection" > <!--borrar style="display: block !important;"--> <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px"> <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;"> <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1> </div> <div class="container"> <header> <div> <h1>Sorteador</h1> <div class="tiny">Juegos Nacionales</div> </div> <div class="userBox"> <span class="pill" id="userInfo" title="Usuario"></span> <button id="themeToggle" class="btn ghost">🌙 Tema</button> <button id="logoutBtn" class="btn ghost">Cerrar sesión</button> <span class="badge">v3.0 </span> </div> </header> <div class="panel"> <div id="tab-grupos" class="tabcontent"> <div class="row"> <div class="card"> <h3>Equipos</h3> <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; *</span> para cabeza de serie.</label> <textarea id="teamsInput" placeholder="Ejemplos: River Plate; CABA; * Boca Juniors; CABA Newell's; Santa Fe ..."></textarea> <div class="controls" style="margin-top:8px"> <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label> <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" /> <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button> <button class="btn ghost" id="btnClear" type="button">Limpiar</button> <button class="btn" id="btnBuildList" type="button">Mostrar checks</button> </div> <div class="tiny hidden">CSV de equipos:.</div> <div id="csvInfo" class="tiny" style="margin-top:6px"></div> <div id="checkLists" class="listWrap hidden" style="margin-top:10px"> <div class="listBox"> <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4> <div class="controls" style="margin-bottom:6px"> <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button> <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button> </div> <div id="activeList"></div> </div> <div class="listBox"> <h4>Descartados <span class="tag" id="countInactive">0</span></h4> <div class="controls" style="margin-bottom:6px"> <label class="pill"><input type="checkbox" id="toggleShowInactive" checked> Mostrar descartados</label> <label class="pill"> <input type="checkbox" id="selectAllInactive"> Seleccionar todos </label> <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button> </div> <div id="inactiveList" class="hidden"></div> </div> </div> </div> <div class="card"> <h3>Parámetros</h3> <div class="controls" id="formatRow"> <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label> <label class="pill"><input type="radio" name="format" value="4x6"> 4x6</label> <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label> <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label> </div> <!-- Selector de zonas (solo se muestra con Personalizado) --> <div class="controls"> <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer"> <label>Nº de zonas / grupos</label> <input type="number" id="zones" min="1" value="8" /> </div> </div> <!-- Fila: Importar disciplinas + Selector de disciplinas --> <div class="controls"> <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label> <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" /> <div style="min-width:220px;flex:1"> <label>Disciplina</label> <select id="disciplineSelect"> <option value="">— Seleccionar disciplina —</option> </select> </div> </div> <!-- Fila: Importar categorías + Selector de categorías --> <div class="controls"> <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label> <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" /> <div style="min-width:220px;flex:1"> <label>Categoría</label> <select id="categorySelect"> <option value="">— Seleccionar categoría —</option> </select> </div> </div> <!-- Fila: Selector de género --> <div class="controls"> <div style="min-width:220px;flex:1"> <label>Género</label> <select id="genderSelect"> <option value="">— Seleccionar género —</option> <option value="Masculino">Masculino</option> <option value="Femenino">Femenino</option> <option value="Mixto">Mixto</option> <option value="No Aplica">No Aplica</option> </select> </div> </div> <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div> <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div> <label><input type="checkbox" id="headsAsFirst" > Cabezas de serie primero</label> <div id="capInfo" class="tiny" style="margin-top:6px"></div> <div class="controls" style="margin-top:10px"> <button class="btn primary" id="btnDrawGroups" type="button">Sortear</button> <button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button> <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button> <button class="btn hidden" id="btnShare" type="button">🔗 Compartir</button> </div> <div id="status" class="tiny" style="margin-top:8px"></div> </div> </div> <div class="card" style="margin-top:12px"> <h3>Resultado</h3> <div id="resultGroups" class="grid"></div> </div> <div class="card" style="margin-top:12px"> <h3>Historial de sorteos guardados</h3> <div class="controls" style="margin-bottom:12px"> <label class="pill"> <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos </label> <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button> </div> <div id="cloudHistoryList" class="history"></div> </div> </div> </div> <div class="tiny" style="margin-top:12px">Desarrollado por Leonardo Ballestero - 2025.</div> </div> </section> <script> // ====================== CÓDIGO COMPLETO Y FUNCIONANDO ====================== 'use strict'; /* ====================== Firebase ====================== */ const firebaseConfig = { apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54", authDomain: "sorteador-53cb5.firebaseapp.com", projectId: "sorteador-53cb5", storageBucket: "sorteador-53cb5.firebasestorage.app", messagingSenderId: "583913752340", appId: "1:583913752340:web:347f8b2866fcbb216e6401" }; firebase.initializeApp(firebaseConfig); const auth = firebase.auth(); const db = firebase.firestore(); /* ====================== Utils ====================== */ function toast(msg) { const el = document.createElement('div'); el.textContent = msg; el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;'; document.body.appendChild(el); setTimeout(() => el.remove(), 1500); } function escapeHtml(text) { const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}; return text.replace(/[&<>"']/g, m => map[m]); } function downloadText(text, filename) { const blob = new Blob([text], {type: 'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); } function copyText(text) { navigator.clipboard.writeText(text).then(() => toast('Copiado')).catch(() => alert('No se pudo copiar')); } /* ====================== CSV genérico ====================== */ function parseCSVLine(line, delimiter) { const result = []; let current = ''; let inQuotes = false; for (let i = 0; i < line.length; i++) { const ch = line[i], next = line[i + 1]; if (ch === '"') { if (inQuotes && next === '"') { current += '"'; i++; } else { inQuotes = !inQuotes; } } else if (ch === delimiter && !inQuotes) { result.push(current.trim()); current = ''; } else { current += ch; } } result.push(current.trim()); return result; } function parseCSV(text) { if (!text.trim()) return {headers: [], rows: [], delimiter: ','}; const firstLine = text.split(/\r?\n/)[0] || ''; const counts = { ',': (firstLine.match(/,/g) || []).length, ';': (firstLine.match(/;/g) || []).length, '\t': (firstLine.match(/\t/g) || []).length }; const best = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || ','; const lines = text.split(/\r?\n/).filter(l => l.trim()); const headers = parseCSVLine(lines[0], best); const rows = lines.slice(1).map(l => parseCSVLine(l, best)); return {headers, rows, delimiter: best}; } function importTeamsCSV(text) { if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1); const {headers, rows, delimiter} = parseCSV(text); let nameIdx = -1, provinceIdx = -1, headIdx = -1; if (headers.length) { headers.forEach((h, i) => { const s = h.toLowerCase(); if (nameIdx === -1 && (s.includes('equipo') || s.includes('team') || s.includes('nombre') || s.includes('club'))) nameIdx = i; if (provinceIdx === -1 && (s.includes('provincia') || s.includes('province') || s.includes('región') || s.includes('region') || s.includes('localidad'))) provinceIdx = i; if (headIdx === -1 && (s.includes('cabeza') || s.includes('head') || s.includes('seed') || s.includes('semilla'))) headIdx = i; }); } if (nameIdx === -1) { nameIdx = 0; provinceIdx = headers.length > 1 ? 1 : -1; headIdx = headers.length > 2 ? 2 : -1; } const teams = []; const uniq = new Set(); for (const row of rows) { if (row.length <= nameIdx) continue; const raw = (row[nameIdx] || ''); const name = raw.replace(/\*+$/, '').trim(); if (!name) continue; const key = name.toLowerCase(); if (uniq.has(key)) continue; uniq.add(key); const province = (provinceIdx !== -1 && row[provinceIdx]) ? row[provinceIdx].replace(/\*+$/, '').trim() : ''; const hv = (headIdx !== -1 && row[headIdx]) ? String(row[headIdx]).toLowerCase().trim() : ''; const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw); teams.push({name, province, head}); } return {teams, delimiter, hasHeaders: headers.length > 0}; } function importDisciplinesCSV(text) { if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1); const {headers, rows, delimiter} = parseCSV(text); let nameIdx = 0, seedIdx = 1; if (headers.length) { headers.forEach((h, i) => { const s = h.toLowerCase(); if (s.includes('disciplina') || s.includes('deporte') || s.includes('nombre')) nameIdx = i; if (s.includes('semilla') || s.includes('seed') || s.includes('código') || s.includes('codigo')) seedIdx = i; }); } const items = []; for (const row of rows) { const name = (row[nameIdx] || '').trim(); if (!name) continue; const seed = (row[seedIdx] || name).trim(); items.push({name, seed}); } return {items, delimiter, hasHeaders: headers.length > 0}; } function importCategoriesCSV(text) { if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1); const {headers, rows, delimiter} = parseCSV(text); let nameIdx = 0, seedIdx = 1; if (headers.length) { headers.forEach((h, i) => { const s = h.toLowerCase(); if (s.includes('categor') || s.includes('división') || s.includes('division') || s.includes('nombre')) nameIdx = i; if (s.includes('semilla') || s.includes('seed') || s.includes('código') || s.includes('codigo')) seedIdx = i; }); } const items = []; for (const row of rows) { const name = (row[nameIdx] || '').trim(); if (!name) continue; const seed = (row[seedIdx] || name).trim(); items.push({name, seed}); } return {items, delimiter, hasHeaders: headers.length > 0}; } /* ====================== Selects ====================== */ function refreshDisciplineSelects() { const sels = [ document.getElementById('disciplineSelect'), document.getElementById('disciplineSelectSimple') ]; sels.forEach(sel => { if (!sel) return; const current = sel.value; sel.innerHTML = '<option value="">— Seleccionar disciplina —</option>'; disciplines.forEach(d => { const o = document.createElement('option'); o.value = d.seed; o.textContent = d.name; o.dataset.seed = d.seed; sel.appendChild(o); }); if (current && [...sel.options].some(o => o.value === current)) sel.value = current; }); } function refreshCategorySelects() { const sels = [ document.getElementById('categorySelect'), document.getElementById('categorySelectSimple') ]; sels.forEach(sel => { if (!sel) return; // Esto evita el error si el elemento no existe const current = sel.value; sel.innerHTML = '<option value="">— Seleccionar categoría —</option>'; categories.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; o.dataset.seed = c.seed; sel.appendChild(o); }); if (current && [...sel.options].some(o => o.value === current)) sel.value = current; }); } /* ====================== Estado ====================== */ let activeTeams = [], inactiveTeams = []; let disciplines = [], categories = []; let lastResult = null; let cloudUnsub = null; /* ====================== Listas activas/inactivas ====================== */ function renderLists() { const aBox = document.getElementById('activeList'); const iBox = document.getElementById('inactiveList'); const showInactive = document.getElementById('toggleShowInactive').checked; document.getElementById('countActive').textContent = activeTeams.length; document.getElementById('countInactive').textContent = inactiveTeams.length; iBox.classList.toggle('hidden', !showInactive); aBox.innerHTML = ''; activeTeams.forEach((t, idx) => { const row = document.createElement('div'); row.className = 'itemRow'; row.innerHTML = <input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? <span class="muted">— ${escapeHtml(t.province)}</span> : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}; aBox.appendChild(row); }); iBox.innerHTML = ''; inactiveTeams.forEach((t, idx) => { const row = document.createElement('div'); row.className = 'itemRow'; row.innerHTML = <input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? <span class="muted">— ${escapeHtml(t.province)}</span> : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}; iBox.appendChild(row); }); } function buildListsFromTextarea() { const lines = document.getElementById('teamsInput').value.split(/\r?\n/).filter(l => l.trim()); activeTeams = []; inactiveTeams = []; const uniq = new Set(); for (const line of lines) { const parts = line.split(';').map(p => p.trim()); const name = (parts[0] || '').replace(/\*+$/, '').trim(); if (!name) continue; const key = name.toLowerCase(); if (uniq.has(key)) continue; uniq.add(key); const province = (parts[1] || '').replace(/\*+$/, '').trim(); const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : /\*$/.test(parts[0] || ''); activeTeams.push({name, province, head}); } document.getElementById('checkLists').classList.remove('hidden'); renderLists(); updateCapInfo(); toast(Lista cargada: ${activeTeams.length} equipos únicos); } function getChecked(selector) { return Array.from(document.querySelectorAll(selector + ':checked')).map(el => parseInt(el.dataset.idx, 10)).filter(n => !isNaN(n)).sort((a, b) => b - a); } function moveSelectedToInactive() { const idxs = getChecked('.chkActive'); const moved = idxs.map(i => activeTeams[i]); idxs.forEach(i => activeTeams.splice(i, 1)); inactiveTeams.unshift(...moved); renderLists(); updateCapInfo(); } function restoreSelectedFromInactive() { const idxs = getChecked('.chkInactive'); const moved = idxs.map(i => inactiveTeams[i]); idxs.forEach(i => inactiveTeams.splice(i, 1)); activeTeams.push(...moved); renderLists(); updateCapInfo(); } function selectAll(selector) { document.querySelectorAll(selector).forEach(cb => cb.checked = true); } function getActiveTeamsLive() { if (document.getElementById('checkLists').classList.contains('hidden')) { const lines = document.getElementById('teamsInput').value.split(/\r?\n/).filter(l => l.trim()); const teams = []; const uniq = new Set(); for (const line of lines) { const parts = line.split(';').map(p => p.trim()); const raw = parts[0] || ''; const name = raw.replace(/\*+$/, '').trim(); if (!name) continue; const key = name.toLowerCase(); if (uniq.has(key)) continue; uniq.add(key); teams.push({ name, province: (parts[1] || '').replace(/\*+$/, '').trim(), head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : /\*$/.test(raw) }); } return teams; } return [...activeTeams]; } /* ====================== RNG + Sorteo ====================== */ function xmur3(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return function() { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^ h >>> 16) >>> 0; }; } function mulberry32(a) { return function() { let t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; } function rngFromSeed(seed) { if (!seed || seed.trim() === "") return Math.random; const h = xmur3(String(seed))(); return mulberry32(h); } function shuffle(array, rand) { const a = [...array]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; } function capacities(n, z) { const base = Math.floor(n / z), rest = n % z; return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0)); } function capacitiesFourBySix(n) { const caps = [6, 6, 6, 6]; const total = 24; if (n >= total) return caps; let deficits = total - n; const order = [3, 1, 2, 0]; // Zona4, Zona2, Zona3, Zona1 let i = 0; while (deficits > 0) { const idx = order[i % order.length]; if (caps[idx] > 0) { caps[idx]--; deficits--; } i++; } return caps; } function capacitiesEightByThree(n) { const caps = Array(8).fill(3); const total = 24; if (n >= total) return caps; const d = total - n; const zeros = Math.floor(d / 3); const twos = d % 3; const order = [7, 6, 5, 4, 3, 2, 1, 0]; for (let i = 0; i < zeros; i++) caps[order[i]] = 0; let k = zeros; for (let j = 0; j < twos && k < order.length; j++, k++) { if (caps[order[k]] === 3) caps[order[k]] = 2; } return caps; } function drawGroups(teams, z, headsAsFirst, seed, format) { const rand = rngFromSeed(seed); const n = teams.length; if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'}; if (n < z) return {error: 'Hay menos equipos que zonas.'}; const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) : (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) : capacities(n, z); const groups = Array.from({length: z}, () => []); const heads = shuffle(teams.filter(t => t.head), rand); const others = shuffle(teams.filter(t => !t.head), rand); if (headsAsFirst && heads.length) { for (let i = 0; i < groups.length && i < heads.length; i++) { groups[i].push(heads[i]); } } const targetCaps = capsBase.map((cap, i) => Math.max(0, cap - groups[i].length)); const pool = headsAsFirst ? others : shuffle(teams, rand); const maxAttempts = 500; for (let attempt = 0; attempt < maxAttempts; attempt++) { const g = groups.map(arr => [...arr]); const remaining = [...targetCaps]; let ok = true; const order = shuffle(pool, rand); for (const team of order) { const options = g.map((arr, idx) => ({idx, size: arr.length, cap: remaining[idx]})).filter(x => x.cap > 0).sort((a, b) => a.size - b.size || a.idx - b.idx).map(x => x.idx); if (!options.length) { ok = false; break; } const pick = options[Math.floor(rand() * options.length)]; g[pick].push(team); remaining[pick]--; } if (ok) return {groups: g, caps: capsBase, relaxed: false, attempt}; } return {error: 'No se pudo asignar después de varios intentos'}; } /* ====================== Render + Pestaña nueva ====================== */ function renderGroups(target, result) { if (result.error) { target.innerHTML = <div class="errorText">${result.error}</div>; lastResult = null; return; } const grid = document.createElement('div'); grid.className = 'grid'; result.groups.forEach((arr, gi) => { const card = document.createElement('div'); card.className = 'zone'; card.innerHTML = <h4>Zona ${gi + 1}</h4>; const ol = document.createElement('ol'); arr.forEach(t => { const li = document.createElement('li'); li.innerHTML = <b>${escapeHtml(t.name)}</b>${t.province ? <span class="muted">— ${escapeHtml(t.province)}</span> : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}; ol.appendChild(li); }); card.appendChild(ol); grid.appendChild(card); }); target.innerHTML = ''; target.appendChild(grid); const attempts = result.attempt != null ? (intentos: ${result.attempt + 1}) : ''; document.getElementById('status').innerHTML = Sorteo realizado${attempts}; lastResult = result; } function openResultInNewTab(result) { const w = window.open('about:blank', '_blank'); if (!w) { toast('Permití pop-ups para ver el resultado'); return; } const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || ''; const category = (document.getElementById('categorySelect').value) || ''; const gender = (document.getElementById('genderSelect').value) || ''; const chipsHTML = [ disciplineText ? <span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span> : '', category ? <span class="chip">Categoría: ${escapeHtml(category)}</span> : '', gender ? <span class="chip">Género: ${escapeHtml(gender)}</span> : '', <span class="chip">${result.groups.length} zonas</span>, <span class="chip">${new Date().toLocaleString()}</span> ].filter(Boolean).join(''); const zonesHTML = result.groups.map((arr, gi) => { const items = arr.map(t => <li><b>${escapeHtml(t.name)}</b>${t.province ? — ${escapeHtml(t.province)} : ''}${t.head ? ' ★' : ''}</li>).join(''); return <div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>; }).join(''); const html = <!DOCTYPE html><html><head><meta charset="utf-8"> <title>Resultado del Sorteo</title> <style> body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;} .container{max-width:1100px; margin:0 auto;} h1{margin-bottom:16px} .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0} .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px} .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px} .zone h4{margin:4px 0 8px 0} .zone ol{margin:0;padding-left:18px} .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px} .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff} </style> <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script> <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script> </head><body> <div class="container"> <h1>🎲 Resultado del Sorteo</h1> <div class="chips">${chipsHTML}</div> <div class="grid">${zonesHTML}</div> <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button> </div> <script> function exportPDF(){ if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return} const sheet=document.createElement('div'); sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a'; sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px'; const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h); const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips); const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid); document.body.appendChild(sheet); html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{ const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf'); }); } <\/script> </body></html>; w.document.open(); w.document.write(html); w.document.close(); } function openSimpleResultInNewTab(list) { const w = window.open('about:blank', '_blank'); if (!w) { toast('Permití pop-ups para ver el resultado'); return; } const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || ''; const category = (document.getElementById('categorySelect').value) || ''; const gender = (document.getElementById('genderSelect').value) || ''; const chipsHTML = [ disciplineText ? <span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span> : '', category ? <span class="chip">Categoría: ${escapeHtml(category)}</span> : '', gender ? <span class="chip">Género: ${escapeHtml(gender)}</span> : '', <span class="chip">${list.length} equipos</span>, <span class="chip">${new Date().toLocaleString()}</span> ].filter(Boolean).join(''); const listHTML = list.map((name, index) => <div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div> ).join(''); const html = <!DOCTYPE html><html><head><meta charset="utf-8"> <title>Orden de Paso</title> <style> body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;} .container{max-width:1100px; margin:0 auto;} h1{margin-bottom:16px} .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0} .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px} .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px} .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff} </style> <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script> <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script> </head><body> <div class="container"> <h1>🎲 Orden de Paso</h1> <div class="chips">${chipsHTML}</div> <div>${listHTML}</div> <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button> </div> <script> function exportPDF(){ if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return} const sheet=document.createElement('div'); sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a'; sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px'; const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h); const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips); const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv); document.body.appendChild(sheet); html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{ const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('orden_paso_'+new Date().toISOString().slice(0,10)+'.pdf'); }); } <\/script> </body></html>; w.document.open(); w.document.write(html); w.document.close(); } /* ====================== Guardar en Firestore ====================== */ async function saveDrawToCloud(result, meta) { const user = auth.currentUser; if (!user) { console.log('Usuario no logueado, no se guarda en nube'); return; } try { const groupsData = result.groups.map((group, groupIndex) => ({ groupNumber: groupIndex + 1, teams: group.map(team => ({ name: team.name, province: team.province || '', head: team.head || false })) })); const payload = { teamsCount: meta.teamsCount, zones: meta.zones, format: meta.format, discipline: meta.discipline, disciplineSeed: meta.disciplineSeed, category: meta.category, gender: meta.gender, groups: groupsData, createdAt: firebase.firestore.FieldValue.serverTimestamp(), userId: user.uid }; await db.collection('users').doc(user.uid).collection('draws').add(payload); toast('Sorteo guardado en la nube ✓'); } catch(e) { console.error('Error guardando en nube:', e); toast('No se pudo guardar en la nube'); } } async function saveSimpleDrawToCloud(list, meta) { const user = auth.currentUser; if (!user) { console.log('Usuario no logueado, no se guarda en nube'); return; } try { const payload = { type: 'simple', teamsCount: list.length, discipline: meta.discipline, disciplineSeed: meta.disciplineSeed, category: meta.category, gender: meta.gender, list: list, createdAt: firebase.firestore.FieldValue.serverTimestamp(), userId: user.uid }; await db.collection('users').doc(user.uid).collection('draws').add(payload); toast('Sorteo simple guardado en la nube ✓'); } catch(e) { console.error('Error guardando en nube:', e); toast('No se pudo guardar en la nube'); } } function subscribeCloudHistory() { const user = auth.currentUser; const listEl = document.getElementById('cloudHistoryList'); if (cloudUnsub) { cloudUnsub(); cloudUnsub = null; } if (!user) { listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>'; return; } cloudUnsub = db.collection('users').doc(user.uid) .collection('draws') .orderBy('createdAt', 'desc') .limit(50) .onSnapshot(snap => { listEl.innerHTML = ''; if (snap.empty) { listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>'; return; } snap.forEach(doc => { const d = doc.data(); const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'; let title = ''; if (d.type === 'simple') { title = ${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}; } else { title = ${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}; } const item = document.createElement('div'); item.className = 'item'; item.style.display = 'flex'; item.style.alignItems = 'center'; item.style.gap = '10px'; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'cloud-draw-checkbox'; checkbox.dataset.docId = doc.id; checkbox.addEventListener('change', function() { const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox'); const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked'); document.getElementById('selectAllCloudBtn').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length; }); const titleSpan = document.createElement('span'); titleSpan.textContent = title; titleSpan.style.flex = '1'; item.appendChild(checkbox); item.appendChild(titleSpan); const btns = document.createElement('div'); btns.style.marginLeft = 'auto'; btns.style.display = 'flex'; btns.style.gap = '6px'; const openBtn = document.createElement('button'); openBtn.className = 'btn tiny'; openBtn.textContent = 'Abrir'; openBtn.addEventListener('click', () => { if (d.type === 'simple') { // Abrir sorteo simple const w = window.open('about:blank', '_blank'); if (!w) { toast('Permití pop-ups para ver el resultado'); return; } const chipsHTML = [ d.discipline ? <span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span> : '', d.category ? <span class="chip">Categoría: ${escapeHtml(d.category)}</span> : '', d.gender ? <span class="chip">Género: ${escapeHtml(d.gender)}</span> : '', <span class="chip">${d.teamsCount || d.list.length} equipos</span>, <span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span> ].filter(Boolean).join(''); const listHTML = d.list.map((name, index) => <div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div> ).join(''); const html = <!DOCTYPE html><html><head><meta charset="utf-8"> <title>Resultado del Sorteo Simple Guardado</title> <style> body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;} .container{max-width:1100px; margin:0 auto;} h1{margin-bottom:16px} .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0} .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px} .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px} .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff} </style> <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script> <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script> </head><body> <div class="container"> <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1> <div class="chips">${chipsHTML}</div> <div>${listHTML}</div> <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button> </div> <script> function exportPDF(){ if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return} const sheet=document.createElement('div'); sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a'; sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px'; const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h); const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips); const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv); document.body.appendChild(sheet); html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{ const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_guardado_'+new Date().toISOString().slice(0,10)+'.pdf'); }); } <\/script> </body></html>; w.document.open(); w.document.write(html); w.document.close(); } else { // Código existente para sorteos de zonas (no modificar) const groups = (d.groups || []).map(groupObj => groupObj.teams.map(team => ({ name: team.name, province: team.province || '', head: team.head || false })) ); const res = { groups: groups }; const w = window.open('about:blank', '_blank'); if (!w) { toast('Permití pop-ups para ver el resultado'); return; } const chipsHTML = [ d.discipline ? <span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span> : '', d.category ? <span class="chip">Categoría: ${escapeHtml(d.category)}</span> : '', d.gender ? <span class="chip">Género: ${escapeHtml(d.gender)}</span> : '', d.format ? <span class="chip">Formato: ${escapeHtml(d.format)}</span> : '', <span class="chip">${d.zones || groups.length} zonas</span>, <span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span> ].filter(Boolean).join(''); const zonesHTML = groups.map((arr, gi) => { const items = arr.map(t => <li><b>${escapeHtml(t.name)}</b>${t.province ? — ${escapeHtml(t.province)} : ''}${t.head ? ' ★' : ''}</li> ).join(''); return <div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>; }).join(''); const html = <!DOCTYPE html><html><head><meta charset="utf-8"> <title>Resultado del Sorteo Guardado</title> <style> body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;} .container{max-width:1100px; margin:0 auto;} h1{margin-bottom:16px} .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0} .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px} .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px} .zone h4{margin:4px 0 8px 0} .zone ol{margin:0;padding-left:18px} .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px} .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff} </style> <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script> <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script> </head><body> <div class="container"> <h1>🎲 Resultado del Sorteo (Guardado)</h1> <div class="chips">${chipsHTML}</div> <div class="grid">${zonesHTML}</div> <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button> </div> <script> function exportPDF(){ if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return} const sheet=document.createElement('div'); sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a'; sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px'; const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h); const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips); const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid); document.body.appendChild(sheet); html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{ const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf'); }); } <\/script> </body></html>; w.document.open(); w.document.write(html); w.document.close(); } }); const deleteBtn = document.createElement('button'); deleteBtn.className = 'btn tiny warn'; deleteBtn.textContent = 'Eliminar'; deleteBtn.addEventListener('click', async () => { if (confirm('¿Estás seguro de que querés eliminar este sorteo?')) { try { await db.collection('users').doc(user.uid).collection('draws').doc(doc.id).delete(); toast('Sorteo eliminado'); } catch (err) { console.error('Error eliminando sorteo:', err); toast('Error al eliminar el sorteo'); } } }); btns.appendChild(openBtn); btns.appendChild(deleteBtn); item.appendChild(btns); listEl.appendChild(item); }); }, err => { console.error('Error leyendo historial cloud:', err); listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial.</div>'; }); } /* ====================== UI State ====================== */ function getFormat() { const r = document.querySelector('input[name="format"]:checked'); return r ? r.value : 'custom'; } function currentZones() { const fmt = getFormat(); if (fmt === '8x3') return 8; if (fmt === '4x6') return 4; return parseInt(document.getElementById('zones').value) || 1; } function updateCapInfo() { const teams = getActiveTeamsLive().length; const fmt = getFormat(); let msg = Equipos: ${teams}; if (fmt === 'simple') { msg += · Orden de paso; } else { const z = currentZones(); const avg = (teams / z).toFixed(2); msg += · Zonas: ${z} — Promedio: ${avg} por zona; } document.getElementById('capInfo').innerHTML = msg; } /* ====================== DOM Ready ====================== */ document.addEventListener('DOMContentLoaded', function() { // Tabs app document.querySelectorAll('.tab').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab').forEach(b => b.classList.remove('active')); document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden')); btn.classList.add('active'); }); }); // Formato document.querySelectorAll('input[name="format"]').forEach(r => { r.addEventListener('change', () => { const elZones = document.getElementById('zones'); const customZonesContainer = document.getElementById('customZonesContainer'); if (r.value === '8x3') { elZones.value = '8'; elZones.disabled = true; customZonesContainer.classList.add('hidden'); } else if (r.value === '4x6') { elZones.value = '4'; elZones.disabled = true; customZonesContainer.classList.add('hidden'); } else if (r.value === 'simple') { elZones.disabled = true; customZonesContainer.classList.add('hidden'); } else { elZones.disabled = false; customZonesContainer.classList.remove('hidden'); } updateCapInfo(); }); }); // Panel checks document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea); document.getElementById('toggleShowInactive').addEventListener('change', renderLists); document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive); document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive); document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive')); // Checkbox para seleccionar todos los descartados document.getElementById('selectAllInactive').addEventListener('change', function() { const checkboxes = document.querySelectorAll('.chkInactive'); checkboxes.forEach(checkbox => { checkbox.checked = this.checked; }); }); // Actualizar el checkbox "Seleccionar todos" cuando cambien checkboxes individuales document.addEventListener('change', function(e) { if (e.target.classList.contains('chkInactive')) { const allChecked = document.querySelectorAll('.chkInactive:checked').length; const allCheckboxes = document.querySelectorAll('.chkInactive').length; document.getElementById('selectAllInactive').checked = allChecked === allCheckboxes && allCheckboxes > 0; } }); // Utilidad document.getElementById('btnExample').addEventListener('click', () => { const sample = River Plate; CABA Boca Juniors; CABA; * Newell's; Santa Fe Rosario Central; Santa Fe San Lorenzo; CABA Racing; Buenos Aires; * Independiente; Buenos Aires Estudiantes; Buenos Aires Talleres; Córdoba Belgrano; Córdoba Godoy Cruz; Mendoza Atl. Tucumán; Tucumán; document.getElementById('teamsInput').value = sample; updateCapInfo(); }); document.getElementById('btnClear').addEventListener('click', () => { document.getElementById('teamsInput').value = ''; activeTeams = []; inactiveTeams = []; document.getElementById('checkLists').classList.add('hidden'); document.getElementById('resultGroups').innerHTML = ''; document.getElementById('status').innerHTML = ''; updateCapInfo(); lastResult = null; }); // Sorteos document.getElementById('btnDrawGroups').addEventListener('click', async () => { const teams = getActiveTeamsLive(); if (teams.length === 0) { document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>'; return; } const fmt = getFormat(); const base = (document.getElementById('disciplineSelect').value || 'sorteo'); const runSeed = ${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}; const headsAsFirst = document.getElementById('headsAsFirst').checked; // Si es orden de paso, hacer sorteo simple if (fmt === 'simple') { const rand = rngFromSeed(runSeed); const teamNames = teams.map(t => t.name); const list = shuffle(teamNames, rand); // Mostrar resultado document.getElementById('resultGroups').innerHTML = list.map((n, i) => <div style="margin-bottom: 8px;">${i + 1}. <b>${escapeHtml(n)}</b></div> ).join(''); document.getElementById('status').textContent = 'Sorteo de orden de paso realizado'; // Abrir en nueva pestaña openSimpleResultInNewTab(list); /* if (w) { const chipsHTML = [ disciplineText ? <span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span> : '', category ? <span class="chip">Categoría: ${escapeHtml(category)}</span> : '', gender ? <span class="chip">Género: ${escapeHtml(gender)}</span> : '', <span class="chip">${list.length} equipos</span>, <span class="chip">${new Date().toLocaleString()}</span> ].filter(Boolean).join(''); const listHTML = list.map((name, index) => <div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div> ).join(''); const html = <!DOCTYPE html><html><head><meta charset="utf-8"> <title>Orden de Paso</title> <style> body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;} .container{max-width:1100px; margin:0 auto;} h1{margin-bottom:16px} .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0} .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px} </style> </head><body> <div class="container"> <h1>🎲 Orden de Paso</h1> <div class="chips">${chipsHTML}</div> <div>${listHTML}</div> </div> </body></html>; w.document.open(); w.document.write(html); w.document.close(); } */ // Guardar en la nube const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || ''; const cat = (document.getElementById('categorySelect').value) || ''; const gen = (document.getElementById('genderSelect').value) || ''; const meta = { teamsCount: teams.length, discipline: discTxt, disciplineSeed: base, category: cat, gender: gen, }; await saveSimpleDrawToCloud(list, meta); } else { // Sorteo normal por zonas const z = currentZones(); const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt); renderGroups(document.getElementById('resultGroups'), result); if (!result.error) { openResultInNewTab(result); const now = new Date().toLocaleString(); const item = document.createElement('div'); item.className = 'item'; const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || ''; const cat = (document.getElementById('categorySelect').value) || ''; const gen = (document.getElementById('genderSelect').value) || ''; item.textContent = ${now} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}; document.getElementById('cloudHistoryList').prepend(item); // Guardar en la nube const meta = { teamsCount: teams.length, zones: z, format: fmt, discipline: discTxt, disciplineSeed: base, category: cat, gender: gen, }; await saveDrawToCloud(result, meta); } } }); // CSV Equipos document.getElementById('csvFile').addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function() { try { const result = importTeamsCSV(reader.result || ''); if (result.teams.length === 0) { toast('CSV vacío o sin equipos'); return; } document.getElementById('teamsInput').value = result.teams.map(t => ${t.name}${t.province ? ; ${t.province} : ''}${t.head ? '; *' : ''} ).join('\n'); buildListsFromTextarea(); const info = CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}; document.getElementById('csvInfo').innerHTML = info; toast('CSV de equipos cargado'); } catch(err) { console.error(err); alert('Error: ' + err.message); } }; reader.readAsText(file, 'UTF-8'); }); // CSV Disciplinas document.getElementById('csvDisciplines').addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function() { try { const res = importDisciplinesCSV(reader.result || ''); disciplines = res.items; refreshDisciplineSelects(); const info = CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}; document.getElementById('discCSVInfo').innerHTML = info; toast('CSV de disciplinas cargado'); } catch(err) { console.error(err); alert('Error: ' + err.message); } }; reader.readAsText(file, 'UTF-8'); }); // CSV Categorías document.getElementById('csvCategories').addEventListener('change', function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function() { try { const res = importCategoriesCSV(reader.result || ''); categories = res.items; refreshCategorySelects(); const info = CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}; document.getElementById('catCSVInfo').innerHTML = info; toast('CSV de categorías cargado'); } catch(err) { console.error(err); alert('Error: ' + err.message); } }; reader.readAsText(file, 'UTF-8'); }); // Demos (solo si existen los botones en el HTML) const btnDiscDemo = document.getElementById('btnDiscDemo'); if (btnDiscDemo) { btnDiscDemo.addEventListener('click', () => { disciplines = [ {name: 'Fútbol', seed: 'futbol'}, {name: 'Básquet', seed: 'basquet'}, {name: 'Vóley', seed: 'voley'}, {name: 'Hockey', seed: 'hockey'} ]; refreshDisciplineSelects(); document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas'; toast('Disciplinas demo cargadas'); }); } const btnCatDemo = document.getElementById('btnCatDemo'); if (btnCatDemo) { btnCatDemo.addEventListener('click', () => { categories = [ {name: 'Sub-15', seed: 'sub15'}, {name: 'Sub-17', seed: 'sub17'}, {name: 'Senior', seed: 'senior'}, {name: 'Libre', seed: 'libre'} ]; refreshCategorySelects(); document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas'; toast('Categorías demo cargadas'); }); } // Export/Copy document.getElementById('btnExportCSV').addEventListener('click', () => { const fmt = getFormat(); if (fmt === 'simple') { // Exportar orden de paso como CSV const teams = getActiveTeamsLive(); const teamNames = teams.map(t => t.name); let csv = 'Posicion,Equipo\n'; teamNames.forEach((name, index) => { csv += ${index + 1},"${name.replace(/"/g, '""')}"\n; }); downloadText(csv, 'orden_paso.csv'); } else { // Exportar zonas como CSV (código existente) if (!lastResult || lastResult.error) { toast('Generá el sorteo primero'); return; } let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n'; lastResult.groups.forEach((arr, gi) => { arr.forEach((t, i) => { csv += ${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}","${(t.province || '').replace(/"/g, '""')}",${t.head ? 'si' : 'no'}\n; }); }); downloadText(csv, 'sorteo_zonas.csv'); } }); document.getElementById('btnCopy').addEventListener('click', () => { const fmt = getFormat(); if (fmt === 'simple') { const teams = getActiveTeamsLive(); const teamNames = teams.map(t => t.name); let txt = 'Orden de Paso:\n\n'; teamNames.forEach((name, index) => { txt += ${index + 1}. ${name}\n; }); copyText(txt); } else { if (!lastResult || lastResult.error) { toast('No hay resultado'); return; } let txt = ''; lastResult.groups.forEach((arr, zi) => { txt += Zona ${zi + 1}\n; arr.forEach((t, i) => { txt += ${i + 1}. ${t.name}${t.province ? ' — ' + t.province : ''}${t.head ? ' (Cabeza)' : ''}\n; }); txt += '\n'; }); copyText(txt); } }); // Simple /* document.getElementById('btnUseFromGroups').addEventListener('click', () => { const names = getActiveTeamsLive().map(t => t.name); document.getElementById('simpleInput').value = names.join('\n'); toast('Lista copiada al tab Sorteo simple'); }); document.getElementById('btnClearSimple').addEventListener('click', () => { document.getElementById('simpleInput').value = ''; document.getElementById('resultSimple').innerHTML = ''; }); document.getElementById('btnDrawSimple').addEventListener('click', async () => { const seed = document.getElementById('disciplineSelectSimple').value || simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}; const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean); if (!names.length) { document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>'; return; } const rand = rngFromSeed(seed); const list = shuffle(names, rand); document.getElementById('resultSimple').innerHTML = list.map((n, i) => <div>${i + 1}. <b>${escapeHtml(n)}</b></div>).join(''); document.getElementById('statusSimple').textContent = 'Sorteo realizado'; // Abrir en nueva pestaña openSimpleResultInNewTab(list); // Guardar en la nube const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || ''; const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple'); const categoryEl = document.getElementById('categorySelectSimple'); const genderEl = document.getElementById('genderSelectSimple'); const category = categoryEl ? categoryEl.value : ''; const gender = genderEl ? genderEl.value : ''; const meta = { discipline: discTxt, disciplineSeed: base, category: category, gender: gender }; await saveSimpleDrawToCloud(list, meta); }); */ // Inicializar los selects del tab simple (si existen) // Seleccionar todos los sorteos en la nube - CORREGIDO document.addEventListener('change', function(e) { // "Seleccionar todos" - funciona con delegación if (e.target && e.target.id === 'selectAllCloudBtn') { const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox'); checkboxes.forEach(checkbox => { checkbox.checked = e.target.checked; }); } // Actualizar "Seleccionar todos" cuando cambien checkboxes individuales if (e.target && e.target.classList.contains('cloud-draw-checkbox')) { const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked').length; const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox').length; const selectAllBtn = document.getElementById('selectAllCloudBtn'); if (selectAllBtn) { selectAllBtn.checked = allChecked === allCheckboxes && allCheckboxes > 0; } } }); // Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN document.addEventListener('click', function(e) { if (e.target.id === 'deleteSelectedCloud') { const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked'); if (checkboxes.length === 0) { toast('No hay sorteos seleccionados'); return; } if (!confirm(¿Estás seguro de que querés eliminar ${checkboxes.length} sorteo(s)?)) { return; } const user = auth.currentUser; if (!user) { toast('No estás autenticado'); return; } const deletePromises = Array.from(checkboxes).map(checkbox => db.collection('users').doc(user.uid).collection('draws').doc(checkbox.dataset.docId).delete() ); Promise.all(deletePromises) .then(() => toast(${checkboxes.length} sorteo(s) eliminado(s))) .catch(err => { console.error('Error eliminando sorteos:', err); toast('Error al eliminar los sorteos'); }); } }); }); /* ====================== Auth ====================== */ document.querySelectorAll('.authTab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.authTab').forEach(t => t.classList.remove('active')); document.getElementById('loginForm').classList.add('hidden'); document.getElementById('registerForm').classList.add('hidden'); tab.classList.add('active'); document.getElementById(tab.dataset.tab + 'Form').classList.remove('hidden'); }); }); // Mostrar/ocultar campo de zonas según formato inicial document.querySelector('input[name="format"]:checked').dispatchEvent(new Event('change')); document.getElementById('registerForm').addEventListener('submit', async (e) => { e.preventDefault(); const name = document.getElementById('registerName').value.trim(); const email = document.getElementById('registerEmail').value.trim(); const pass = document.getElementById('registerPassword').value; const pass2 = document.getElementById('registerConfirmPassword').value; if (pass !== pass2) { toast('Las contraseñas no coinciden'); return; } try { const cred = await auth.createUserWithEmailAndPassword(email, pass); await cred.user.updateProfile({displayName: name}); toast('Cuenta creada exitosamente'); } catch(err) { toast('Error: ' + err.message); } }); document.getElementById('loginForm').addEventListener('submit', async (e) => { e.preventDefault(); const email = document.getElementById('loginEmail').value.trim(); const pass = document.getElementById('loginPassword').value; try { await auth.signInWithEmailAndPassword(email, pass); toast('Sesión iniciada'); } catch(err) { toast('Error: ' + err.message); } }); document.getElementById('logoutBtn').addEventListener('click', async () => { try { await auth.signOut(); toast('Sesión cerrada'); } catch { toast('Error al cerrar sesión'); } }); auth.onAuthStateChanged((user) => { const authSection = document.getElementById('authSection'); const appSection = document.getElementById('appSection'); const userInfo = document.getElementById('userInfo'); if (user) { authSection.classList.add('hidden'); appSection.classList.remove('hidden'); userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario'); subscribeCloudHistory(); } else { appSection.classList.add('hidden'); authSection.classList.remove('hidden'); userInfo.textContent = ''; if (cloudUnsub) { cloudUnsub(); cloudUnsub = null; } } }); // Toggle de tema const themeToggle = document.getElementById('themeToggle'); const currentTheme = localStorage.getItem('theme') || 'light'; // Aplicar el tema guardado al cargar document.documentElement.setAttribute('data-theme', currentTheme); // Cambiar logos según el tema inicial const logos = document.querySelectorAll('.logo'); logos.forEach(logo => { if (currentTheme === 'light') { logo.src = 'logo-light.png'; } else { logo.src = 'logo.png'; // O si renombraste: 'logo-dark.png' } }); updateThemeButton(); function updateThemeButton() { const current = document.documentElement.getAttribute('data-theme'); themeToggle.textContent = current === 'light' ? '🌙 Tema Oscuro' : '☀️ Tema Claro'; // Cambiar logos const logos = document.querySelectorAll('.logo'); logos.forEach(logo => { if (current === 'light') { logo.src = 'logo-light.png'; } else { logo.src = 'logo-dark.png'; } }); } themeToggle.addEventListener('click', () => { const current = document.documentElement.getAttribute('data-theme'); const newTheme = current === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme); updateThemeButton(); }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sorteador</title>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <!-- Utilidades PDF en la pestaña de resultado -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+
+  <style>
+    :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    a{color:var(--accent2)}
+    .container{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+    /* Header app */
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    h1{
+    font-size: clamp(22px,3vw,30px);
+    margin: 0;
+    color: #94E5F2;
+}
+    .badge{
+    font-size: 12px;
+    background-color: #94E5F2;
+    opacity: .9;
+    padding: 4px 8px;
+    border-radius: 999px;
+    color: #000000;
+    font-weight: bold;
+}
+    .userBox{display:flex;align-items:center;gap:8px}
+    .pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border: 1px solid #1B315E;
+    border-radius: 999px;
+    background: #0b1220;
+    color: #FFFFFF;
+}
+    .btn{background:#0b1220;color:var(--text);border:1px solid #223046;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    .btn:hover{border-color:#3b82f6}
+    .btn.primary{
+    border: 0;
+    color: #052e16;
+    background-color: #94E5F2;
+}
+    .btn.ghost{background:transparent;border-color:#2b3b55}
+    .btn.warn{
+    border: 0;
+    color: #FFFFFF;
+    background-color: #8A0002;
+}
+    .tiny{
+    font-size: 13px;
+    color: #94E5F2;
+    font-weight: bold;
+}
+    .hidden{display:none}
+
+    /* Paneles y tarjetas */
+    .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:900px){.row{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #243042;border-radius:14px;padding:14px}
+    .card h3{
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #94E5F2;
+}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text],input[type=number],input[type=email],input[type=password],textarea,select{
+      width:100%;background:#0b1220;color:var(--text);border:1px solid #223046;border-radius:10px;padding:10px;font-size:14px
+    }
+    textarea{min-height:200px;resize:vertical}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border-radius:10px;border:1px solid #223046;background:#0b1220;cursor:pointer;color:#e5e7eb}
+    .tab.active{
+    background-color: #1B315E;
+    border-color: #1B315E;
+    color: #94E5F2;
+    font-weight: bold;
+}
+
+    /* Resultado */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+    .zone{background:#0b1220;border:1px solid #223046;border-radius:14px;padding:10px}
+    .zone h4{margin:4px 0 8px 0}
+    .zone ol{margin:0;padding-left:18px}
+    .muted{color:var(--muted)}
+    .warnText{color:var(--warn)}
+    .errorText{color:var(--danger)}
+
+    /* Listas con checks */
+    .history{display:grid;gap:8px}
+    .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
+    .listWrap{display:grid;grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:900px){.listWrap{grid-template-columns:1fr}}
+    .listBox{background:#0b1220;border:1px dashed #2b3b55;border-radius:12px;padding:10px;min-height:120px}
+    .listBox h4{margin:2px 0 8px 0;font-size:14px}
+    .itemRow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed #1f2a3b}
+    .itemRow:last-child{border-bottom:none}
+    .tag{font-size:11px;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:1px 6px}
+   
+    
+    /* Variables para tema claro */
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --card: #f8fafc;
+  --muted: #64748b;
+  --text: #1e293b;
+  --accent: #22c55e;
+  --accent2: #38bdf8;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+}
+
+[data-theme="light"] .btn {
+  background: #e2e8f0;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .btn.primary {
+  background-color: #94E5F2;
+  color: #052e16;
+}
+
+[data-theme="light"] .btn.warn {
+  background-color: #8A0002;
+  color: #FFFFFF;
+}
+
+[data-theme="light"] input[type=text],
+[data-theme="light"] input[type=number],
+[data-theme="light"] input[type=email],
+[data-theme="light"] input[type=password],
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+[data-theme="light"] h1 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .card h3 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .tiny {
+  color: #1B315E;
+}
+	  [data-theme="light"] .pill {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+[data-theme="light"] .tab.active {
+  background-color: #1B315E;
+  border-color: #1B315E;
+  color: #94E5F2;
+}
+
+[data-theme="light"] .tab {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+[data-theme="light"] .tag {
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+	  [data-theme="light"] .listBox {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+}
+
+[data-theme="light"] .listBox h4 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .itemRow {
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+[data-theme="light"] .itemRow:last-child {
+  border-bottom: none;
+}
+
+[data-theme="light"] .zone {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .zone h4 {
+  color: #1B315E;
+}
+
+[data-theme="light"] .history .item {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+}
+
+[data-theme="light"] .card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+	  [data-theme="light"] .cloud-draw-checkbox {
+  accent-color: #1B315E;
+}
+
+[data-theme="light"] .item {
+  color: #1e293b;
+}
+	  [data-theme="light"] .tag {
+  background: #e2e8f0;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+  </style>
+</head>
+<body>
+
+  <!-- ============ Sección de Autenticación ============ -->
+  <section id="authSection" style="max-width:460px;margin:48px auto"> <!--reemplazar "display: none !important;" por "max-width:460px;margin:48px auto">-->
+ <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
+  <img src="logo-dark.png" alt="Logo" class="logo" style="height: 50px; width: auto;">
+  <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
+</div>
+    <div class="card" style="background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px">
+      <div class="authTabs" style="display:flex;border-bottom:1px solid #223046;margin-bottom:14px">
+        <button class="authTab active" data-tab="login" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid #22c55e">Iniciar Sesión</button>
+        <button class="authTab" data-tab="register" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent">Registrarse</button>
+      </div>
+
+      <!-- Login -->
+      <form class="authForm" id="loginForm">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="tu@email.com">
+        </div>
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">Iniciar Sesión</button>
+      </form>
+
+      <!-- Registro -->
+      <form class="authForm hidden" id="registerForm">
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerName">Nombre</label>
+          <input type="text" id="registerName" required placeholder="Tu nombre">
+        </div>
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerEmail">Email</label>
+          <input type="email" id="registerEmail" required placeholder="tu@email.com">
+        </div>
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerPassword">Contraseña</label>
+          <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
+        </div>
+        <div class="formGroup" style="margin-bottom:12px">
+          <label for="registerConfirmPassword">Confirmar Contraseña</label>
+          <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%">Crear Cuenta</button>
+      </form>
+    </div>
+      </section>
+
+  <!-- ============ Aplicación (se muestra tras login) ============ -->
+  <section id="appSection" > <!--borrar style="display: block !important;"-->
+     <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
+  <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
+  <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
+</div>
+    <div class="container">
+      <header>
+        <div>
+          <h1>Sorteador</h1>
+          <div class="tiny">Juegos Nacionales</div>
+        </div>
+        <div class="userBox">
+  <span class="pill" id="userInfo" title="Usuario"></span>
+  <button id="themeToggle" class="btn ghost">🌙 Tema</button>
+  <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
+  <span class="badge">v3.0 </span>
+</div>
+        
+      </header>
+
+      <div class="panel">
+        
+
+        <div id="tab-grupos" class="tabcontent">
+          <div class="row">
+            <div class="card">
+              <h3>Equipos</h3>
+              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">, *</span> para cabeza de serie.</label>
+              <textarea id="teamsInput" placeholder="Ejemplos:
+River Plate, CABA, *
+Boca Juniors, CABA
+Newell's, Santa Fe
+..."></textarea>
+              <div class="controls" style="margin-top:8px">
+                <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
+                <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
+                <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
+                <button class="btn" id="btnBuildList" type="button">Mostrar checks</button>
+              </div>
+              <div class="tiny hidden">CSV de equipos:.</div>
+              <div id="csvInfo" class="tiny" style="margin-top:6px"></div>
+
+             <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
+  <div class="listBox">
+    <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
+    <div class="controls" style="margin-bottom:6px">
+      <label class="pill">
+        <input type="checkbox" id="selectAllActive">
+        Seleccionar todos
+      </label>
+      <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+    </div>
+    <div id="activeList"></div>
+  </div>
+
+  <div class="listBox">
+    <h4>Descartados <span class="tag" id="countInactive">0</span></h4>
+    <div class="controls" style="margin-bottom:6px">
+      <label class="pill">
+        <input type="checkbox" id="toggleShowInactive" checked>
+        Mostrar descartados
+      </label>
+      <label class="pill">
+        <input type="checkbox" id="selectAllInactive">
+        Seleccionar todos
+      </label>
+      <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+    </div>
+    <div id="inactiveList" class="hidden"></div>
+  </div>
+</div>
+
+
+            <div class="card">
+              <h3>Parámetros</h3>
+<div class="controls" id="formatRow">
+  <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label>
+  <label class="pill"><input type="radio" name="format" value="4x6"> 4x6</label>
+  <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label>
+  <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
+</div>
+        <!-- Selector de zonas (solo se muestra con Personalizado) -->
+<div class="controls">
+  <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
+    <label>Nº de zonas / grupos</label>
+    <input type="number" id="zones" min="1" value="8" />
+  </div>
+</div>
+
+<!-- Fila: Importar disciplinas + Selector de disciplinas -->
+<div class="controls">
+  <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+  <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
+  <div style="min-width:220px;flex:1">
+    <label>Disciplina</label>
+    <select id="disciplineSelect">
+      <option value="">— Seleccionar disciplina —</option>
+    </select>
+  </div>
+</div>
+
+<!-- Fila: Importar categorías + Selector de categorías -->
+<div class="controls">
+  <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+  <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
+  <div style="min-width:220px;flex:1">
+    <label>Categoría</label>
+    <select id="categorySelect">
+      <option value="">— Seleccionar categoría —</option>
+    </select>
+  </div>
+</div>
+
+<!-- Fila: Selector de género -->
+<div class="controls">
+  <div style="min-width:220px;flex:1">
+    <label>Género</label>
+    <select id="genderSelect">
+      <option value="">— Seleccionar género —</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Femenino">Femenino</option>
+      <option value="Mixto">Mixto</option>
+      <option value="No Aplica">No Aplica</option>
+    </select>
+  </div>
+</div>
+              <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
+              <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
+
+              <label><input type="checkbox" id="headsAsFirst" > Cabezas de serie primero</label>
+              <div id="capInfo" class="tiny" style="margin-top:6px"></div>
+
+              <div class="controls" style="margin-top:10px">
+                <button class="btn primary" id="btnDrawGroups" type="button">Sortear</button>
+                <button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
+                <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button>
+                <button class="btn hidden" id="btnShare" type="button">🔗 Compartir</button>
+              </div>
+              <div id="status" class="tiny" style="margin-top:8px"></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Resultado</h3>
+            <div id="resultGroups" class="grid"></div>
+          </div>
+
+
+      <div class="card" style="margin-top:12px">
+  <h3>Historial de sorteos guardados</h3>
+  <div class="controls" style="margin-bottom:12px">
+    <label class="pill">
+      <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos
+    </label>
+    <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
+  </div>
+<div id="cloudHistoryList" class="history"></div>
+</div>
+
+        </div>
+        </div>
+
+      <div class="tiny" style="margin-top:12px">Desarrollado por Leonardo Ballestero - 2025.</div>
+    </div>
+  </section>
+
+<script>
+// ====================== CÓDIGO COMPLETO Y FUNCIONANDO ======================
+'use strict';
+
+/* ====================== Firebase ====================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAg7CKq8cMD7WZXJSKylls5JJS4juvxi54",
+  authDomain: "sorteador-53cb5.firebaseapp.com",
+  projectId: "sorteador-53cb5",
+  storageBucket: "sorteador-53cb5.firebasestorage.app",
+  messagingSenderId: "583913752340",
+  appId: "1:583913752340:web:347f8b2866fcbb216e6401"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* ====================== Utils ====================== */
+function toast(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid #334155;padding:10px 12px;border-radius:10px;z-index:9999;';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+function escapeHtml(text) {
+  const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function downloadText(text, filename) {
+  const blob = new Blob([text], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copiado')).catch(() => alert('No se pudo copiar'));
+}
+/* ====================== CSV genérico ====================== */
+function parseCSVLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i], next = line[i + 1];
+    if (ch === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === delimiter && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCSV(text) {
+  if (!text.trim()) return {headers: [], rows: [], delimiter: ','};
+  const firstLine = text.split(/\r?\n/)[0] || '';
+  const counts = {
+    ',': (firstLine.match(/,/g) || []).length,
+    ';': (firstLine.match(/;/g) || []).length,
+    '\t': (firstLine.match(/\t/g) || []).length
+  };
+  const best = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || ',';
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const headers = parseCSVLine(lines[0], best);
+  const rows = lines.slice(1).map(l => parseCSVLine(l, best));
+  return {headers, rows, delimiter: best};
+}
+
+function importTeamsCSV(text) {
+  if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const {headers, rows, delimiter} = parseCSV(text);
+  let nameIdx = -1, provinceIdx = -1, headIdx = -1;
+  
+  if (headers.length) {
+    headers.forEach((h, i) => {
+      const s = h.toLowerCase();
+      if (nameIdx === -1 && (s.includes('equipo') || s.includes('team') || s.includes('nombre') || s.includes('club'))) nameIdx = i;
+      if (provinceIdx === -1 && (s.includes('provincia') || s.includes('province') || s.includes('región') || s.includes('region') || s.includes('localidad'))) provinceIdx = i;
+      if (headIdx === -1 && (s.includes('cabeza') || s.includes('head') || s.includes('seed') || s.includes('semilla'))) headIdx = i;
+    });
+  }
+  
+  if (nameIdx === -1) {
+    nameIdx = 0;
+    provinceIdx = headers.length > 1 ? 1 : -1;
+    headIdx = headers.length > 2 ? 2 : -1;
+  }
+  
+  const teams = [];
+  const uniq = new Set();
+  
+  for (const row of rows) {
+    if (row.length <= nameIdx) continue;
+    const raw = (row[nameIdx] || '');
+    const name = raw.replace(/\*+$/, '').trim();
+    if (!name) continue;
+    
+    const key = name.toLowerCase();
+    if (uniq.has(key)) continue;
+    uniq.add(key);
+    
+    const province = (provinceIdx !== -1 && row[provinceIdx]) ? row[provinceIdx].replace(/\*+$/, '').trim() : '';
+    const hv = (headIdx !== -1 && row[headIdx]) ? String(row[headIdx]).toLowerCase().trim() : '';
+    const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw);
+    teams.push({name, province, head});
+  }
+  
+  return {teams, delimiter, hasHeaders: headers.length > 0};
+}
+
+function importDisciplinesCSV(text) {
+  if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const {headers, rows, delimiter} = parseCSV(text);
+  let nameIdx = 0, seedIdx = 1;
+  
+  if (headers.length) {
+    headers.forEach((h, i) => {
+      const s = h.toLowerCase();
+      if (s.includes('disciplina') || s.includes('deporte') || s.includes('nombre')) nameIdx = i;
+      if (s.includes('semilla') || s.includes('seed') || s.includes('código') || s.includes('codigo')) seedIdx = i;
+    });
+  }
+  
+  const items = [];
+  for (const row of rows) {
+    const name = (row[nameIdx] || '').trim();
+    if (!name) continue;
+    const seed = (row[seedIdx] || name).trim();
+    items.push({name, seed});
+  }
+  return {items, delimiter, hasHeaders: headers.length > 0};
+}
+
+function importCategoriesCSV(text) {
+  if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const {headers, rows, delimiter} = parseCSV(text);
+  let nameIdx = 0, seedIdx = 1;
+  
+  if (headers.length) {
+    headers.forEach((h, i) => {
+      const s = h.toLowerCase();
+      if (s.includes('categor') || s.includes('división') || s.includes('division') || s.includes('nombre')) nameIdx = i;
+      if (s.includes('semilla') || s.includes('seed') || s.includes('código') || s.includes('codigo')) seedIdx = i;
+    });
+  }
+  
+  const items = [];
+  for (const row of rows) {
+    const name = (row[nameIdx] || '').trim();
+    if (!name) continue;
+    const seed = (row[seedIdx] || name).trim();
+    items.push({name, seed});
+  }
+  return {items, delimiter, hasHeaders: headers.length > 0};
+}
+
+/* ====================== Selects ====================== */
+function refreshDisciplineSelects() {
+  const sels = [
+    document.getElementById('disciplineSelect'),
+    document.getElementById('disciplineSelectSimple')
+  ];
+  
+  sels.forEach(sel => {
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar disciplina —</option>';
+    disciplines.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.seed;
+      o.textContent = d.name;
+      o.dataset.seed = d.seed;
+      sel.appendChild(o);
+    });
+    if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
+  });
+}
+
+function refreshCategorySelects() {
+  const sels = [
+    document.getElementById('categorySelect'),
+    document.getElementById('categorySelectSimple')
+  ];
+  
+  sels.forEach(sel => {
+    if (!sel) return; // Esto evita el error si el elemento no existe
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar categoría —</option>';
+    categories.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.name;
+      o.textContent = c.name;
+      o.dataset.seed = c.seed;
+      sel.appendChild(o);
+    });
+    if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
+  });
+}
+/* ====================== Estado ====================== */
+let activeTeams = [], inactiveTeams = [];
+let disciplines = [], categories = [];
+let lastResult = null;
+let cloudUnsub = null;
+
+/* ====================== Listas activas/inactivas ====================== */
+function renderLists() {
+  const aBox = document.getElementById('activeList');
+  const iBox = document.getElementById('inactiveList');
+  const showInactive = document.getElementById('toggleShowInactive').checked;
+  
+  document.getElementById('countActive').textContent = activeTeams.length;
+  document.getElementById('countInactive').textContent = inactiveTeams.length;
+  iBox.classList.toggle('hidden', !showInactive);
+
+  aBox.innerHTML = '';
+  activeTeams.forEach((t, idx) => {
+    const row = document.createElement('div');
+    row.className = 'itemRow';
+    row.innerHTML = `<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+    aBox.appendChild(row);
+  });
+
+  iBox.innerHTML = '';
+  inactiveTeams.forEach((t, idx) => {
+    const row = document.createElement('div');
+    row.className = 'itemRow';
+    row.innerHTML = `<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+    iBox.appendChild(row);
+  });
+}
+
+function buildListsFromTextarea() {
+  const lines = document.getElementById('teamsInput').value.split(/\r?\n/).filter(l => l.trim());
+  activeTeams = [];
+  inactiveTeams = [];
+  const uniq = new Set();
+  
+  for (const line of lines) {
+    const parts = line.split(';').map(p => p.trim());
+    const name = (parts[0] || '').replace(/\*+$/, '').trim();
+    if (!name) continue;
+    
+    const key = name.toLowerCase();
+    if (uniq.has(key)) continue;
+    uniq.add(key);
+    
+    const province = (parts[1] || '').replace(/\*+$/, '').trim();
+    const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : /\*$/.test(parts[0] || '');
+    activeTeams.push({name, province, head});
+  }
+  
+  document.getElementById('checkLists').classList.remove('hidden');
+  renderLists();
+  updateCapInfo();
+  toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
+}
+
+function getChecked(selector) {
+  return Array.from(document.querySelectorAll(selector + ':checked')).map(el => parseInt(el.dataset.idx, 10)).filter(n => !isNaN(n)).sort((a, b) => b - a);
+}
+
+function moveSelectedToInactive() {
+  const idxs = getChecked('.chkActive');
+  const moved = idxs.map(i => activeTeams[i]);
+  idxs.forEach(i => activeTeams.splice(i, 1));
+  inactiveTeams.unshift(...moved);
+  renderLists();
+  updateCapInfo();
+}
+
+function restoreSelectedFromInactive() {
+  const idxs = getChecked('.chkInactive');
+  const moved = idxs.map(i => inactiveTeams[i]);
+  idxs.forEach(i => inactiveTeams.splice(i, 1));
+  activeTeams.push(...moved);
+  renderLists();
+  updateCapInfo();
+}
+
+function selectAll(selector) {
+  document.querySelectorAll(selector).forEach(cb => cb.checked = true);
+}
+
+function getActiveTeamsLive() {
+  // 1) Leer SIEMPRE lo que hay actualmente en el textarea
+  const lines = document.getElementById('teamsInput').value
+    .split(/\r?\n/)
+    .filter(l => l.trim());
+
+  const uniq = new Set();
+  const textTeams = [];
+  const mapByName = new Map();
+
+  for (const line of lines) {
+    const parts = line.split(';').map(p => p.trim());
+    const raw = parts[0] || '';
+    const name = raw.replace(/\*+$/, '').trim();
+    if (!name) continue;
+
+    const key = name.toLowerCase();
+    if (uniq.has(key)) continue;
+    uniq.add(key);
+
+    const province = (parts[1] || '').replace(/\*+$/, '').trim();
+    const head = parts[2]
+      ? /^(si|sí|true|1|\*|x)$/i.test(parts[2])
+      : /\*$/.test(raw);
+
+    const team = { name, province, head };
+    textTeams.push(team);
+    mapByName.set(key, team);
+  }
+
+  const checkListsVisible = !document
+    .getElementById('checkLists')
+    .classList
+    .contains('hidden');
+
+  // 2) Si NO estás usando la vista de Activos/Descartados,
+  //    simplemente usamos lo que hay escrito en el textarea.
+  if (!checkListsVisible) {
+    return textTeams;
+  }
+
+  // 3) Si la vista de Activos/Descartados está visible,
+  //    respetamos quién está activo/inactivo, pero
+  //    ACTUALIZAMOS el "head" según lo que haya escrito en el textarea.
+  const updatedActive = activeTeams.map(t => {
+    const key = t.name.toLowerCase();
+    const fromText = mapByName.get(key);
+    if (fromText) {
+      return {
+        name: t.name,
+        province: t.province,
+        head: fromText.head   // ← acá se respetan los ; *
+      };
+    }
+    return t;
+  });
+
+  return updatedActive;
+}
+
+
+/* ====================== RNG + Sorteo ====================== */
+function xmur3(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = h << 13 | h >>> 19;
+  }
+  return function() {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return (h ^ h >>> 16) >>> 0;
+  };
+}
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function rngFromSeed(seed) {
+  if (!seed || seed.trim() === "") return Math.random;
+  const h = xmur3(String(seed))();
+  return mulberry32(h);
+}
+
+function shuffle(array, rand) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function capacities(n, z) {
+  const base = Math.floor(n / z), rest = n % z;
+  return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0));
+}
+function capacitiesFourBySix(n) {
+  const caps = [6, 6, 6, 6];
+  const total = 24;
+  if (n >= total) return caps;
+  let deficits = total - n;
+  const order = [3, 1, 2, 0]; // Zona4, Zona2, Zona3, Zona1
+  let i = 0;
+  while (deficits > 0) {
+    const idx = order[i % order.length];
+    if (caps[idx] > 0) {
+      caps[idx]--;
+      deficits--;
+    }
+    i++;
+  }
+  return caps;
+}
+  function capacitiesEightByThree(n) {
+  const caps = Array(8).fill(3);
+  const total = 24;
+  if (n >= total) return caps;
+  const d = total - n;
+  const zeros = Math.floor(d / 3);
+  const twos = d % 3;
+  const order = [7, 6, 5, 4, 3, 2, 1, 0];
+  for (let i = 0; i < zeros; i++) caps[order[i]] = 0;
+  let k = zeros;
+  for (let j = 0; j < twos && k < order.length; j++, k++) {
+    if (caps[order[k]] === 3) caps[order[k]] = 2;
+  }
+  return caps;
+}
+function drawGroups(teams, z, headsAsFirst, seed, format) {
+  const rand = rngFromSeed(seed);
+  const n = teams.length;
+  
+  if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
+  if (n < z) return {error: 'Hay menos equipos que zonas.'};
+
+  const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) : (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) : capacities(n, z);
+  const groups = Array.from({length: z}, () => []);
+  const heads = shuffle(teams.filter(t => t.head), rand);
+  const others = shuffle(teams.filter(t => !t.head), rand);
+  
+  if (headsAsFirst && heads.length) {
+    for (let i = 0; i < groups.length && i < heads.length; i++) {
+      groups[i].push(heads[i]);
+    }
+  }
+  
+  const targetCaps = capsBase.map((cap, i) => Math.max(0, cap - groups[i].length));
+  const pool = headsAsFirst ? others : shuffle(teams, rand);
+
+  const maxAttempts = 500;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const g = groups.map(arr => [...arr]);
+    const remaining = [...targetCaps];
+    let ok = true;
+    const order = shuffle(pool, rand);
+    
+    for (const team of order) {
+      const options = g.map((arr, idx) => ({idx, size: arr.length, cap: remaining[idx]})).filter(x => x.cap > 0).sort((a, b) => a.size - b.size || a.idx - b.idx).map(x => x.idx);
+      if (!options.length) { ok = false; break; }
+      const pick = options[Math.floor(rand() * options.length)];
+      g[pick].push(team);
+      remaining[pick]--;
+    }
+    if (ok) return {groups: g, caps: capsBase, relaxed: false, attempt};
+  }
+  return {error: 'No se pudo asignar después de varios intentos'};
+}
+
+/* ====================== Render + Pestaña nueva ====================== */
+function renderGroups(target, result) {
+  if (result.error) {
+    target.innerHTML = `<div class="errorText">${result.error}</div>`;
+    lastResult = null;
+    return;
+  }
+  
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  
+  result.groups.forEach((arr, gi) => {
+    const card = document.createElement('div');
+    card.className = 'zone';
+    card.innerHTML = `<h4>Zona ${gi + 1}</h4>`;
+    const ol = document.createElement('ol');
+    
+    arr.forEach(t => {
+      const li = document.createElement('li');
+      li.innerHTML = `<b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+      ol.appendChild(li);
+    });
+    
+    card.appendChild(ol);
+    grid.appendChild(card);
+  });
+  
+  target.innerHTML = '';
+  target.appendChild(grid);
+  const attempts = result.attempt != null ? ` (intentos: ${result.attempt + 1})` : '';
+  document.getElementById('status').innerHTML = `Sorteo realizado${attempts}`;
+  lastResult = result;
+}
+
+function openResultInNewTab(result) {
+  const w = window.open('about:blank', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado');
+    return;
+  }
+  
+  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+  const category = (document.getElementById('categorySelect').value) || '';
+  const gender = (document.getElementById('genderSelect').value) || '';
+  
+  const chipsHTML = [
+    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    `<span class="chip">${result.groups.length} zonas</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  
+  const zonesHTML = result.groups.map((arr, gi) => {
+    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`).join('');
+    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Resultado del Sorteo</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
+    .zone h4{margin:4px 0 8px 0}
+    .zone ol{margin:0;padding-left:18px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+  </head><body>
+    <div class="container">
+      <h1>🎲 Resultado del Sorteo</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div class="grid">${zonesHTML}</div>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+        document.body.appendChild(sheet);
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
+        });
+      }
+    <\/script>
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+function openSimpleResultInNewTab(list) {
+  const w = window.open('about:blank', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado');
+    return;
+  }
+  
+  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+  const category = (document.getElementById('categorySelect').value) || '';
+  const gender = (document.getElementById('genderSelect').value) || '';
+  
+  const chipsHTML = [
+    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    `<span class="chip">${list.length} equipos</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  
+  const listHTML = list.map((name, index) => 
+    `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Orden de Paso</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+  </head><body>
+    <div class="container">
+      <h1>🎲 Orden de Paso</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div>${listHTML}</div>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+        document.body.appendChild(sheet);
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('orden_paso_'+new Date().toISOString().slice(0,10)+'.pdf');
+        });
+      }
+    <\/script>
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+/* ====================== Guardar en Firestore ====================== */
+async function saveDrawToCloud(result, meta) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('Usuario no logueado, no se guarda en nube');
+    return;
+  }
+  
+  try {
+    const groupsData = result.groups.map((group, groupIndex) => ({
+      groupNumber: groupIndex + 1,
+      teams: group.map(team => ({
+        name: team.name,
+        province: team.province || '',
+        head: team.head || false
+      }))
+    }));
+
+    const payload = {
+      teamsCount: meta.teamsCount,
+      zones: meta.zones,
+      format: meta.format,
+      discipline: meta.discipline,
+      disciplineSeed: meta.disciplineSeed,
+      category: meta.category,
+      gender: meta.gender,
+      groups: groupsData,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: user.uid
+    };
+    
+    await db.collection('users').doc(user.uid).collection('draws').add(payload);
+    toast('Sorteo guardado en la nube ✓');
+    
+  } catch(e) {
+    console.error('Error guardando en nube:', e);
+    toast('No se pudo guardar en la nube');
+  }
+}
+async function saveSimpleDrawToCloud(list, meta) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.log('Usuario no logueado, no se guarda en nube');
+    return;
+  }
+  
+  try {
+    const payload = {
+      type: 'simple',
+      teamsCount: list.length,
+      discipline: meta.discipline,
+      disciplineSeed: meta.disciplineSeed,
+      category: meta.category,
+      gender: meta.gender,
+      list: list,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: user.uid
+    };
+    
+    await db.collection('users').doc(user.uid).collection('draws').add(payload);
+    toast('Sorteo simple guardado en la nube ✓');
+    
+  } catch(e) {
+    console.error('Error guardando en nube:', e);
+    toast('No se pudo guardar en la nube');
+  }
+}
+function subscribeCloudHistory() {
+  const user = auth.currentUser;
+  const listEl = document.getElementById('cloudHistoryList');
+  
+  if (cloudUnsub) {
+    cloudUnsub();
+    cloudUnsub = null;
+  }
+  
+  if (!user) {
+    listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>';
+    return;
+  }
+  
+  cloudUnsub = db.collection('users').doc(user.uid)
+    .collection('draws')
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      listEl.innerHTML = '';
+      
+      if (snap.empty) {
+        listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>';
+        return;
+      }
+      
+      snap.forEach(doc => {
+        const d = doc.data();
+        const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
+        let title = '';
+        if (d.type === 'simple') {
+          title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        } else {
+          title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+        }
+        
+        const item = document.createElement('div');
+item.className = 'item';
+item.style.display = 'flex';
+item.style.alignItems = 'center';
+item.style.gap = '10px';
+
+const checkbox = document.createElement('input');
+checkbox.type = 'checkbox';
+checkbox.className = 'cloud-draw-checkbox';
+checkbox.dataset.docId = doc.id;
+
+checkbox.addEventListener('change', function() {
+  const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+  const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+  document.getElementById('selectAllCloudBtn').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length;
+});
+
+const titleSpan = document.createElement('span');
+titleSpan.textContent = title;
+titleSpan.style.flex = '1';
+
+item.appendChild(checkbox);
+item.appendChild(titleSpan);
+
+const btns = document.createElement('div');
+btns.style.marginLeft = 'auto';
+btns.style.display = 'flex';
+btns.style.gap = '6px';
+        
+        const openBtn = document.createElement('button');
+        openBtn.className = 'btn tiny';
+        openBtn.textContent = 'Abrir';
+        openBtn.addEventListener('click', () => {
+          if (d.type === 'simple') {
+            // Abrir sorteo simple
+            const w = window.open('about:blank', '_blank');
+            if (!w) {
+              toast('Permití pop-ups para ver el resultado');
+              return;
+            }
+            
+            const chipsHTML = [
+              d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
+              d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
+              d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+              `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
+              `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
+            ].filter(Boolean).join('');
+            
+            const listHTML = d.list.map((name, index) => 
+              `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+            ).join('');
+
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+            <title>Resultado del Sorteo Simple Guardado</title>
+            <style>
+              body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+              .container{max-width:1100px; margin:0 auto;}
+              h1{margin-bottom:16px}
+              .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+              .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+              .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+              .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+            </head><body>
+              <div class="container">
+                <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
+                <div class="chips">${chipsHTML}</div>
+                <div>${listHTML}</div>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+              </div>
+              <script>
+                function exportPDF(){
+                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+                  const sheet=document.createElement('div');
+                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+                  const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+                  document.body.appendChild(sheet);
+                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                  });
+                }
+              <\/script>
+            </body></html>`;
+
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+          } else {
+            // Código existente para sorteos de zonas (no modificar)
+            const groups = (d.groups || []).map(groupObj =>
+              groupObj.teams.map(team => ({
+                name: team.name,
+                province: team.province || '',
+                head: team.head || false
+              }))
+            );
+            
+            const res = { groups: groups };
+            
+            const w = window.open('about:blank', '_blank');
+            if (!w) {
+              toast('Permití pop-ups para ver el resultado');
+              return;
+            }
+            
+            const chipsHTML = [
+              d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
+              d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
+              d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+              d.format ? `<span class="chip">Formato: ${escapeHtml(d.format)}</span>` : '',
+              `<span class="chip">${d.zones || groups.length} zonas</span>`,
+              `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
+            ].filter(Boolean).join('');
+            
+            const zonesHTML = groups.map((arr, gi) => {
+              const items = arr.map(t =>
+                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+              ).join('');
+              return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+            }).join('');
+
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+            <title>Resultado del Sorteo Guardado</title>
+            <style>
+              body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+              .container{max-width:1100px; margin:0 auto;}
+              h1{margin-bottom:16px}
+              .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+              .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+              .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+              .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
+              .zone h4{margin:4px 0 8px 0}
+              .zone ol{margin:0;padding-left:18px}
+              .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+              .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+            </head><body>
+              <div class="container">
+                <h1>🎲 Resultado del Sorteo (Guardado)</h1>
+                <div class="chips">${chipsHTML}</div>
+                <div class="grid">${zonesHTML}</div>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+              </div>
+              <script>
+                function exportPDF(){
+                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+                  const sheet=document.createElement('div');
+                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+                  document.body.appendChild(sheet);
+                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                  });
+                }
+              <\/script>
+            </body></html>`;
+
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+          }
+        });
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn tiny warn';
+        deleteBtn.textContent = 'Eliminar';
+        deleteBtn.addEventListener('click', async () => {
+          if (confirm('¿Estás seguro de que querés eliminar este sorteo?')) {
+            try {
+              await db.collection('users').doc(user.uid).collection('draws').doc(doc.id).delete();
+              toast('Sorteo eliminado');
+            } catch (err) {
+              console.error('Error eliminando sorteo:', err);
+              toast('Error al eliminar el sorteo');
+            }
+          }
+        });
+
+        btns.appendChild(openBtn);
+        btns.appendChild(deleteBtn);
+        item.appendChild(btns);
+        listEl.appendChild(item);
+      });
+    }, err => {
+      console.error('Error leyendo historial cloud:', err);
+      listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial.</div>';
+    });
+}
+
+/* ====================== UI State ====================== */
+function getFormat() {
+  const r = document.querySelector('input[name="format"]:checked');
+  return r ? r.value : 'custom';
+}
+
+function currentZones() {
+  const fmt = getFormat();
+  if (fmt === '8x3') return 8;
+  if (fmt === '4x6') return 4;
+  return parseInt(document.getElementById('zones').value) || 1;
+}
+
+function updateCapInfo() {
+  const teams = getActiveTeamsLive().length;
+  const fmt = getFormat();
+  let msg = `Equipos: ${teams}`;
+  
+  if (fmt === 'simple') {
+    msg += ` · Orden de paso`;
+  } else {
+    const z = currentZones();
+    const avg = (teams / z).toFixed(2);
+    msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
+  }
+  
+  document.getElementById('capInfo').innerHTML = msg;
+}
+
+/* ====================== DOM Ready ====================== */
+document.addEventListener('DOMContentLoaded', function() {
+  // Tabs app
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabcontent').forEach(c => c.classList.add('hidden'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Formato
+  document.querySelectorAll('input[name="format"]').forEach(r => {
+  r.addEventListener('change', () => {
+    const elZones = document.getElementById('zones');
+    const customZonesContainer = document.getElementById('customZonesContainer');
+    
+    if (r.value === '8x3') {
+      elZones.value = '8';
+      elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
+    } else if (r.value === '4x6') {
+      elZones.value = '4';
+      elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
+    } else if (r.value === 'simple') {
+      elZones.disabled = true;
+      customZonesContainer.classList.add('hidden');
+    } else {
+      elZones.disabled = false;
+      customZonesContainer.classList.remove('hidden');
+    }
+    updateCapInfo();
+  });
+});
+
+  // Panel checks
+document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
+document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
+document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
+document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
+
+// Checkbox para seleccionar todos los ACTIVOS
+document.getElementById('selectAllActive').addEventListener('change', function () {
+  const checkboxes = document.querySelectorAll('.chkActive');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
+
+// Checkbox para seleccionar todos los DESCARTADOS
+document.getElementById('selectAllInactive').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.chkInactive');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
+
+// Actualizar los checkboxes "Seleccionar todos" cuando cambien los individuales
+document.addEventListener('change', function(e) {
+  // DESCARTADOS
+  if (e.target.classList.contains('chkInactive')) {
+    const allChecked = document.querySelectorAll('.chkInactive:checked').length;
+    const allCheckboxes = document.querySelectorAll('.chkInactive').length;
+    document.getElementById('selectAllInactive').checked =
+      (allChecked === allCheckboxes && allCheckboxes > 0);
+  }
+
+  // ACTIVOS
+  if (e.target.classList.contains('chkActive')) {
+    const allCheckedA = document.querySelectorAll('.chkActive:checked').length;
+    const allCheckboxesA = document.querySelectorAll('.chkActive').length;
+    document.getElementById('selectAllActive').checked =
+      (allCheckedA === allCheckboxesA && allCheckboxesA > 0);
+  }
+});
+});
+
+
+  // Utilidad
+  document.getElementById('btnExample').addEventListener('click', () => {
+    const sample = `River Plate, CABA
+Boca Juniors, CABA, *
+Newell's, Santa Fe
+Rosario Central, Santa Fe
+San Lorenzo, CABA
+Racing; Buenos Aires, *
+Independiente, Buenos Aires
+Estudiantes, Buenos Aires
+Talleres, Córdoba
+Belgrano, Córdoba
+Godoy Cruz, Mendoza
+Atl. Tucumán, Tucumán`;
+    document.getElementById('teamsInput').value = sample;
+    updateCapInfo();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    document.getElementById('teamsInput').value = '';
+    activeTeams = [];
+    inactiveTeams = [];
+    document.getElementById('checkLists').classList.add('hidden');
+    document.getElementById('resultGroups').innerHTML = '';
+    document.getElementById('status').innerHTML = '';
+    updateCapInfo();
+    lastResult = null;
+  });
+
+  // Sorteos
+  document.getElementById('btnDrawGroups').addEventListener('click', async () => {
+  const teams = getActiveTeamsLive();
+  if (teams.length === 0) {
+    document.getElementById('status').innerHTML = '<span class="errorText">No hay equipos activos</span>';
+    return;
+  }
+  
+  const fmt = getFormat();
+  const base = (document.getElementById('disciplineSelect').value || 'sorteo');
+  const runSeed = `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const headsAsFirst = document.getElementById('headsAsFirst').checked;
+
+  // Si es orden de paso, hacer sorteo simple
+  if (fmt === 'simple') {
+    const rand = rngFromSeed(runSeed);
+    const teamNames = teams.map(t => t.name);
+    const list = shuffle(teamNames, rand);
+    
+    // Mostrar resultado
+    document.getElementById('resultGroups').innerHTML = list.map((n, i) => 
+      `<div style="margin-bottom: 8px;">${i + 1}. <b>${escapeHtml(n)}</b></div>`
+    ).join('');
+    
+    document.getElementById('status').textContent = 'Sorteo de orden de paso realizado';
+    
+    // Abrir en nueva pestaña
+openSimpleResultInNewTab(list);
+
+/*    if (w) {
+      const chipsHTML = [
+        disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+        category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+        gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+        `<span class="chip">${list.length} equipos</span>`,
+        `<span class="chip">${new Date().toLocaleString()}</span>`
+      ].filter(Boolean).join('');
+      
+      const listHTML = list.map((name, index) => 
+        `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+      ).join('');
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>Orden de Paso</title>
+      <style>
+        body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+        .container{max-width:1100px; margin:0 auto;}
+        h1{margin-bottom:16px}
+        .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+        .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+      </style>
+      </head><body>
+        <div class="container">
+          <h1>🎲 Orden de Paso</h1>
+          <div class="chips">${chipsHTML}</div>
+          <div>${listHTML}</div>
+        </div>
+      </body></html>`;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+*/
+
+
+// Guardar en la nube
+const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+const cat = (document.getElementById('categorySelect').value) || '';
+const gen = (document.getElementById('genderSelect').value) || '';
+const meta = {
+  teamsCount: teams.length,
+  discipline: discTxt,
+  disciplineSeed: base,
+  category: cat,
+  gender: gen,
+};
+await saveSimpleDrawToCloud(list, meta);
+    
+  } else {
+    // Sorteo normal por zonas
+    const z = currentZones();
+    const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
+    renderGroups(document.getElementById('resultGroups'), result);
+    
+    if (!result.error) {
+      openResultInNewTab(result);
+      const now = new Date().toLocaleString();
+      const item = document.createElement('div');
+      item.className = 'item';
+      const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+      const cat = (document.getElementById('categorySelect').value) || '';
+      const gen = (document.getElementById('genderSelect').value) || '';
+      item.textContent = `${now} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
+      document.getElementById('cloudHistoryList').prepend(item);
+
+      // Guardar en la nube
+      const meta = {
+        teamsCount: teams.length,
+        zones: z,
+        format: fmt,
+        discipline: discTxt,
+        disciplineSeed: base,
+        category: cat,
+        gender: gen,
+      };
+      await saveDrawToCloud(result, meta);
+    }
+  }
+});
+  // CSV Equipos
+  document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const result = importTeamsCSV(reader.result || '');
+        if (result.teams.length === 0) {
+          toast('CSV vacío o sin equipos');
+          return;
+        }
+        document.getElementById('teamsInput').value = result.teams.map(t => 
+          `${t.name}${t.province ? `; ${t.province}` : ''}${t.head ? '; *' : ''}`
+        ).join('\n');
+        buildListsFromTextarea();
+const info = `CSV cargado: ${result.teams.length} equipos · Delimitador: ${result.delimiter === '\t' ? 'TAB' : result.delimiter}${result.hasHeaders ? ' · Con cabecera' : ''}`;
+const csvInfoEl = document.getElementById('csvInfo');
+if (csvInfoEl) {
+  csvInfoEl.innerHTML = info;
+}
+toast('CSV de equipos cargado');
+      } catch(err) {
+        console.error(err);
+        alert('Error: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // CSV Disciplinas
+  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const res = importDisciplinesCSV(reader.result || '');
+        disciplines = res.items;
+        refreshDisciplineSelects();
+        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('discCSVInfo').innerHTML = info;
+        toast('CSV de disciplinas cargado');
+      } catch(err) {
+        console.error(err);
+        alert('Error: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // CSV Categorías
+  document.getElementById('csvCategories').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function() {
+      try {
+        const res = importCategoriesCSV(reader.result || '');
+        categories = res.items;
+        refreshCategorySelects();
+        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
+        document.getElementById('catCSVInfo').innerHTML = info;
+        toast('CSV de categorías cargado');
+      } catch(err) {
+        console.error(err);
+        alert('Error: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+    // Demos (solo si existen los botones en el HTML)
+  const btnDiscDemo = document.getElementById('btnDiscDemo');
+  if (btnDiscDemo) {
+    btnDiscDemo.addEventListener('click', () => {
+      disciplines = [
+        {name: 'Fútbol', seed: 'futbol'},
+        {name: 'Básquet', seed: 'basquet'}, 
+        {name: 'Vóley', seed: 'voley'},
+        {name: 'Hockey', seed: 'hockey'}
+      ];
+      refreshDisciplineSelects();
+      document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
+      toast('Disciplinas demo cargadas');
+    });
+  }
+
+  const btnCatDemo = document.getElementById('btnCatDemo');
+  if (btnCatDemo) {
+    btnCatDemo.addEventListener('click', () => {
+      categories = [
+        {name: 'Sub-15', seed: 'sub15'},
+        {name: 'Sub-17', seed: 'sub17'},
+        {name: 'Senior', seed: 'senior'}, 
+        {name: 'Libre', seed: 'libre'}
+      ];
+      refreshCategorySelects();
+      document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
+      toast('Categorías demo cargadas');
+    });
+  }
+
+  // Export/Copy
+  document.getElementById('btnExportCSV').addEventListener('click', () => {
+  const fmt = getFormat();
+  
+  if (fmt === 'simple') {
+    // Exportar orden de paso como CSV
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    let csv = 'Posicion,Equipo\n';
+    teamNames.forEach((name, index) => {
+      csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
+    });
+    downloadText(csv, 'orden_paso.csv');
+  } else {
+    // Exportar zonas como CSV (código existente)
+    if (!lastResult || lastResult.error) {
+      toast('Generá el sorteo primero');
+      return;
+    }
+    let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
+    lastResult.groups.forEach((arr, gi) => {
+      arr.forEach((t, i) => {
+        csv += `${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}","${(t.province || '').replace(/"/g, '""')}",${t.head ? 'si' : 'no'}\n`;
+      });
+    });
+    downloadText(csv, 'sorteo_zonas.csv');
+  }
+});
+
+ document.getElementById('btnCopy').addEventListener('click', () => {
+  const fmt = getFormat();
+  
+  if (fmt === 'simple') {
+    const teams = getActiveTeamsLive();
+    const teamNames = teams.map(t => t.name);
+    let txt = 'Orden de Paso:\n\n';
+    teamNames.forEach((name, index) => {
+      txt += `${index + 1}. ${name}\n`;
+    });
+    copyText(txt);
+  } else {
+    if (!lastResult || lastResult.error) {
+      toast('No hay resultado');
+      return;
+    }
+    let txt = '';
+    lastResult.groups.forEach((arr, zi) => {
+      txt += `Zona ${zi + 1}\n`;
+      arr.forEach((t, i) => {
+        txt += `${i + 1}. ${t.name}${t.province ? ' — ' + t.province : ''}${t.head ? ' (Cabeza)' : ''}\n`;
+      });
+      txt += '\n';
+    });
+    copyText(txt);
+  }
+});
+
+  // Simple
+ /* document.getElementById('btnUseFromGroups').addEventListener('click', () => {
+    const names = getActiveTeamsLive().map(t => t.name);
+    document.getElementById('simpleInput').value = names.join('\n');
+    toast('Lista copiada al tab Sorteo simple');
+  });
+
+  document.getElementById('btnClearSimple').addEventListener('click', () => {
+    document.getElementById('simpleInput').value = '';
+    document.getElementById('resultSimple').innerHTML = '';
+  });
+
+  document.getElementById('btnDrawSimple').addEventListener('click', async () => {
+  const seed = document.getElementById('disciplineSelectSimple').value || `simple-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const names = document.getElementById('simpleInput').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (!names.length) {
+    document.getElementById('statusSimple').innerHTML = '<span class="errorText">No hay equipos</span>';
+    return;
+  }
+  const rand = rngFromSeed(seed);
+  const list = shuffle(names, rand);
+  document.getElementById('resultSimple').innerHTML = list.map((n, i) => `<div>${i + 1}. <b>${escapeHtml(n)}</b></div>`).join('');
+  document.getElementById('statusSimple').textContent = 'Sorteo realizado';
+  
+  // Abrir en nueva pestaña
+  openSimpleResultInNewTab(list);
+
+  // Guardar en la nube
+  const discTxt = (document.getElementById('disciplineSelectSimple').selectedOptions[0]?.text) || '';
+  const base = (document.getElementById('disciplineSelectSimple').value || 'sorteo-simple');
+  const categoryEl = document.getElementById('categorySelectSimple');
+  const genderEl = document.getElementById('genderSelectSimple');
+  const category = categoryEl ? categoryEl.value : '';
+  const gender = genderEl ? genderEl.value : '';
+  const meta = {
+    discipline: discTxt,
+    disciplineSeed: base,
+    category: category,
+    gender: gender
+  };
+  await saveSimpleDrawToCloud(list, meta);
+});
+*/
+
+  // Inicializar los selects del tab simple (si existen)
+// Seleccionar todos los sorteos en la nube - CORREGIDO
+document.addEventListener('change', function(e) {
+  // "Seleccionar todos" - funciona con delegación
+  if (e.target && e.target.id === 'selectAllCloudBtn') {
+    const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = e.target.checked;
+    });
+  }
+  
+  // Actualizar "Seleccionar todos" cuando cambien checkboxes individuales
+  if (e.target && e.target.classList.contains('cloud-draw-checkbox')) {
+    const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked').length;
+    const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox').length;
+    const selectAllBtn = document.getElementById('selectAllCloudBtn');
+    if (selectAllBtn) {
+      selectAllBtn.checked = allChecked === allCheckboxes && allCheckboxes > 0;
+    }
+  }
+});
+
+// Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'deleteSelectedCloud') {
+    const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+    if (checkboxes.length === 0) {
+      toast('No hay sorteos seleccionados');
+      return;
+    }
+
+    if (!confirm(`¿Estás seguro de que querés eliminar ${checkboxes.length} sorteo(s)?`)) {
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      toast('No estás autenticado');
+      return;
+    }
+
+    const deletePromises = Array.from(checkboxes).map(checkbox => 
+      db.collection('users').doc(user.uid).collection('draws').doc(checkbox.dataset.docId).delete()
+    );
+    
+    Promise.all(deletePromises)
+      .then(() => toast(`${checkboxes.length} sorteo(s) eliminado(s)`))
+      .catch(err => {
+        console.error('Error eliminando sorteos:', err);
+        toast('Error al eliminar los sorteos');
+      });
+  }
+});
+});
+
+/* ====================== Auth ====================== */
+document.querySelectorAll('.authTab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.authTab').forEach(t => t.classList.remove('active'));
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab + 'Form').classList.remove('hidden');
+  });
+});
+// Mostrar/ocultar campo de zonas según formato inicial
+document.querySelector('input[name="format"]:checked').dispatchEvent(new Event('change'));
+  
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const pass = document.getElementById('registerPassword').value;
+  const pass2 = document.getElementById('registerConfirmPassword').value;
+  
+  if (pass !== pass2) {
+    toast('Las contraseñas no coinciden');
+    return;
+  }
+  
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({displayName: name});
+    toast('Cuenta creada exitosamente');
+  } catch(err) {
+    toast('Error: ' + err.message);
+  }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    toast('Sesión iniciada');
+  } catch(err) {
+    toast('Error: ' + err.message);
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await auth.signOut();
+    toast('Sesión cerrada');
+  } catch {
+    toast('Error al cerrar sesión');
+  }
+});
+
+auth.onAuthStateChanged((user) => {
+  const authSection = document.getElementById('authSection');
+  const appSection = document.getElementById('appSection');
+  const userInfo = document.getElementById('userInfo');
+  
+  if (user) {
+    authSection.classList.add('hidden');
+    appSection.classList.remove('hidden');
+    userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
+    subscribeCloudHistory();
+  } else {
+    appSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+    userInfo.textContent = '';
+    if (cloudUnsub) {
+      cloudUnsub();
+      cloudUnsub = null;
+    }
+  }
+});
+  // Toggle de tema
+const themeToggle = document.getElementById('themeToggle');
+const currentTheme = localStorage.getItem('theme') || 'light';
+
+// Aplicar el tema guardado al cargar
+document.documentElement.setAttribute('data-theme', currentTheme);
+
+// Cambiar logos según el tema inicial
+const logos = document.querySelectorAll('.logo');
+logos.forEach(logo => {
+  if (currentTheme === 'light') {
+    logo.src = 'logo-light.png';
+  } else {
+    logo.src = 'logo.png';  // O si renombraste: 'logo-dark.png'
+  }
+});
+
+updateThemeButton();
+
+function updateThemeButton() {
+  const current = document.documentElement.getAttribute('data-theme');
+  themeToggle.textContent = current === 'light' ? '🌙 Tema Oscuro' : '☀️ Tema Claro';
+  
+  // Cambiar logos
+  const logos = document.querySelectorAll('.logo');
+  logos.forEach(logo => {
+    if (current === 'light') {
+      logo.src = 'logo-light.png';
+    } else {
+      logo.src = 'logo-dark.png';
+    }
+  });
+}
+
+	themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeButton();
+});	
+</script>
+</body>
+</html>
