@@ -1796,15 +1796,17 @@ await saveSimpleDrawToCloud(list, meta);
 */
 
   // Inicializar los selects del tab simple (si existen)
-// Seleccionar todos los sorteos en la nube
-document.getElementById('selectAllCloudBtn').addEventListener('change', function(e) {
-  const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
-  checkboxes.forEach(checkbox => {
-    checkbox.checked = e.target.checked;
-  });
+// Seleccionar todos los sorteos en la nube - USANDO DELEGACIÓN
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'selectAllCloudBtn') {
+    const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = e.target.checked;
+    });
+  }
 });
 
-// Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN DE EVENTOS
+// Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN
 document.addEventListener('click', function(e) {
   if (e.target.id === 'deleteSelectedCloud') {
     const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox:checked');
