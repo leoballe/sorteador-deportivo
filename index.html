@@ -392,6 +392,13 @@ Newell's, Santa Fe
     </select>
   </div>
 </div>
+<!-- Nueva fila: Agregar disciplina manual -->
+<div class="controls" style="margin-top:4px">
+  <div style="min-width:160px;flex:1">
+    <input type="text" id="newDisciplineInput" placeholder="Nueva disciplina" style="width:100%">
+  </div>
+  <button class="btn tiny" id="btnAddDiscipline">Agregar disciplina</button>
+</div>
 
 <!-- Fila: Importar categorías + Selector de categorías -->
 <div class="controls">
@@ -403,6 +410,13 @@ Newell's, Santa Fe
       <option value="">— Seleccionar categoría —</option>
     </select>
   </div>
+</div>
+<!-- Nueva fila: Agregar categoría manual -->
+<div class="controls" style="margin-top:4px">
+  <div style="min-width:160px;flex:1">
+    <input type="text" id="newCategoryInput" placeholder="Nueva categoría" style="width:100%">
+  </div>
+  <button class="btn tiny" id="btnAddCategory">Agregar categoría</button>
 </div>
 
 <!-- Fila: Selector de género -->
@@ -673,6 +687,56 @@ function refreshCategorySelects() {
     if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
   });
 }
+
+	/* ====================== Agregar disciplinas y categorías manualmente ====================== */
+document.getElementById('btnAddDiscipline').addEventListener('click', function() {
+  const input = document.getElementById('newDisciplineInput');
+  const name = input.value.trim();
+  if (!name) {
+    toast('Escribí el nombre de la disciplina');
+    return;
+  }
+  // Verificar que no exista ya
+  if (disciplines.some(d => d.name.toLowerCase() === name.toLowerCase())) {
+    toast('Esa disciplina ya existe');
+    return;
+  }
+  // Agregar la disciplina (usamos el nombre como seed también)
+  disciplines.push({ name, seed: name });
+  refreshDisciplineSelects();
+  input.value = ''; // Limpiar el input
+  toast(`Disciplina "${name}" agregada`);
+});
+
+document.getElementById('btnAddCategory').addEventListener('click', function() {
+  const input = document.getElementById('newCategoryInput');
+  const name = input.value.trim();
+  if (!name) {
+    toast('Escribí el nombre de la categoría');
+    return;
+  }
+  if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    toast('Esa categoría ya existe');
+    return;
+  }
+  categories.push({ name, seed: name });
+  refreshCategorySelects();
+  input.value = '';
+  toast(`Categoría "${name}" agregada`);
+});
+
+// Permitir agregar con Enter
+document.getElementById('newDisciplineInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('btnAddDiscipline').click();
+  }
+});
+
+document.getElementById('newCategoryInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('btnAddCategory').click();
+  }
+});
 /* ====================== Estado ====================== */
 let activeTeams = [], inactiveTeams = [];
 let disciplines = [], categories = [];
