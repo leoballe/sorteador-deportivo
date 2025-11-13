@@ -442,7 +442,7 @@ Newell's; Santa Fe
   <h3>Historial de sorteos guardados</h3>
   <div class="controls" style="margin-bottom:12px">
     <label class="pill">
-      <input type="checkbox" id="selectAllCloud"> Seleccionar todos
+      <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos
     </label>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
@@ -1797,7 +1797,7 @@ await saveSimpleDrawToCloud(list, meta);
 
   // Inicializar los selects del tab simple (si existen)
 // Seleccionar todos los sorteos en la nube
-document.getElementById('selectAllCloud').addEventListener('change', function(e) {
+document.getElementById('selectAllCloudBtn').addEventListener('change', function(e) {
   const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
   checkboxes.forEach(checkbox => {
     checkbox.checked = e.target.checked;
