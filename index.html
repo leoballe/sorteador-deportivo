@@ -343,10 +343,12 @@ Newell's, Santa Fe
               <div id="checkLists" class="listWrap hidden" style="margin-top:10px">
                 <div class="listBox">
                   <h4>Activos (participan) <span class="tag" id="countActive">0</span></h4>
-                  <div class="controls" style="margin-bottom:6px">
-                    <button class="btn tiny" id="btnSelectAllActive" type="button">Seleccionar todo</button>
-                    <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
-                  </div>
+<div class="controls" style="margin-bottom:6px">
+  <label class="pill">
+    <input type="checkbox" id="selectAllActive"> Seleccionar todos
+  </label>
+  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+</div>
                   <div id="activeList"></div>
                 </div>
                 <div class="listBox">
@@ -1483,8 +1485,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
   document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
-  document.getElementById('btnSelectAllActive').addEventListener('click', () => selectAll('.chkActive'));
-
+document.getElementById('selectAllActive').addEventListener('change', function() {
+  const checkboxes = document.querySelectorAll('.chkActive');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = this.checked;
+  });
+});
   // Checkbox para seleccionar todos los descartados
 document.getElementById('selectAllInactive').addEventListener('change', function() {
   const checkboxes = document.querySelectorAll('.chkInactive');
@@ -1495,6 +1501,12 @@ document.getElementById('selectAllInactive').addEventListener('change', function
 
 // Actualizar el checkbox "Seleccionar todos" cuando cambien checkboxes individuales
 document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('chkActive')) {
+    const allChecked = document.querySelectorAll('.chkActive:checked').length;
+    const allCheckboxes = document.querySelectorAll('.chkActive').length;
+    document.getElementById('selectAllActive').checked = allChecked === allCheckboxes && allCheckboxes > 0;
+  }
+  
   if (e.target.classList.contains('chkInactive')) {
     const allChecked = document.querySelectorAll('.chkInactive:checked').length;
     const allCheckboxes = document.querySelectorAll('.chkInactive').length;
