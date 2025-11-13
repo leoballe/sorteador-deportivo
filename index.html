@@ -757,31 +757,65 @@ function selectAll(selector) {
 }
 
 function getActiveTeamsLive() {
-  if (document.getElementById('checkLists').classList.contains('hidden')) {
-    const lines = document.getElementById('teamsInput').value.split(/\r?\n/).filter(l => l.trim());
-    const teams = [];
-    const uniq = new Set();
-    
-    for (const line of lines) {
-      const parts = line.split(';').map(p => p.trim());
-      const raw = parts[0] || '';
-      const name = raw.replace(/\*+$/, '').trim();
-      if (!name) continue;
-      
-      const key = name.toLowerCase();
-      if (uniq.has(key)) continue;
-      uniq.add(key);
-      
-      teams.push({
-        name,
-        province: (parts[1] || '').replace(/\*+$/, '').trim(),
-        head: parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : /\*$/.test(raw)
-      });
-    }
-    return teams;
+  // 1) Leer SIEMPRE lo que hay actualmente en el textarea
+  const lines = document.getElementById('teamsInput').value
+    .split(/\r?\n/)
+    .filter(l => l.trim());
+
+  const uniq = new Set();
+  const textTeams = [];
+  const mapByName = new Map();
+
+  for (const line of lines) {
+    const parts = line.split(';').map(p => p.trim());
+    const raw = parts[0] || '';
+    const name = raw.replace(/\*+$/, '').trim();
+    if (!name) continue;
+
+    const key = name.toLowerCase();
+    if (uniq.has(key)) continue;
+    uniq.add(key);
+
+    const province = (parts[1] || '').replace(/\*+$/, '').trim();
+    const head = parts[2]
+      ? /^(si|sí|true|1|\*|x)$/i.test(parts[2])
+      : /\*$/.test(raw);
+
+    const team = { name, province, head };
+    textTeams.push(team);
+    mapByName.set(key, team);
   }
-  return [...activeTeams];
+
+  const checkListsVisible = !document
+    .getElementById('checkLists')
+    .classList
+    .contains('hidden');
+
+  // 2) Si NO estás usando la vista de Activos/Descartados,
+  //    simplemente usamos lo que hay escrito en el textarea.
+  if (!checkListsVisible) {
+    return textTeams;
+  }
+
+  // 3) Si la vista de Activos/Descartados está visible,
+  //    respetamos quién está activo/inactivo, pero
+  //    ACTUALIZAMOS el "head" según lo que haya escrito en el textarea.
+  const updatedActive = activeTeams.map(t => {
+    const key = t.name.toLowerCase();
+    const fromText = mapByName.get(key);
+    if (fromText) {
+      return {
+        name: t.name,
+        province: t.province,
+        head: fromText.head   // ← acá se respetan los ; *
+      };
+    }
+    return t;
+  });
+
+  return updatedActive;
 }
+
 
 /* ====================== RNG + Sorteo ====================== */
 function xmur3(str) {
