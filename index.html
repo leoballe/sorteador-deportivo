@@ -374,10 +374,15 @@ Newell's, Santa Fe
   <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
 </div>
         <!-- Selector de zonas (solo se muestra con Personalizado) -->
+<!-- Selector de zonas (solo se muestra con Personalizado) -->
 <div class="controls">
   <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
     <label>Nº de zonas / grupos</label>
     <input type="number" id="zones" min="1" value="8" />
+  </div>
+  <div style="min-width:160px;flex:1" class="hidden" id="customTeamsPerZoneContainer">
+    <label>Equipos por zona</label>
+    <input type="number" id="teamsPerZone" min="2" value="4" />
   </div>
 </div>
 
@@ -925,6 +930,35 @@ function capacities(n, z) {
   const base = Math.floor(n / z), rest = n % z;
   return Array.from({length: z}, (_, i) => base + (i < rest ? 1 : 0));
 }
+	function capacitiesWithTeamsPerZone(n, z, teamsPerZone) {
+  const totalCapacity = z * teamsPerZone;
+  
+  // Si hay más equipos que la capacidad total, redistribuir
+  if (n > totalCapacity) {
+    return capacities(n, z); // Usar la distribución normal
+  }
+  
+  // Si hay menos equipos, redistribuir según el criterio especificado
+  let caps = Array(z).fill(teamsPerZone);
+  let teamsToRemove = totalCapacity - n;
+  let currentZone = z - 1; // Empezar desde la última zona
+  
+  while (teamsToRemove > 0 && currentZone >= 0) {
+    if (caps[currentZone] > 2) {
+      caps[currentZone]--;
+      teamsToRemove--;
+    } else {
+      currentZone--;
+      // Si todas las zonas tienen 2 equipos, redistribuir en menos zonas
+      if (currentZone < 0 && teamsToRemove > 0) {
+        const newZoneCount = Math.ceil(n / teamsPerZone);
+        return capacitiesWithTeamsPerZone(n, newZoneCount, teamsPerZone);
+      }
+    }
+  }
+  
+  return caps;
+}
 function capacitiesFourBySix(n) {
   const caps = [6, 6, 6, 6];
   const total = 24;
@@ -964,7 +998,17 @@ function drawGroups(teams, z, headsAsFirst, seed, format) {
   if (z < 1) return {error: 'El nº de zonas debe ser ≥ 1'};
   if (n < z) return {error: 'Hay menos equipos que zonas.'};
 
-  const capsBase = (format === '4x6' && z === 4 && n <= 24) ? capacitiesFourBySix(n) : (format === '8x3' && z === 8 && n <= 24) ? capacitiesEightByThree(n) : capacities(n, z);
+let capsBase;
+if (format === 'custom') {
+  const teamsPerZone = parseInt(document.getElementById('teamsPerZone').value) || 4;
+  capsBase = capacitiesWithTeamsPerZone(n, z, teamsPerZone);
+} else if (format === '4x6' && z === 4 && n <= 24) {
+  capsBase = capacitiesFourBySix(n);
+} else if (format === '8x3' && z === 8 && n <= 24) {
+  capsBase = capacitiesEightByThree(n);
+} else {
+  capsBase = capacities(n, z);
+}
   const groups = Array.from({length: z}, () => []);
   const heads = shuffle(teams.filter(t => t.head), rand);
   const others = shuffle(teams.filter(t => !t.head), rand);
@@ -1520,30 +1564,35 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Formato
-  document.querySelectorAll('input[name="format"]').forEach(r => {
+document.querySelectorAll('input[name="format"]').forEach(r => {
   r.addEventListener('change', () => {
     const elZones = document.getElementById('zones');
     const customZonesContainer = document.getElementById('customZonesContainer');
+    const customTeamsPerZoneContainer = document.getElementById('customTeamsPerZoneContainer');
     
     if (r.value === '8x3') {
       elZones.value = '8';
       elZones.disabled = true;
       customZonesContainer.classList.add('hidden');
+      customTeamsPerZoneContainer.classList.add('hidden');
     } else if (r.value === '4x6') {
       elZones.value = '4';
       elZones.disabled = true;
       customZonesContainer.classList.add('hidden');
+      customTeamsPerZoneContainer.classList.add('hidden');
     } else if (r.value === 'simple') {
       elZones.disabled = true;
       customZonesContainer.classList.add('hidden');
+      customTeamsPerZoneContainer.classList.add('hidden');
     } else {
       elZones.disabled = false;
       customZonesContainer.classList.remove('hidden');
+      customTeamsPerZoneContainer.classList.remove('hidden');
     }
     updateCapInfo();
   });
 });
-
+	
   // Panel checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
