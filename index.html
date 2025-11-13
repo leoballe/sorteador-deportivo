@@ -1184,6 +1184,12 @@ checkbox.type = 'checkbox';
 checkbox.className = 'cloud-draw-checkbox';
 checkbox.dataset.docId = doc.id;
 
+checkbox.addEventListener('change', function() {
+  const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox');
+  const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked');
+  document.getElementById('selectAllCloudBtn').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length;
+});
+
 const titleSpan = document.createElement('span');
 titleSpan.textContent = title;
 titleSpan.style.flex = '1';
