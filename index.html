@@ -324,11 +324,11 @@
           <div class="row">
             <div class="card">
               <h3>Equipos</h3>
-              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">; *</span> para cabeza de serie.</label>
+              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">, *</span> para cabeza de serie.</label>
               <textarea id="teamsInput" placeholder="Ejemplos:
-River Plate; CABA; *
-Boca Juniors; CABA
-Newell's; Santa Fe
+River Plate, CABA, *
+Boca Juniors, CABA
+Newell's, Santa Fe
 ..."></textarea>
               <div class="controls" style="margin-top:8px">
                 <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
@@ -1504,18 +1504,18 @@ document.addEventListener('change', function(e) {
 
   // Utilidad
   document.getElementById('btnExample').addEventListener('click', () => {
-    const sample = `River Plate; CABA
-Boca Juniors; CABA; *
-Newell's; Santa Fe
-Rosario Central; Santa Fe
-San Lorenzo; CABA
-Racing; Buenos Aires; *
-Independiente; Buenos Aires
-Estudiantes; Buenos Aires
-Talleres; Córdoba
-Belgrano; Córdoba
-Godoy Cruz; Mendoza
-Atl. Tucumán; Tucumán`;
+    const sample = `River Plate, CABA
+Boca Juniors, CABA, *
+Newell's, Santa Fe
+Rosario Central, Santa Fe
+San Lorenzo, CABA
+Racing; Buenos Aires, *
+Independiente, Buenos Aires
+Estudiantes, Buenos Aires
+Talleres, Córdoba
+Belgrano, Córdoba
+Godoy Cruz, Mendoza
+Atl. Tucumán, Tucumán`;
     document.getElementById('teamsInput').value = sample;
     updateCapInfo();
   });
