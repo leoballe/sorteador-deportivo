@@ -1676,30 +1676,37 @@ await saveSimpleDrawToCloud(list, meta);
     reader.readAsText(file, 'UTF-8');
   });
 
-  // Demos
-  document.getElementById('btnDiscDemo').addEventListener('click', () => {
-    disciplines = [
-      {name: 'Fútbol', seed: 'futbol'},
-      {name: 'Básquet', seed: 'basquet'}, 
-      {name: 'Vóley', seed: 'voley'},
-      {name: 'Hockey', seed: 'hockey'}
-    ];
-    refreshDisciplineSelects();
-    document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
-    toast('Disciplinas demo cargadas');
-  });
+    // Demos (solo si existen los botones en el HTML)
+  const btnDiscDemo = document.getElementById('btnDiscDemo');
+  if (btnDiscDemo) {
+    btnDiscDemo.addEventListener('click', () => {
+      disciplines = [
+        {name: 'Fútbol', seed: 'futbol'},
+        {name: 'Básquet', seed: 'basquet'}, 
+        {name: 'Vóley', seed: 'voley'},
+        {name: 'Hockey', seed: 'hockey'}
+      ];
+      refreshDisciplineSelects();
+      document.getElementById('discCSVInfo').innerHTML = 'Demo: 4 disciplinas cargadas';
+      toast('Disciplinas demo cargadas');
+    });
+  }
 
-  document.getElementById('btnCatDemo').addEventListener('click', () => {
-    categories = [
-      {name: 'Sub-15', seed: 'sub15'},
-      {name: 'Sub-17', seed: 'sub17'},
-      {name: 'Senior', seed: 'senior'}, 
-      {name: 'Libre', seed: 'libre'}
-    ];
-    refreshCategorySelects();
-    document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
-    toast('Categorías demo cargadas');
-  });
+  const btnCatDemo = document.getElementById('btnCatDemo');
+  if (btnCatDemo) {
+    btnCatDemo.addEventListener('click', () => {
+      categories = [
+        {name: 'Sub-15', seed: 'sub15'},
+        {name: 'Sub-17', seed: 'sub17'},
+        {name: 'Senior', seed: 'senior'}, 
+        {name: 'Libre', seed: 'libre'}
+      ];
+      refreshCategorySelects();
+      document.getElementById('catCSVInfo').innerHTML = 'Demo: 4 categorías cargadas';
+      toast('Categorías demo cargadas');
+    });
+  }
+
   // Export/Copy
   document.getElementById('btnExportCSV').addEventListener('click', () => {
   const fmt = getFormat();
