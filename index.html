@@ -987,7 +987,7 @@ function openResultInNewTab(result) {
   ].filter(Boolean).join('');
   
   const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`).join('');
+    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
 
@@ -1334,7 +1334,7 @@ btns.style.gap = '6px';
             
             const zonesHTML = groups.map((arr, gi) => {
               const items = arr.map(t =>
-                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' ★' : ''}</li>`
+                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' cabeza' : ''}</li>`
               ).join('');
               return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
             }).join('');
