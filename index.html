@@ -445,8 +445,8 @@ Newell's, Santa Fe
 
               <div class="controls" style="margin-top:10px">
                 <button class="btn primary" id="btnDrawGroups" type="button">Sortear</button>
-                <button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
-                <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button>
+				<button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
+				  <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button>
                 <button class="btn hidden" id="btnShare" type="button">🔗 Compartir</button>
               </div>
               <div id="status" class="tiny" style="margin-top:8px"></div>
@@ -1353,6 +1353,28 @@ btns.style.gap = '6px';
         const openBtn = document.createElement('button');
         openBtn.className = 'btn tiny';
         openBtn.textContent = 'Abrir';
+		  const exportBtn = document.createElement('button');
+exportBtn.className = 'btn tiny';
+exportBtn.textContent = 'Exportar CSV';
+exportBtn.addEventListener('click', () => {
+  if (d.type === 'simple') {
+    // Exportar sorteo simple
+    let csv = 'Posicion,Equipo\n';
+    d.list.forEach((name, index) => {
+      csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
+    });
+    downloadText(csv, `orden_paso_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
+  } else {
+    // Exportar sorteo por zonas
+    let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
+    d.groups.forEach((group, gi) => {
+      group.teams.forEach((team, i) => {
+        csv += `${gi + 1},${i + 1},"${team.name.replace(/"/g, '""')}","${(team.province || '').replace(/"/g, '""')}",${team.head ? 'si' : 'no'}\n`;
+      });
+    });
+    downloadText(csv, `sorteo_zonas_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
+  }
+});
         openBtn.addEventListener('click', () => {
           if (d.type === 'simple') {
             // Abrir sorteo simple
@@ -1517,6 +1539,7 @@ btns.style.gap = '6px';
         });
 
         btns.appendChild(openBtn);
+		  btns.appendChild(exportBtn);
         btns.appendChild(deleteBtn);
         item.appendChild(btns);
         listEl.appendChild(item);
@@ -1665,6 +1688,10 @@ Atl. Tucumán, Tucumán`;
     document.getElementById('status').innerHTML = '';
     updateCapInfo();
     lastResult = null;
+	  // Ocultar botones de exportación
+document.getElementById('btnExportCSV').classList.add('hidden');
+document.getElementById('btnCopy').classList.add('hidden');
+document.getElementById('btnShare').classList.add('hidden');
   });
 
   // Sorteos
@@ -1692,7 +1719,9 @@ Atl. Tucumán, Tucumán`;
     ).join('');
     
     document.getElementById('status').textContent = 'Sorteo de orden de paso realizado';
-    
+    // Mostrar botones de exportación para sorteo simple
+document.getElementById('btnExportCSV').classList.remove('hidden');
+document.getElementById('btnCopy').classList.remove('hidden');
     // Abrir en nueva pestaña
 openSimpleResultInNewTab(list);
 
@@ -1751,7 +1780,10 @@ await saveSimpleDrawToCloud(list, meta);
     const z = currentZones();
     const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
     renderGroups(document.getElementById('resultGroups'), result);
-    
+    // Mostrar botones de exportación
+document.getElementById('btnExportCSV').classList.remove('hidden');
+document.getElementById('btnCopy').classList.remove('hidden');
+document.getElementById('btnShare').classList.remove('hidden');
     if (!result.error) {
       openResultInNewTab(result);
       const now = new Date().toLocaleString();
@@ -1876,7 +1908,10 @@ await saveSimpleDrawToCloud(list, meta);
       toast('Categorías demo cargadas');
     });
   }
-
+// Ocultar botones de exportación al inicio
+document.getElementById('btnExportCSV').classList.add('hidden');
+document.getElementById('btnCopy').classList.add('hidden');
+document.getElementById('btnShare').classList.add('hidden');
   // Export/Copy
   document.getElementById('btnExportCSV').addEventListener('click', () => {
   const fmt = getFormat();
