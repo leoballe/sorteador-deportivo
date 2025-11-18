@@ -1355,6 +1355,24 @@ async function saveSimpleDrawToCloud(list, meta) {
 }
 function subscribeCloudHistory() {
   const user = auth.currentUser;
+  console.log('🔐 Usuario actual:', user ? user.uid : 'No autenticado');
+  
+  const listEl = document.getElementById('cloudHistoryList');
+  
+  if (cloudUnsub) {
+    cloudUnsub();
+    cloudUnsub = null;
+  }
+  
+  if (!user) {
+    console.log('❌ Usuario no autenticado, no se puede cargar historial');
+    listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>';
+    return;
+  }
+  
+  console.log('✅ Usuario autenticado, suscribiendo a historial...');
+	
+  const user = auth.currentUser;
   const listEl = document.getElementById('cloudHistoryList');
   
   if (cloudUnsub) {
