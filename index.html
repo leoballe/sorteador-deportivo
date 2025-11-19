@@ -743,9 +743,57 @@ document.getElementById('newCategoryInput').addEventListener('keypress', functio
   }
 });
 
-	// Compartir - VERSIÓN BÁSICA INICIAL
-document.getElementById('btnShare').addEventListener('click', () => {
-  toast('🔗 Función de compartir - En desarrollo');
+// Compartir - VERSIÓN SEGURA (sin Firestore público)
+document.getElementById('btnShare').addEventListener('click', async () => {
+  const teams = getActiveTeamsLive();
+  if (teams.length === 0) {
+    toast('No hay equipos activos para compartir');
+    return;
+  }
+  
+  const fmt = getFormat();
+  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+  const category = (document.getElementById('categorySelect').value) || '';
+  const gender = (document.getElementById('genderSelect').value) || '';
+  
+  // Crear datos del sorteo para compartir
+  const drawData = {
+    type: fmt === 'simple' ? 'simple' : 'zones',
+    teamsCount: teams.length,
+    discipline: disciplineText,
+    category: category,
+    gender: gender,
+    timestamp: new Date().toISOString()
+  };
+  
+  if (fmt === 'simple') {
+    // Para sorteo simple
+    drawData.list = teams.map(t => t.name);
+  } else {
+    // Para sorteo por zonas - usar el último resultado
+    if (!lastResult || lastResult.error) {
+      toast('Primero tenés que hacer el sorteo');
+      return;
+    }
+    drawData.groups = lastResult.groups.map((group, groupIndex) => ({
+      groupNumber: groupIndex + 1,
+      teams: group.map(team => ({
+        name: team.name,
+        province: team.province || '',
+        head: team.head || false
+      }))
+    }));
+    drawData.zones = lastResult.groups.length;
+    drawData.format = fmt;
+  }
+  
+  // Convertir a JSON y crear enlace de datos
+  const jsonData = encodeURIComponent(JSON.stringify(drawData));
+  const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${jsonData}`;
+  
+  // Copiar al portapapeles
+  copyText(shareUrl);
+  toast('✅ Enlace copiado! Compartilo con quien quieras');
 });
 /* ====================== Estado ====================== */
 let activeTeams = [], inactiveTeams = [];
@@ -2128,7 +2176,123 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
     toast('Error al cerrar sesión');
   }
 });
+// Cargar sorteo compartido desde URL (versión simple)
+function loadSharedDrawFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const sharedData = urlParams.get('shared');
+  
+  if (sharedData) {
+    try {
+      // Limpiar parámetro de la URL
+      window.history.replaceState({}, '', window.location.pathname);
+      
+      const drawData = JSON.parse(decodeURIComponent(sharedData));
+      
+      // Mostrar diálogo de confirmación
+      if (confirm(`¿Querés ver el sorteo compartido?\n${drawData.discipline ? 'Disciplina: ' + drawData.discipline + '\n' : ''}${drawData.teamsCount} equipos`)) {
+        showSharedDraw(drawData);
+      }
+    } catch (e) {
+      console.error('Error cargando sorteo compartido:', e);
+      toast('Error al cargar el sorteo compartido');
+    }
+  }
+}
 
+function showSharedDraw(drawData) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el sorteo compartido');
+    return;
+  }
+  
+  let htmlContent = '';
+  
+  if (drawData.type === 'simple') {
+    // HTML para sorteo simple compartido
+    htmlContent = generateSimpleSharedHTML(drawData);
+  } else {
+    // HTML para sorteo por zonas compartido
+    htmlContent = generateZonesSharedHTML(drawData);
+  }
+  
+  w.document.open();
+  w.document.write(htmlContent);
+  w.document.close();
+}
+
+function generateSimpleSharedHTML(data) {
+  const chipsHTML = [
+    data.discipline ? `<span class="chip">Disciplina: ${escapeHtml(data.discipline)}</span>` : '',
+    data.category ? `<span class="chip">Categoría: ${escapeHtml(data.category)}</span>` : '',
+    data.gender ? `<span class="chip">Género: ${escapeHtml(data.gender)}</span>` : '',
+    `<span class="chip">${data.teamsCount} equipos</span>`,
+    data.timestamp ? `<span class="chip">${new Date(data.timestamp).toLocaleString()}</span>` : ''
+  ].filter(Boolean).join('');
+  
+  const listHTML = data.list.map((name, index) => 
+    `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+  ).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Sorteo Compartido</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:20px;font-size:14px}
+  </style></head>
+  <body>
+    <div class="container">
+      <h1>🎲 Sorteo Compartido</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div>${listHTML}</div>
+    </div>
+  </body></html>`;
+}
+
+function generateZonesSharedHTML(data) {
+  const chipsHTML = [
+    data.discipline ? `<span class="chip">Disciplina: ${escapeHtml(data.discipline)}</span>` : '',
+    data.category ? `<span class="chip">Categoría: ${escapeHtml(data.category)}</span>` : '',
+    data.gender ? `<span class="chip">Género: ${escapeHtml(data.gender)}</span>` : '',
+    data.format ? `<span class="chip">Formato: ${escapeHtml(data.format)}</span>` : '',
+    `<span class="chip">${data.zones} zonas</span>`,
+    data.timestamp ? `<span class="chip">${new Date(data.timestamp).toLocaleString()}</span>` : ''
+  ].filter(Boolean).join('');
+  
+  const zonesHTML = data.groups.map((groupObj, gi) => {
+    const items = groupObj.teams.map(team =>
+      `<li><b>${escapeHtml(team.name)}</b>${team.province ? ` — ${escapeHtml(team.province)}` : ''}${team.head ? ' (Cabeza)' : ''}</li>`
+    ).join('');
+    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Sorteo Compartido</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:20px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .zone{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px}
+    .zone h4{margin:4px 0 8px 0}
+    .zone ol{margin:0;padding-left:18px}
+  </style></head>
+  <body>
+    <div class="container">
+      <h1>🎲 Sorteo Compartido</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div class="grid">${zonesHTML}</div>
+    </div>
+  </body></html>`;
+}
+
+// Ejecutar al cargar la página
+loadSharedDrawFromURL();
 auth.onAuthStateChanged((user) => {
   const authSection = document.getElementById('authSection');
   const appSection = document.getElementById('appSection');
