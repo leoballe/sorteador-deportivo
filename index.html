@@ -1245,6 +1245,94 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     .btn.primary {
       background: #22c55e;
     }
+	    /* Mejoras adicionales para zonas */
+    .zone-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .zone-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 25px rgba(27, 49, 94, 0.15);
+    }
+    
+    .team-item {
+      transition: all 0.2s ease;
+    }
+    
+    .team-item:hover {
+      background: #f0f9ff;
+      transform: translateX(4px);
+    }
+    
+    /* Mejoras para los chips */
+    .info-chip {
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .info-chip:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(148, 229, 242, 0.3);
+    }
+    
+    /* Efecto de brillo en el header */
+    .header {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: rotate(45deg);
+      animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    /* Mejora para el botón de exportar */
+    .export-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .export-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .export-btn:hover::before {
+      left: 100%;
+    }
+    
+    /* Efectos de impresión mejorados */
+    @media print {
+      .zone-card {
+        break-inside: avoid;
+        margin-bottom: 15px;
+      }
+      
+      .team-item:hover {
+        transform: none;
+        background: #f8fafc;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
@@ -1312,6 +1400,52 @@ function openSimpleResultInNewTab(list) {
     .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
     .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
     .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+	    /* Estilos para orden de paso */
+    .order-list {
+      counter-reset: order-counter;
+      margin: 30px 0;
+    }
+    
+    .order-item {
+      counter-increment: order-counter;
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 4px solid #94E5F2;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .order-item::before {
+      content: counter(order-counter);
+      background: linear-gradient(135deg, #1B315E, #2d4b8f);
+      color: white;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1em;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+    
+    .order-item:hover {
+      transform: translateX(8px);
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .order-team {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #1e293b;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
