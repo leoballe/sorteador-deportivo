@@ -1428,6 +1428,37 @@ exportBtn.addEventListener('click', () => {
     downloadText(csv, `sorteo_zonas_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
   }
 });
+		  // BOTÓN COMPARTIR para sorteos guardados
+const shareBtn = document.createElement('button');
+shareBtn.className = 'btn tiny';
+shareBtn.textContent = 'Compartir';
+shareBtn.addEventListener('click', () => {
+  // Preparar datos del sorteo guardado para compartir
+  const drawData = {
+    type: d.type || 'zones',
+    teamsCount: d.teamsCount,
+    discipline: d.discipline || '',
+    category: d.category || '',
+    gender: d.gender || '',
+    timestamp: d.createdAt?.toDate().toISOString() || new Date().toISOString()
+  };
+
+  if (d.type === 'simple') {
+    drawData.list = d.list;
+  } else {
+    drawData.groups = d.groups;
+    drawData.zones = d.zones;
+    drawData.format = d.format;
+  }
+
+  // Convertir a JSON y crear enlace
+  const jsonData = encodeURIComponent(JSON.stringify(drawData));
+  const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${jsonData}`;
+
+  // Copiar al portapapeles
+  copyText(shareUrl);
+  toast('✅ Enlace copiado! Compartilo con quien quieras');
+});
         openBtn.addEventListener('click', () => {
           if (d.type === 'simple') {
             // Abrir sorteo simple
@@ -1593,6 +1624,7 @@ exportBtn.addEventListener('click', () => {
 
         btns.appendChild(openBtn);
 		  btns.appendChild(exportBtn);
+		  btns.appendChild(shareBtn);  // NUEVA LÍNEA
         btns.appendChild(deleteBtn);
         item.appendChild(btns);
         listEl.appendChild(item);
