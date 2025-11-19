@@ -1143,230 +1143,121 @@ function openResultInNewTab(result) {
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
   
+  // Función escapeHtml para usar en el HTML generado
+  const escapeHtml = (unsafe) => {
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  };
+
+  // Construir el HTML en partes para evitar problemas de sintaxis
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8">`;
+  html += `<title>Resultado del Sorteo - Juegos Nacionales</title>`;
+  html += `<style>`;
+  html += `* { box-sizing: border-box; margin: 0; padding: 0; }`;
+  html += `body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 20px; line-height: 1.6; }`;
+  html += `.container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); overflow: hidden; }`;
+  html += `.header { background: linear-gradient(135deg, #1B315E 0%, #2d4b8f 100%); color: white; padding: 30px 40px; text-align: center; position: relative; overflow: hidden; }`;
+  html += `.logo-title-container { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }`;
+  html += `.header-logo { height: 80px; width: auto; filter: brightness(0) invert(1); }`;
+  html += `.logo-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid rgba(255,255,255,0.3); }`;
+  html += `.title-wrapper { text-align: left; }`;
+  html += `.title-wrapper h1 { font-size: 2.5em; margin: 0 0 8px 0; font-weight: 700; }`;
+  html += `.title-wrapper .subtitle { font-size: 1.3em; opacity: 0.9; }`;
+  html += `.info-section { padding: 20px 30px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }`;
+  html += `.info-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }`;
+  html += `.info-chip { background: linear-gradient(135deg, #1B315E, #2d4b8f); color: white; padding: 8px 16px; border-radius: 25px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 6px rgba(27,49,94,0.2); transition: all 0.3s ease; }`;
+  html += `.info-chip:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(27,49,94,0.3); }`;
+  html += `.content { padding: 30px; }`;
+  html += `.zones-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }`;
+  html += `.zone-card { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; }`;
+  html += `.zone-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #1B315E, #94E5F2, #22c55e); }`;
+  html += `.zone-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }`;
+  html += `.zone-header { background: linear-gradient(135deg, #1B315E, #2d4b8f); color: white; padding: 15px 20px; font-weight: 700; font-size: 1.2em; text-align: center; }`;
+  html += `.team-list { list-style: none; padding: 12px; margin: 0; }`;
+  html += `.team-item { padding: 12px 15px; margin-bottom: 8px; background: white; border-radius: 8px; border-left: 4px solid #94E5F2; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s ease; }`;
+  html += `.team-item:hover { background: #f0f9ff; transform: translateX(5px); }`;
+  html += `.team-name { font-weight: 600; color: #1e293b; flex: 1; }`;
+  html += `.team-province { color: #64748b; font-size: 0.85em; margin: 0 12px; font-style: italic; }`;
+  html += `.head-badge { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }`;
+  html += `.footer { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; text-align: center; padding: 25px; font-size: 0.95em; }`;
+  html += `.export-btn { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 1.1em; cursor: pointer; margin: 40px auto; display: block; box-shadow: 0 4px 15px rgba(34,197,94,0.4); transition: all 0.3s ease; }`;
+  html += `.export-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(34,197,94,0.6); }`;
+  html += `@media print { body { background: white !important; padding: 0 !important; } .container { box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; max-width: none !important; } .export-btn { display: none !important; } .team-item:hover { transform: none !important; background: white !important; } }`;
+  html += `</style>`;
+  html += `<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>`;
+  html += `<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>`;
+  html += `</head><body>`;
+  
+  // Construir chips HTML
   const chipsHTML = [
-    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
-    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
-    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
-    `<span class="chip">${result.groups.length} zonas</span>`,
-    `<span class="chip">${new Date().toLocaleString()}</span>`
+    disciplineText ? `<div class="info-chip">Disciplina: ${escapeHtml(disciplineText)}</div>` : '',
+    category ? `<div class="info-chip">Categoría: ${escapeHtml(category)}</div>` : '',
+    gender ? `<div class="info-chip">Género: ${escapeHtml(gender)}</div>` : '',
+    `<div class="info-chip">${result.groups.length} zonas</div>`,
+    `<div class="info-chip">${new Date().toLocaleString()}</div>`
   ].filter(Boolean).join('');
   
+  // Construir zonas HTML
   const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
-    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+    const items = arr.map(t => 
+      `<li class="team-item">
+        <span class="team-name">${escapeHtml(t.name)}</span>
+        ${t.province ? `<span class="team-province">— ${escapeHtml(t.province)}</span>` : ''}
+        ${t.head ? '<span class="head-badge">Cabeza</span>' : ''}
+      </li>`
+    ).join('');
+    return `<div class="zone-card"><div class="zone-header">Zona ${gi + 1}</div><ol class="team-list">${items}</ol></div>`;
   }).join('');
-
-const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>🎲 Sorteo Mejorado - Juegos Nacionales</title>
-   <style>
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
-      margin: 0;
-      padding: 20px;
-      line-height: 1.5;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
-    .header {
-      background: #1B315E;
-      color: white;
-      padding: 25px 30px;
-      text-align: center;
-      border-bottom: 4px solid #94E5F2;
-    }
-    .header h1 {
-      font-size: 2em;
-      margin: 0 0 8px 0;
-      font-weight: 700;
-    }
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 16px 0;
-      justify-content: center;
-    }
-    .chip {
-      background: white;
-      color: #1B315E;
-      border: 1px solid #94E5F2;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.9em;
-      font-weight: 500;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      padding: 20px;
-    }
-    .zone {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .zone h4 {
-      margin: 0 0 12px 0;
-      color: #1B315E;
-      font-size: 1.1em;
-      border-bottom: 2px solid #94E5F2;
-      padding-bottom: 6px;
-    }
-    .zone ol {
-      margin: 0;
-      padding-left: 20px;
-    }
-    .zone li {
-      margin-bottom: 6px;
-      padding: 4px 0;
-    }
-    .btn {
-      background: #22c55e;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      margin: 20px auto;
-      display: block;
-    }
-    .btn.primary {
-      background: #22c55e;
-    }
-	    /* Mejoras adicionales para zonas */
-    .zone-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .zone-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 25px rgba(27, 49, 94, 0.15);
-    }
-    
-    .team-item {
-      transition: all 0.2s ease;
-    }
-    
-    .team-item:hover {
-      background: #f0f9ff;
-      transform: translateX(4px);
-    }
-    
-    /* Mejoras para los chips */
-    .info-chip {
-      transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .info-chip:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(148, 229, 242, 0.3);
-    }
-    
-    /* Efecto de brillo en el header */
-    .header {
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-      transform: rotate(45deg);
-      animation: shine 3s infinite;
-    }
-    
-    @keyframes shine {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-    }
-    
-    /* Mejora para el botón de exportar */
-    .export-btn {
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .export-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s;
-    }
-    
-    .export-btn:hover::before {
-      left: 100%;
-    }
-    
-    /* Efectos de impresión mejorados */
-    @media print {
-      .zone-card {
-        break-inside: avoid;
-        margin-bottom: 15px;
-      }
-      
-      .team-item:hover {
-        transform: none;
-        background: #f8fafc;
-      }
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-  </head><body>
-    <div class="container">
-      <h1>🎲 Resultado del Sorteo</h1>
-      <div class="chips">${chipsHTML}</div>
-      <div class="grid">${zonesHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-    </div>
-    <script>
-      function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
-        });
-      }
+  
+  // Continuar construyendo el HTML
+  html += `<div class="container" id="pdfContent">`;
+  html += `<div class="header">`;
+  html += `<div class="logo-title-container">`;
+  html += `<div class="logo-wrapper">`;
+  html += `<img src="logo-light.png" alt="Logo Juegos Nacionales" class="header-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+  html += `<div class="logo-placeholder" style="display: none;">🎲</div>`;
+  html += `</div>`;
+  html += `<div class="title-wrapper">`;
+  html += `<h1>Resultado del Sorteo</h1>`;
+  html += `<div class="subtitle">Juegos Nacionales</div>`;
+  html += `</div>`;
+  html += `</div>`;
+  html += `</div>`;
+  html += `<div class="info-section"><div class="info-chips">${chipsHTML}</div></div>`;
+  html += `<div class="content"><div class="zones-grid">${zonesHTML}</div>`;
+  html += `<button class="export-btn" onclick="exportPDF()">🖨️ Exportar PDF</button></div>`;
+  html += `<div class="footer">`;
+  html += `<div>Sorteador Deportivo - Desarrollado por Leonardo Ballestero</div>`;
+  html += `<div>${new Date().getFullYear()} - Juegos Nacionales</div>`;
+  html += `</div>`;
+  html += `</div>`;
+  html += `<script>`;
+  html += `function exportPDF() {`;
+  html += `if(!window.jspdf || !window.html2canvas) { alert('Librerías PDF no cargadas'); return; }`;
+  html += `const element = document.getElementById('pdfContent');`;
+  html += `const options = { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false };`;
+  html += `html2canvas(element, options).then(canvas => {`;
+  html += `const imgData = canvas.toDataURL('image/png');`;
+  html += `const { jsPDF } = window.jspdf;`;
+  html += `const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });`;
+  html += `const pdfWidth = pdf.internal.pageSize.getWidth();`;
+  html += `const pdfHeight = pdf.internal.pageSize.getHeight();`;
+  html += `const imgWidth = canvas.width;`;
+  html += `const imgHeight = canvas.height;`;
+  html += `const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);`;
+  html += `const imgX = (pdfWidth - imgWidth * ratio) / 2;`;
+  html += `const imgY = 0;`;
+  html += `pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);`;
+  html += `pdf.save('sorteo_juegos_nacionales_' + new Date().toISOString().slice(0,10) + '.pdf');`;
+  html += `}); }`;
     <\/script>
   </body></html>`;
 
   w.document.open();
   w.document.write(html);
   w.document.close();
-}
+	  }
+	  
+
 function openSimpleResultInNewTab(list) {
   const w = window.open('about:blank', '_blank');
   if (!w) {
