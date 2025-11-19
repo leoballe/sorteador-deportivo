@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sorteador</title>
 
-   <!-- Firebase (compat) -->
+  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -1152,9 +1152,7 @@ function openResultInNewTab(result) {
   ].filter(Boolean).join('');
   
   const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => 
-      `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`
-    ).join('');
+    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
 
@@ -1165,7 +1163,7 @@ function openResultInNewTab(result) {
     .container{max-width:1100px; margin:0 auto;}
     h1{margin-bottom:16px}
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-    .chip{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:20px;font-size:14px}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
     .zone{background:#fff;border:2px solid #223046;border-radius:6px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
@@ -1173,8 +1171,8 @@ function openResultInNewTab(result) {
     .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
     .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
   </head><body>
     <div class="container">
       <h1>🎲 Resultado del Sorteo</h1>
@@ -1199,15 +1197,80 @@ function openResultInNewTab(result) {
           pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
         });
       }
-    </script>
+    <\/script>
   </body></html>`;
 
   w.document.open();
   w.document.write(html);
   w.document.close();
 }
-	
-function openResultInNewTab(result) 
+function openSimpleResultInNewTab(list) {
+  const w = window.open('about:blank', '_blank');
+  if (!w) {
+    toast('Permití pop-ups para ver el resultado');
+    return;
+  }
+  
+  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+  const category = (document.getElementById('categorySelect').value) || '';
+  const gender = (document.getElementById('genderSelect').value) || '';
+  
+  const chipsHTML = [
+    disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
+    category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
+    gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
+    `<span class="chip">${list.length} equipos</span>`,
+    `<span class="chip">${new Date().toLocaleString()}</span>`
+  ].filter(Boolean).join('');
+  
+  const listHTML = list.map((name, index) => 
+    `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Orden de Paso</title>
+  <style>
+    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
+    .container{max-width:1100px; margin:0 auto;}
+    h1{margin-bottom:16px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
+    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
+    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+  </head><body>
+    <div class="container">
+      <h1>🎲 Orden de Paso</h1>
+      <div class="chips">${chipsHTML}</div>
+      <div>${listHTML}</div>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+    </div>
+    <script>
+      function exportPDF(){
+        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
+        const sheet=document.createElement('div');
+        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
+        const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+        document.body.appendChild(sheet);
+        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
+          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
+          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('orden_paso_'+new Date().toISOString().slice(0,10)+'.pdf');
+        });
+      }
+    <\/script>
+  </body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 /* ====================== Guardar en Firestore ====================== */
 async function saveDrawToCloud(result, meta) {
   const user = auth.currentUser;
