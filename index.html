@@ -1629,33 +1629,15 @@ exportBtn.addEventListener('click', () => {
     });
     downloadText(csv, `orden_paso_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
   } else {
-// Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
-if (!lastResult || lastResult.error) {
-  toast('Generá el sorteo primero');
-  return;
-}
-
-let csv = ''; // sin encabezado (como tu ejemplo)
-
-// lastResult.groups = [ [equipo1,equipo2,...], [equipoX,...], ... ]
-lastResult.groups.forEach((arr, gi) => {
-  const zone = String.fromCharCode(65 + gi); // A, B, C, ...
-  arr.forEach((t) => {
-    // Soporta equipos como objeto {name: ...} o como string directo
-    const raw = (typeof t === 'string') ? t : String((t && t.name) ? t.name : '');
-
-    // Escapar comillas dobles para CSV
-    const escaped = raw.replace(/"/g, '""');
-
-    // Si trae ; o comillas o saltos de línea, lo entrecomillamos
-    const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
-
-    csv += `${zone};${cell}\n`;
-  });
-});
-
-downloadText(csv, 'sorteo_zonas.csv');
-}
+    // Exportar sorteo por zonas
+    let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
+    d.groups.forEach((group, gi) => {
+      group.teams.forEach((team, i) => {
+        csv += `${gi + 1},${i + 1},"${team.name.replace(/"/g, '""')}","${(team.province || '').replace(/"/g, '""')}",${team.head ? 'si' : 'no'}\n`;
+      });
+    });
+    downloadText(csv, `sorteo_zonas_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
+  }
 });
 		  // BOTÓN COMPARTIR para sorteos guardados
 const shareBtn = document.createElement('button');
@@ -2240,26 +2222,33 @@ document.getElementById('btnShare').classList.add('hidden');
     });
     downloadText(csv, 'orden_paso.csv');
   } else {
-    // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;NroCorrida)
+    // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
 if (!lastResult || lastResult.error) {
   toast('Generá el sorteo primero');
   return;
 }
 
-let csv = '';      // sin encabezado
-let n = 1;         // contador corrido: 1..N (como tu ejemplo)
+let csv = ''; // sin encabezado (como el ejemplo)
 
+// lastResult.groups = [ [equipo1,equipo2,...], [equipoX,...], ... ]
 lastResult.groups.forEach((arr, gi) => {
-  const zone = String.fromCharCode(65 + gi); // 65='A' => A, B, C...
-  arr.forEach(() => {
-    csv += `${zone};${n}\n`;
-    n++;
+  const zone = String.fromCharCode(65 + gi); // A, B, C, ...
+  arr.forEach((t) => {
+    // Soporta equipos como objeto {name: ...} o como string directo
+    const raw = (typeof t === 'string') ? t : String((t && t.name) ? t.name : '');
+
+    // Escapar comillas dobles para CSV
+    const escaped = raw.replace(/"/g, '""');
+
+    // Si trae ; o comillas o saltos de línea, lo entrecomillamos
+    const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
+
+    csv += `${zone};${cell}\n`;
   });
 });
 
 downloadText(csv, 'sorteo_zonas.csv');
-
-  }
+}
 });
 
  document.getElementById('btnCopy').addEventListener('click', () => {
