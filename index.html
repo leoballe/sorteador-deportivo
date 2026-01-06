@@ -1629,29 +1629,32 @@ exportBtn.addEventListener('click', () => {
     });
     downloadText(csv, `orden_paso_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
   } else {
-  // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
-  if (!lastResult || lastResult.error) {
-    toast('Generá el sorteo primero');
-    return;
-  }
+// Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
+if (!lastResult || lastResult.error) {
+  toast('Generá el sorteo primero');
+  return;
+}
 
-  let csv = ''; // sin encabezado, como tu ejemplo
+let csv = ''; // sin encabezado (como tu ejemplo)
 
-  lastResult.groups.forEach((arr, gi) => {
-    const zone = (gi < 26) ? String.fromCharCode(65 + gi) : `Z${gi + 1}`; // A, B, C...
+// lastResult.groups = [ [equipo1,equipo2,...], [equipoX,...], ... ]
+lastResult.groups.forEach((arr, gi) => {
+  const zone = String.fromCharCode(65 + gi); // A, B, C, ...
+  arr.forEach((t) => {
+    // Soporta equipos como objeto {name: ...} o como string directo
+    const raw = (typeof t === 'string') ? t : String((t && t.name) ? t.name : '');
 
-    arr.forEach((t) => {
-      const raw = String((t && t.name) ? t.name : '');
-      const escaped = raw.replace(/"/g, '""');
+    // Escapar comillas dobles para CSV
+    const escaped = raw.replace(/"/g, '""');
 
-      // Si trae ; o comillas o salto de línea, lo entrecomillamos para que el CSV sea válido
-      const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
+    // Si trae ; o comillas o saltos de línea, lo entrecomillamos
+    const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
 
-      csv += `${zone};${cell}\n`;
-    });
+    csv += `${zone};${cell}\n`;
   });
+});
 
-  downloadText(csv, 'sorteo_zonas.csv');
+downloadText(csv, 'sorteo_zonas.csv');
 }
 });
 		  // BOTÓN COMPARTIR para sorteos guardados
