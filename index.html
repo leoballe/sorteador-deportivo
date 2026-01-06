@@ -2237,18 +2237,25 @@ document.getElementById('btnShare').classList.add('hidden');
     });
     downloadText(csv, 'orden_paso.csv');
   } else {
-    // Exportar zonas como CSV (código existente)
-    if (!lastResult || lastResult.error) {
-      toast('Generá el sorteo primero');
-      return;
-    }
-    let csv = 'Zona,Posicion,Equipo,Provincia,Cabeza\n';
-    lastResult.groups.forEach((arr, gi) => {
-      arr.forEach((t, i) => {
-        csv += `${gi + 1},${i + 1},"${t.name.replace(/"/g, '""')}","${(t.province || '').replace(/"/g, '""')}",${t.head ? 'si' : 'no'}\n`;
-      });
-    });
-    downloadText(csv, 'sorteo_zonas.csv');
+    // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;NroCorrida)
+if (!lastResult || lastResult.error) {
+  toast('Generá el sorteo primero');
+  return;
+}
+
+let csv = '';      // sin encabezado
+let n = 1;         // contador corrido: 1..N (como tu ejemplo)
+
+lastResult.groups.forEach((arr, gi) => {
+  const zone = String.fromCharCode(65 + gi); // 65='A' => A, B, C...
+  arr.forEach(() => {
+    csv += `${zone};${n}\n`;
+    n++;
+  });
+});
+
+downloadText(csv, 'sorteo_zonas.csv');
+
   }
 });
 
