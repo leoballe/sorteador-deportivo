@@ -424,6 +424,26 @@ Newell's, Santa Fe
   <button class="btn tiny" id="btnAddCategory">Agregar categoría</button>
 </div>
 
+
+<!-- Fila: Importar modalidades + Selector de modalidades -->
+<div class="controls">
+  <label for="csvModalities" class="btn ghost">📄 Importar CSV de modalidades</label>
+  <input id="csvModalities" type="file" accept=".csv,text/csv" class="hidden" />
+  <div style="min-width:220px;flex:1">
+    <label>Modalidad</label>
+    <select id="modalitySelect">
+      <option value="">— Seleccionar modalidad —</option>
+    </select>
+  </div>
+</div>
+<!-- Nueva fila: Agregar modalidad manual -->
+<div class="controls" style="margin-top:4px">
+  <div style="min-width:160px;flex:1">
+    <input type="text" id="newModalityInput" placeholder="Nueva modalidad" style="width:100%">
+  </div>
+  <button class="btn tiny" id="btnAddModality">Agregar modalidad</button>
+</div>
+
 <!-- Fila: Selector de género -->
 <div class="controls">
   <div style="min-width:220px;flex:1">
@@ -439,6 +459,7 @@ Newell's, Santa Fe
 </div>
               <div id="discCSVInfo" class="tiny" style="margin-top:4px"></div>
               <div id="catCSVInfo" class="tiny" style="margin-top:4px"></div>
+              <div id="modCSVInfo" class="tiny" style="margin-top:4px"></div>
 
               <label><input type="checkbox" id="headsAsFirst" > Cabezas de serie primero</label>
               <div id="capInfo" class="tiny" style="margin-top:6px"></div>
@@ -549,6 +570,7 @@ function buildExportFilename(ext, meta) {
     safeFilePart(meta?.discipline || ''),
     safeFilePart(meta?.category || ''),
     safeFilePart(meta?.gender || ''),
+    safeFilePart(meta?.modality || ''),
     safeFilePart(meta?.system || ''),
     safeFilePart(date)
   ].filter(Boolean);
@@ -560,18 +582,20 @@ function getCurrentMetaForFilename() {
   const disciplineText = (document.getElementById('disciplineSelect')?.selectedOptions?.[0]?.text) || '';
   const category = (document.getElementById('categorySelect')?.value) || '';
   const gender = (document.getElementById('genderSelect')?.value) || '';
+  const modality = (document.getElementById('modalitySelect')?.value) || '';
   const system = getSystemParamCurrent();
   const date = new Date().toISOString().slice(0,10);
-  return { discipline: disciplineText, category, gender, system, date };
+  return { discipline: disciplineText, category, gender, modality, system, date };
 }
 
 function getCloudMetaForFilename(d) {
   const discipline = d?.discipline || '';
   const category = d?.category || '';
   const gender = d?.gender || '';
+  const modality = d?.modality || '';
   const system = (d?.type === 'simple') ? 'orden_paso' : (d?.format || 'zonas');
   const date = (d?.createdAt?.toDate) ? d.createdAt.toDate().toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
-  return { discipline, category, gender, system, date };
+  return { discipline, category, gender, modality, system, date };
 }
 
 function copyText(text) {
@@ -706,6 +730,28 @@ function importCategoriesCSV(text) {
   return {items, delimiter, hasHeaders: headers.length > 0};
 }
 
+function importModalitiesCSV(text) {
+  if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const {headers, rows, delimiter} = parseCSV(text);
+  let nameIdx = 0;
+
+  if (headers.length) {
+    headers.forEach((h, i) => {
+      const s = h.toLowerCase();
+      if (s.includes('modalidad') || s.includes('tipo') || s.includes('nombre')) nameIdx = i;
+    });
+  }
+
+  const items = [];
+  for (const row of rows) {
+    const name = (row[nameIdx] || '').trim();
+    if (!name) continue;
+    items.push({name, seed: name});
+  }
+  return {items, delimiter, hasHeaders: headers.length > 0};
+}
+
+
 /* ====================== Selects ====================== */
 function refreshDisciplineSelects() {
   const sels = [
@@ -749,6 +795,28 @@ function refreshCategorySelects() {
   });
 }
 
+function refreshModalitySelects() {
+  const sels = [
+    document.getElementById('modalitySelect'),
+    document.getElementById('modalitySelectSimple')
+  ];
+
+  sels.forEach(sel => {
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar modalidad —</option>';
+    modalities.forEach(mo => {
+      const o = document.createElement('option');
+      o.value = mo.seed || mo.name;
+      o.textContent = mo.name;
+      o.dataset.seed = mo.seed || mo.name;
+      sel.appendChild(o);
+    });
+    if (current && [...sel.options].some(o => o.value === current)) sel.value = current;
+  });
+}
+
+
 	/* ====================== Agregar disciplinas y categorías manualmente ====================== */
 document.getElementById('btnAddDiscipline').addEventListener('click', function() {
   const input = document.getElementById('newDisciplineInput');
@@ -784,6 +852,23 @@ document.getElementById('btnAddCategory').addEventListener('click', function() {
   refreshCategorySelects();
   input.value = '';
   toast(`Categoría "${name}" agregada`);
+});
+
+document.getElementById('btnAddModality').addEventListener('click', function() {
+  const input = document.getElementById('newModalityInput');
+  const name = input.value.trim();
+  if (!name) {
+    toast('Escribí el nombre de la modalidad');
+    return;
+  }
+  if (modalities.some(mo => (mo.name || '').toLowerCase() === name.toLowerCase())) {
+    toast('Esa modalidad ya existe');
+    return;
+  }
+  modalities.push({ name, seed: name });
+  refreshModalitySelects();
+  input.value = '';
+  toast(`Modalidad "${name}" agregada`);
 });
 
 // Permitir agregar con Enter
@@ -853,7 +938,7 @@ document.getElementById('btnShare').addEventListener('click', async () => {
 });
 /* ====================== Estado ====================== */
 let activeTeams = [], inactiveTeams = [];
-let disciplines = [], categories = [];
+let disciplines = [], categories = [], modalities = [];
 let lastResult = null;
 let cloudUnsub = null;
 
@@ -1568,6 +1653,8 @@ async function saveDrawToCloud(result, meta) {
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
       gender: meta.gender,
+      modality: meta.modality,
+      modality: meta.modality,
       groups: groupsData,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       userId: user.uid
@@ -1596,6 +1683,8 @@ async function saveSimpleDrawToCloud(list, meta) {
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
       gender: meta.gender,
+      modality: meta.modality,
+      modality: meta.modality,
       list: list,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       userId: user.uid
@@ -1717,6 +1806,7 @@ shareBtn.addEventListener('click', () => {
     discipline: d.discipline || '',
     category: d.category || '',
     gender: d.gender || '',
+    modality: d.modality || '',
     timestamp: d.createdAt?.toDate().toISOString() || new Date().toISOString()
   };
 
@@ -1960,6 +2050,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+
+// Cargar listas por defecto desde /static (si existen).
+// Importante: esto NO impide agregar manualmente ni importar otro CSV.
+(async function loadDefaultDropdownLists() {
+  try {
+    if (!disciplines.length) {
+      const t = await fetchTextWithFallback('/static/Disciplinas.csv');
+      const r = importDisciplinesCSV(t);
+      if (r.items && r.items.length) {
+        disciplines = r.items;
+        refreshDisciplineSelects();
+        document.getElementById('discCSVInfo').innerHTML = `Lista por defecto: ${disciplines.length} disciplinas`;
+      }
+    }
+  } catch(e) {
+    console.warn('No se pudo cargar Disciplinas.csv por defecto:', e);
+  }
+
+  try {
+    if (!categories.length) {
+      const t = await fetchTextWithFallback('/static/Categorias.csv');
+      const r = importCategoriesCSV(t);
+      if (r.items && r.items.length) {
+        categories = r.items;
+        refreshCategorySelects();
+        document.getElementById('catCSVInfo').innerHTML = `Lista por defecto: ${categories.length} categorías`;
+      }
+    }
+  } catch(e) {
+    console.warn('No se pudo cargar Categorias.csv por defecto:', e);
+  }
+
+  try {
+    if (!modalities.length) {
+      const t = await fetchTextWithFallback('/static/modalidad.csv');
+      const r = importModalitiesCSV(t);
+      if (r.items && r.items.length) {
+        modalities = r.items;
+        refreshModalitySelects();
+        document.getElementById('modCSVInfo').innerHTML = `Lista por defecto: ${modalities.length} modalidades`;
+      }
+    }
+  } catch(e) {
+    console.warn('No se pudo cargar modalidad.csv por defecto:', e);
+  }
+})();
+
   // Formato
 document.querySelectorAll('input[name="format"]').forEach(r => {
   r.addEventListener('change', () => {
@@ -2129,12 +2266,14 @@ openSimpleResultInNewTab(list);
 const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
 const cat = (document.getElementById('categorySelect').value) || '';
 const gen = (document.getElementById('genderSelect').value) || '';
+const mod = (document.getElementById('modalitySelect').value) || '';
 const meta = {
   teamsCount: teams.length,
   discipline: discTxt,
   disciplineSeed: base,
   category: cat,
   gender: gen,
+  modality: mod,
 };
 await saveSimpleDrawToCloud(list, meta);
     
@@ -2155,6 +2294,7 @@ document.getElementById('btnShare').classList.remove('hidden');
       const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
       const cat = (document.getElementById('categorySelect').value) || '';
       const gen = (document.getElementById('genderSelect').value) || '';
+      const mod = (document.getElementById('modalitySelect').value) || '';
       item.textContent = `${now} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
       document.getElementById('cloudHistoryList').prepend(item);
 
@@ -2167,6 +2307,7 @@ document.getElementById('btnShare').classList.remove('hidden');
         disciplineSeed: base,
         category: cat,
         gender: gen,
+        modality: mod,
       };
       await saveDrawToCloud(result, meta);
     }
@@ -2196,8 +2337,32 @@ document.getElementById('btnShare').classList.remove('hidden');
         alert('Error: ' + err.message);
       }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsArrayBuffer(file);
   });
+
+function decodeArrayBufferWithFallback(buf) {
+  // 1) Intentar UTF-8
+  let text = '';
+  try {
+    text = new TextDecoder('utf-8').decode(buf);
+  } catch(e) {
+    text = '';
+  }
+  // 2) Si aparecen caracteres de reemplazo, probar ISO-8859-1 (Excel suele exportar así)
+  if (text && text.includes('\uFFFD')) {
+    try {
+      text = new TextDecoder('iso-8859-1').decode(buf);
+    } catch(e) {}
+  }
+  return text;
+}
+
+async function fetchTextWithFallback(url) {
+  const resp = await fetch(url, { cache: 'no-store' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const buf = await resp.arrayBuffer();
+  return decodeArrayBufferWithFallback(buf);
+}
 
   // CSV Disciplinas
   document.getElementById('csvDisciplines').addEventListener('change', function(e) {
@@ -2206,7 +2371,7 @@ document.getElementById('btnShare').classList.remove('hidden');
     const reader = new FileReader();
     reader.onload = function() {
       try {
-        const res = importDisciplinesCSV(reader.result || '');
+        const res = importDisciplinesCSV(decodeArrayBufferWithFallback(reader.result) || '');
         disciplines = res.items;
         refreshDisciplineSelects();
         const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
@@ -2217,7 +2382,7 @@ document.getElementById('btnShare').classList.remove('hidden');
         alert('Error: ' + err.message);
       }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsArrayBuffer(file);
   });
 
   // CSV Categorías
@@ -2227,7 +2392,7 @@ document.getElementById('btnShare').classList.remove('hidden');
     const reader = new FileReader();
     reader.onload = function() {
       try {
-        const res = importCategoriesCSV(reader.result || '');
+        const res = importCategoriesCSV(decodeArrayBufferWithFallback(reader.result) || '');
         categories = res.items;
         refreshCategorySelects();
         const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
@@ -2238,9 +2403,30 @@ document.getElementById('btnShare').classList.remove('hidden');
         alert('Error: ' + err.message);
       }
     };
-    reader.readAsText(file, 'UTF-8');
+    reader.readAsArrayBuffer(file);
   });
 
+
+// CSV Modalidades
+document.getElementById('csvModalities').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function() {
+    try {
+      const res = importModalitiesCSV(decodeArrayBufferWithFallback(reader.result) || '');
+      modalities = res.items;
+      refreshModalitySelects();
+      const info = `CSV cargado: ${modalities.length} modalidad${modalities.length === 1 ? '' : 'es'} · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
+      document.getElementById('modCSVInfo').innerHTML = info;
+      toast('CSV de modalidades cargado');
+    } catch(err) {
+      console.error(err);
+      alert('Error: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
     // Demos (solo si existen los botones en el HTML)
   const btnDiscDemo = document.getElementById('btnDiscDemo');
   if (btnDiscDemo) {
