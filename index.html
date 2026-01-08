@@ -517,6 +517,32 @@ function downloadText(text, filename) {
   a.click();
   URL.revokeObjectURL(url);
 }
+function _safeFilePart(s) {
+  s = (s == null) ? '' : String(s);
+  s = s.trim();
+  // Reemplazar espacios por _
+  s = s.replace(/\s+/g, '_');
+  // Quitar caracteres problemáticos para nombres de archivo
+  s = s.replace(/[\/\\:*?"<>|]/g, '');
+  // Evitar saltos y separadores raros en el nombre
+  s = s.replace(/[\r\n\t;]/g, '_');
+  // Limpiar duplicados de _
+  s = s.replace(/_+/g, '_');
+  // Evitar "_" al inicio/fin
+  s = s.replace(/^_+|_+$/g, '');
+  return s;
+}
+
+function buildCsvFilename({ discipline, category, gender, system }) {
+  const parts = [
+    _safeFilePart(discipline),
+    _safeFilePart(category),
+    _safeFilePart(gender),
+    _safeFilePart(system),
+  ].filter(Boolean);
+
+  return (parts.length ? parts.join('_') : 'sorteo') + '.csv';
+}
 
 function copyText(text) {
   navigator.clipboard.writeText(text).then(() => toast('Copiado')).catch(() => alert('No se pudo copiar'));
@@ -1621,6 +1647,18 @@ btns.style.gap = '6px';
 exportBtn.className = 'btn tiny';
 exportBtn.textContent = 'Exportar CSV';
 exportBtn.addEventListener('click', () => {
+	const disciplineText = d.discipline || '';
+const category = d.category || '';
+const gender = d.gender || '';
+const system = (d.type === 'simple') ? 'simple' : (d.format || 'zones');
+
+const filename = buildCsvFilename({
+  discipline: disciplineText,
+  category,
+  gender,
+  system
+});
+
   if (d.type === 'simple') {
     // Exportar sorteo simple
     let csv = 'Posicion,Equipo\n';
@@ -2221,7 +2259,18 @@ document.getElementById('btnShare').classList.add('hidden');
   // Export/Copy
   document.getElementById('btnExportCSV').addEventListener('click', () => {
   const fmt = getFormat();
-  
+  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
+const category = (document.getElementById('categorySelect').value) || '';
+const gender = (document.getElementById('genderSelect').value) || '';
+const system = fmt;
+
+const filename = buildCsvFilename({
+  discipline: disciplineText,
+  category,
+  gender,
+  system
+});
+
   if (fmt === 'simple') {
     // Exportar orden de paso como CSV
     const teams = getActiveTeamsLive();
@@ -2230,7 +2279,7 @@ document.getElementById('btnShare').classList.add('hidden');
     teamNames.forEach((name, index) => {
       csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
     });
-    downloadText(csv, 'orden_paso.csv');
+downloadText(csv, filename);
   } else {
     // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
 if (!lastResult || lastResult.error) {
@@ -2257,7 +2306,7 @@ lastResult.groups.forEach((arr, gi) => {
   });
 });
 
-downloadText(csv, 'sorteo_zonas.csv');
+downloadText(csv, filename);
 }
 });
 
