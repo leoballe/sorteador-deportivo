@@ -2056,7 +2056,7 @@ document.addEventListener('DOMContentLoaded', function() {
 (async function loadDefaultDropdownLists() {
   try {
     if (!disciplines.length) {
-      const t = await fetchTextWithFallback('/Disciplinas.csv');
+      const t = await fetchTextWithFallback('./Disciplinas.csv');
       const r = importDisciplinesCSV(t);
       if (r.items && r.items.length) {
         disciplines = r.items;
@@ -2070,7 +2070,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   try {
     if (!categories.length) {
-      const t = await fetchTextWithFallback('/Categorias.csv');
+      const t = await fetchTextWithFallback('./Categorias.csv');
       const r = importCategoriesCSV(t);
       if (r.items && r.items.length) {
         categories = r.items;
@@ -2084,7 +2084,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   try {
     if (!modalities.length) {
-      const t = await fetchTextWithFallback('/modalidad.csv');
+      const t = await fetchTextWithFallback('./modalidad.csv');
       const r = importModalitiesCSV(t);
       if (r.items && r.items.length) {
         modalities = r.items;
