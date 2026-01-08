@@ -2320,7 +2320,7 @@ document.getElementById('btnShare').classList.remove('hidden');
     const reader = new FileReader();
     reader.onload = function() {
       try {
-        const result = importTeamsCSV(reader.result || '');
+const result = importTeamsCSV(decodeArrayBufferWithFallback(reader.result) || '');
         if (result.teams.length === 0) {
           toast('CSV vacío o sin equipos');
           return;
