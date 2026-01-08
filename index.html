@@ -517,31 +517,61 @@ function downloadText(text, filename) {
   a.click();
   URL.revokeObjectURL(url);
 }
-function _safeFilePart(s) {
-  s = (s == null) ? '' : String(s);
-  s = s.trim();
-  // Reemplazar espacios por _
-  s = s.replace(/\s+/g, '_');
-  // Quitar caracteres problemáticos para nombres de archivo
-  s = s.replace(/[\/\\:*?"<>|]/g, '');
-  // Evitar saltos y separadores raros en el nombre
-  s = s.replace(/[\r\n\t;]/g, '_');
-  // Limpiar duplicados de _
-  s = s.replace(/_+/g, '_');
-  // Evitar "_" al inicio/fin
-  s = s.replace(/^_+|_+$/g, '');
+
+
+/* ====================== Nombres de archivo (CSV/PDF) ====================== */
+function safeFilePart(value) {
+  if (!value) return '';
+  let s = String(value);
+  try {
+    s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  } catch (e) {}
+  s = s.trim().replace(/\s+/g, '_');
+  s = s.replace(/[^a-zA-Z0-9._-]/g, '');
+  s = s.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
   return s;
 }
 
-function buildCsvFilename({ discipline, category, gender, system }) {
-  const parts = [
-    _safeFilePart(discipline),
-    _safeFilePart(category),
-    _safeFilePart(gender),
-    _safeFilePart(system),
-  ].filter(Boolean);
+function getSystemParamCurrent() {
+  const fmt = getFormat();
+  if (fmt === 'simple') return 'orden_paso';
+  if (fmt === 'custom') {
+    const z = currentZones();
+    const tpz = parseInt(document.getElementById('teamsPerZone')?.value || '', 10);
+    return tpz ? `custom_${z}x${tpz}` : `custom_${z}`;
+  }
+  return fmt || 'sorteo';
+}
 
-  return (parts.length ? parts.join('_') : 'sorteo') + '.csv';
+function buildExportFilename(ext, meta) {
+  const date = meta?.date || new Date().toISOString().slice(0,10);
+  const parts = [
+    safeFilePart(meta?.discipline || ''),
+    safeFilePart(meta?.category || ''),
+    safeFilePart(meta?.gender || ''),
+    safeFilePart(meta?.system || ''),
+    safeFilePart(date)
+  ].filter(Boolean);
+  const base = parts.length ? parts.join('_') : `sorteo_${safeFilePart(date)}`;
+  return `${base}.${ext}`;
+}
+
+function getCurrentMetaForFilename() {
+  const disciplineText = (document.getElementById('disciplineSelect')?.selectedOptions?.[0]?.text) || '';
+  const category = (document.getElementById('categorySelect')?.value) || '';
+  const gender = (document.getElementById('genderSelect')?.value) || '';
+  const system = getSystemParamCurrent();
+  const date = new Date().toISOString().slice(0,10);
+  return { discipline: disciplineText, category, gender, system, date };
+}
+
+function getCloudMetaForFilename(d) {
+  const discipline = d?.discipline || '';
+  const category = d?.category || '';
+  const gender = d?.gender || '';
+  const system = (d?.type === 'simple') ? 'orden_paso' : (d?.format || 'zonas');
+  const date = (d?.createdAt?.toDate) ? d.createdAt.toDate().toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  return { discipline, category, gender, system, date };
 }
 
 function copyText(text) {
@@ -1168,6 +1198,8 @@ function openResultInNewTab(result) {
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
+  const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
+  
   
   const chipsHTML = [
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
@@ -1383,7 +1415,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_'+new Date().toISOString().slice(0,10)+'.pdf');
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
         });
       }
     <\/script>
@@ -1405,6 +1437,8 @@ function openSimpleResultInNewTab(list) {
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
+  const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
+  
   
   const chipsHTML = [
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
@@ -1498,7 +1532,7 @@ function openSimpleResultInNewTab(list) {
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('orden_paso_'+new Date().toISOString().slice(0,10)+'.pdf');
+          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
         });
       }
     <\/script>
@@ -1647,47 +1681,31 @@ btns.style.gap = '6px';
 exportBtn.className = 'btn tiny';
 exportBtn.textContent = 'Exportar CSV';
 exportBtn.addEventListener('click', () => {
-	const disciplineText = d.discipline || '';
-const category = d.category || '';
-const gender = d.gender || '';
-const system = (d.type === 'simple') ? 'simple' : (d.format || 'zones');
-
-const filename = buildCsvFilename({
-  discipline: disciplineText,
-  category,
-  gender,
-  system
-});
-
+  const meta = getCloudMetaForFilename(d);
   if (d.type === 'simple') {
-    // Exportar sorteo simple
+    // Exportar sorteo simple (orden de paso)
     let csv = 'Posicion,Equipo\n';
-    d.list.forEach((name, index) => {
-      csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
+    (d.list || []).forEach((name, index) => {
+      const raw = String(name || '');
+      csv += `${index + 1},"${raw.replace(/"/g, '""')}"\n`;
     });
-    downloadText(csv, `orden_paso_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
+    downloadText(csv, buildExportFilename('csv', meta));
   } else {
-   // Exportar sorteo por zonas (NUEVO FORMATO: ZonaLetra;Equipo)
-let csv = ''; // sin encabezado, separador ;
-
-(d.groups || []).forEach((group, gi) => {
-  const zone = (gi < 26) ? String.fromCharCode(65 + gi) : `Z${gi + 1}`; // A,B,C... (fallback Z27)
-  const teams = (group && Array.isArray(group.teams)) ? group.teams : [];
-
-  teams.forEach((team) => {
-    const raw = String((team && team.name) ? team.name : '');
-    const escaped = raw.replace(/"/g, '""');
-    const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
-
-    csv += `${zone};${cell}\n`;
-  });
-});
-
-downloadText(csv, `sorteo_zonas_${d.createdAt?.toDate ? d.createdAt.toDate().toISOString().slice(0,10) : 'guardado'}.csv`);
-;
+    // Exportar sorteo por zonas (ZonaLetra;Equipo) — sin encabezado
+    let csv = '';
+    (d.groups || []).forEach((group, gi) => {
+      const zone = String.fromCharCode(65 + gi); // A, B, C...
+      (group.teams || []).forEach(team => {
+        const raw = String((team && team.name) ? team.name : '');
+        const escaped = raw.replace(/"/g, '""');
+        const cell = /[;"\r\n]/.test(raw) ? `"${escaped}"` : raw;
+        csv += `${zone};${cell}\n`;
+      });
+    });
+    downloadText(csv, buildExportFilename('csv', meta));
   }
 });
-		  // BOTÓN COMPARTIR para sorteos guardados
+          // BOTÓN COMPARTIR para sorteos guardados
 const shareBtn = document.createElement('button');
 shareBtn.className = 'btn tiny';
 shareBtn.textContent = 'Compartir';
@@ -1719,6 +1737,7 @@ shareBtn.addEventListener('click', () => {
   toast('✅ Enlace copiado! Compartilo con quien quieras');
 });
         openBtn.addEventListener('click', () => {
+  const exportFilename = buildExportFilename('pdf', getCloudMetaForFilename(d));
           if (d.type === 'simple') {
             // Abrir sorteo simple
             const w = window.open('about:blank', '_blank');
@@ -1773,7 +1792,7 @@ shareBtn.addEventListener('click', () => {
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_simple_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
               <\/script>
@@ -1854,7 +1873,7 @@ shareBtn.addEventListener('click', () => {
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save('sorteo_guardado_'+new Date().toISOString().slice(0,10)+'.pdf');
+                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
               <\/script>
@@ -2259,18 +2278,7 @@ document.getElementById('btnShare').classList.add('hidden');
   // Export/Copy
   document.getElementById('btnExportCSV').addEventListener('click', () => {
   const fmt = getFormat();
-  const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
-const category = (document.getElementById('categorySelect').value) || '';
-const gender = (document.getElementById('genderSelect').value) || '';
-const system = fmt;
-
-const filename = buildCsvFilename({
-  discipline: disciplineText,
-  category,
-  gender,
-  system
-});
-
+  
   if (fmt === 'simple') {
     // Exportar orden de paso como CSV
     const teams = getActiveTeamsLive();
@@ -2279,7 +2287,7 @@ const filename = buildCsvFilename({
     teamNames.forEach((name, index) => {
       csv += `${index + 1},"${name.replace(/"/g, '""')}"\n`;
     });
-downloadText(csv, filename);
+    downloadText(csv, buildExportFilename('csv', getCurrentMetaForFilename()));
   } else {
     // Exportar zonas como CSV (NUEVO FORMATO: ZonaLetra;Equipo)
 if (!lastResult || lastResult.error) {
@@ -2306,7 +2314,7 @@ lastResult.groups.forEach((arr, gi) => {
   });
 });
 
-downloadText(csv, filename);
+downloadText(csv, buildExportFilename('csv', getCurrentMetaForFilename()));
 }
 });
 
