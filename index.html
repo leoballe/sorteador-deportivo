@@ -944,21 +944,54 @@ let cloudUnsub = null;
 /* ====================== Cargar lista de provincias por defecto ====================== */
 async function loadDefaultProvinces() {
   try {
-    const response = await fetch("24provincias.csv");
+    const response = await fetch("24provincias.csv", { cache: "no-store" });
     if (!response.ok) throw new Error("No se pudo cargar el archivo 24provincias.csv");
-    const text = await response.text();
+    let text = await response.text();
+    if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM
 
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (!lines.length) return;
-
-    // Si ya hay algo en el textarea, no reemplazamos
+    // Si ya hay algo escrito, NO pisamos (mantiene carga manual)
     const textarea = document.getElementById("teamsInput");
+    if (!textarea) return;
     if (textarea.value.trim()) return;
 
-    // Cargar provincias como equipos
-    textarea.value = lines.map(p => `${p.trim()}`).join("\n");
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return;
 
-    toast(`Cargadas ${lines.length} provincias desde 24provincias.csv`);
+    // Detectar delimitador por la primera línea
+    const first = lines[0];
+    const delim = first.includes(";") ? ";" : (first.includes(",") ? "," : null);
+
+    // Extraer primera columna si es CSV; si no, usar la línea completa
+    const firstCell = delim ? (first.split(delim)[0] || "").trim() : first.trim();
+    const firstLow = firstCell.toLowerCase();
+
+    // Si la primera fila parece encabezado, la salteamos
+    const looksHeader = (
+      firstLow.includes("provincia") ||
+      firstLow.includes("province") ||
+      firstLow.includes("equipo") ||
+      firstLow.includes("team") ||
+      firstLow.includes("nombre") ||
+      firstLow.includes("name")
+    );
+
+    const startIndex = looksHeader ? 1 : 0;
+
+    const provinces = [];
+    const seen = new Set();
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
+      const cell = delim ? (line.split(delim)[0] || "").trim() : line.trim();
+      if (!cell) continue;
+      const key = cell.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      provinces.push(cell);
+    }
+
+    textarea.value = provinces.join("\n");
+    toast(`Cargadas ${provinces.length} provincias desde 24provincias.csv`);
   } catch (err) {
     console.warn("No se pudo cargar provincias:", err);
   }
@@ -995,30 +1028,50 @@ function renderLists() {
 }
 
 function buildListsFromTextarea() {
-  const lines = document.getElementById('teamsInput').value.split(/\r?\n/).filter(l => l.trim());
+  const lines = document.getElementById('teamsInput').value
+    .split(/\r?\n/)
+    .filter(l => l.trim());
+
   activeTeams = [];
   inactiveTeams = [];
   const uniq = new Set();
-  
+
   for (const line of lines) {
-    const parts = line.split(';').map(p => p.trim());
-    const name = (parts[0] || '').replace(/\*+$/, '').trim();
+    const rawLine = line.trim();
+
+    // Soportar separador ';' o ',' (prioridad ';' si existe)
+    const delim = rawLine.includes(';') ? ';' : ',';
+    const parts = rawLine.split(delim).map(p => p.trim());
+
+    const rawName = parts[0] || '';
+    const name = rawName.replace(/\s*\*+\s*$/, '').trim();
     if (!name) continue;
-    
+
     const key = name.toLowerCase();
     if (uniq.has(key)) continue;
     uniq.add(key);
-    
-    const province = (parts[1] || '').replace(/\*+$/, '').trim();
-    const head = parts[2] ? /^(si|sí|true|1|\*|x)$/i.test(parts[2]) : /\*$/.test(parts[0] || '');
-    activeTeams.push({name, province, head});
+
+    const province = (parts[1] || '').replace(/\s*\*+\s*$/, '').trim();
+
+    // Cabeza de serie:
+    // - Si viene tercera columna: si/sí/true/1/*/x/cs/head/seed
+    // - O si la línea termina en '*' aunque haya espacios
+    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
+    const rawThirdLow = rawThird.toLowerCase();
+
+    const headByThird = /^(si|sí|true|1|\*|x|cs|head|seed)$/i.test(rawThirdLow);
+    const headBySuffix = /\*\s*$/.test(rawLine); // '*' al final con espacios permitidos
+    const head = headByThird || headBySuffix;
+
+    activeTeams.push({ name, province, head });
   }
-  
+
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists();
   updateCapInfo();
   toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
 }
+
 
 function getChecked(selector) {
   return Array.from(document.querySelectorAll(selector + ':checked')).map(el => parseInt(el.dataset.idx, 10)).filter(n => !isNaN(n)).sort((a, b) => b - a);
@@ -1057,19 +1110,28 @@ function getActiveTeamsLive() {
   const mapByName = new Map();
 
   for (const line of lines) {
-    const parts = line.split(';').map(p => p.trim());
-    const raw = parts[0] || '';
-    const name = raw.replace(/\*+$/, '').trim();
+    const rawLine = line.trim();
+
+    // Soportar separador ';' o ',' (prioridad ';' si existe)
+    const delim = rawLine.includes(';') ? ';' : ',';
+    const parts = rawLine.split(delim).map(p => p.trim());
+
+    const rawName = parts[0] || '';
+    const name = rawName.replace(/\s*\*+\s*$/, '').trim();
     if (!name) continue;
 
     const key = name.toLowerCase();
     if (uniq.has(key)) continue;
     uniq.add(key);
 
-    const province = (parts[1] || '').replace(/\*+$/, '').trim();
-    const head = parts[2]
-      ? /^(si|sí|true|1|\*|x)$/i.test(parts[2])
-      : /\*$/.test(raw);
+    const province = (parts[1] || '').replace(/\s*\*+\s*$/, '').trim();
+
+    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
+    const rawThirdLow = rawThird.toLowerCase();
+
+    const headByThird = /^(si|sí|true|1|\*|x|cs|head|seed)$/i.test(rawThirdLow);
+    const headBySuffix = /\*\s*$/.test(rawLine);
+    const head = headByThird || headBySuffix;
 
     const team = { name, province, head };
     textTeams.push(team);
@@ -1082,14 +1144,13 @@ function getActiveTeamsLive() {
     .contains('hidden');
 
   // 2) Si NO estás usando la vista de Activos/Descartados,
-  //    simplemente usamos lo que hay escrito en el textarea.
+  //    usamos lo que hay escrito en el textarea.
   if (!checkListsVisible) {
     return textTeams;
   }
 
-  // 3) Si la vista de Activos/Descartados está visible,
-  //    respetamos quién está activo/inactivo, pero
-  //    ACTUALIZAMOS el "head" según lo que haya escrito en el textarea.
+  // 3) Si la vista está visible, respetamos activos/inactivos,
+  //    pero ACTUALIZAMOS head según el textarea
   const updatedActive = activeTeams.map(t => {
     const key = t.name.toLowerCase();
     const fromText = mapByName.get(key);
@@ -1097,7 +1158,7 @@ function getActiveTeamsLive() {
       return {
         name: t.name,
         province: t.province,
-        head: fromText.head   // ← acá se respetan los ; *
+        head: fromText.head
       };
     }
     return t;
@@ -1105,6 +1166,7 @@ function getActiveTeamsLive() {
 
   return updatedActive;
 }
+
 
 
 /* ====================== RNG + Sorteo ====================== */
