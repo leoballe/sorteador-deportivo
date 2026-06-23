@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sorteador</title>
 
-  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-  <!-- Utilidades PDF en la pestaña de resultado -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
@@ -248,8 +246,7 @@
 </head>
 <body>
 
-  <!-- ============ Sección de Autenticación ============ -->
-  <section id="authSection" style="max-width:460px;margin:48px auto"> <!--reemplazar "display: none !important;" por "max-width:460px;margin:48px auto">-->
+  <section id="authSection" style="max-width:460px;margin:48px auto">
  <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
   <img src="logo-dark.png" alt="Logo" class="logo" style="height: 50px; width: auto;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
@@ -260,7 +257,6 @@
         <button class="authTab" data-tab="register" style="flex:1;padding:10px;text-align:center;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid transparent">Registrarse</button>
       </div>
 
-      <!-- Login -->
       <form class="authForm" id="loginForm">
         <div class="formGroup" style="margin-bottom:12px">
           <label for="loginEmail">Email</label>
@@ -273,7 +269,6 @@
         <button type="submit" class="btn primary" style="width:100%">Iniciar Sesión</button>
       </form>
 
-      <!-- Registro -->
       <form class="authForm hidden" id="registerForm">
         <div class="formGroup" style="margin-bottom:12px">
           <label for="registerName">Nombre</label>
@@ -296,8 +291,7 @@
     </div>
       </section>
 
-  <!-- ============ Aplicación (se muestra tras login) ============ -->
-  <section id="appSection" > <!--borrar style="display: block !important;"-->
+  <section id="appSection" > 
      <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
   <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
@@ -380,9 +374,7 @@ Newell's, Santa Fe
   <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label>
   <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
 </div>
-        <!-- Selector de zonas (solo se muestra con Personalizado) -->
-<!-- Selector de zonas (solo se muestra con Personalizado) -->
-<div class="controls">
+        <div class="controls">
   <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
     <label>Nº de zonas / grupos</label>
     <input type="number" id="zones" min="1" value="8" />
@@ -393,7 +385,6 @@ Newell's, Santa Fe
   </div>
 </div>
 
-<!-- Fila: Importar disciplinas + Selector de disciplinas -->
 <div class="controls">
   <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
   <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
@@ -404,7 +395,6 @@ Newell's, Santa Fe
     </select>
   </div>
 </div>
-<!-- Nueva fila: Agregar disciplina manual -->
 <div class="controls" style="margin-top:4px">
   <div style="min-width:160px;flex:1">
     <input type="text" id="newDisciplineInput" placeholder="Nueva disciplina" style="width:100%">
@@ -412,7 +402,6 @@ Newell's, Santa Fe
   <button class="btn tiny" id="btnAddDiscipline">Agregar disciplina</button>
 </div>
 
-<!-- Fila: Importar categorías + Selector de categorías -->
 <div class="controls">
   <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
   <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
@@ -423,7 +412,6 @@ Newell's, Santa Fe
     </select>
   </div>
 </div>
-<!-- Nueva fila: Agregar categoría manual -->
 <div class="controls" style="margin-top:4px">
   <div style="min-width:160px;flex:1">
     <input type="text" id="newCategoryInput" placeholder="Nueva categoría" style="width:100%">
@@ -432,7 +420,6 @@ Newell's, Santa Fe
 </div>
 
 
-<!-- Fila: Importar modalidades + Selector de modalidades -->
 <div class="controls">
   <label for="csvModalities" class="btn ghost">📄 Importar CSV de modalidades</label>
   <input id="csvModalities" type="file" accept=".csv,text/csv" class="hidden" />
@@ -443,7 +430,6 @@ Newell's, Santa Fe
     </select>
   </div>
 </div>
-<!-- Nueva fila: Agregar modalidad manual -->
 <div class="controls" style="margin-top:4px">
   <div style="min-width:160px;flex:1">
     <input type="text" id="newModalityInput" placeholder="Nueva modalidad" style="width:100%">
@@ -451,7 +437,6 @@ Newell's, Santa Fe
   <button class="btn tiny" id="btnAddModality">Agregar modalidad</button>
 </div>
 
-<!-- Fila: Selector de género -->
 <div class="controls">
   <div style="min-width:220px;flex:1">
     <label>Género</label>
@@ -1396,21 +1381,19 @@ const category = (document.getElementById('categorySelect').value) || '';
   }).join('');
 
 const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>🎲 Sorteo Mejorado - Juegos Nacionales</title>
+  <title>Resultado del Sorteo</title>
   <style>
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; margin: 0; padding: 20px; line-height: 1.5; }
-    .container { width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; padding-bottom: 20px; }
-    .header { background: #1B315E; color: white; padding: 25px 30px; text-align: center; border-bottom: 4px solid #94E5F2; }
-    .header h1 { font-size: 2em; margin: 0 0 8px 0; font-weight: 700; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; justify-content: center; }
-    .chip { background: white; color: #1B315E; border: 1px solid #94E5F2; padding: 6px 12px; border-radius: 20px; font-size: 0.9em; font-weight: 500; }
-    .grid { display: flex; flex-wrap: wrap; gap: 16px; padding: 20px; }
-    .zone { width: calc(50% - 8px); box-sizing: border-box; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); page-break-inside: avoid; break-inside: avoid; }
+    body { font-family: system-ui, sans-serif; background: #fff; color: #000; margin: 0; padding: 0; width: 800px; }
+    .container { width: 800px; padding: 20px; box-sizing: border-box; margin: 0; }
+    h1 { margin: 0 0 16px 0; font-size: 2em; color: #1B315E; border-bottom: 2px solid #94E5F2; padding-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip { background: #f1f5f9; color: #1B315E; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .grid { display: block; width: 100%; padding: 0; margin-top: 10px; }
+    .zone { display: inline-block; width: 47%; margin: 0 1% 16px 1%; vertical-align: top; box-sizing: border-box; background: #fff; border: 2px solid #223046; border-radius: 8px; padding: 15px; page-break-inside: avoid; break-inside: avoid; }
     .zone h4 { margin: 0 0 12px 0; color: #1B315E; font-size: 1.1em; border-bottom: 2px solid #94E5F2; padding-bottom: 6px; }
     .zone ol { margin: 0; padding-left: 20px; }
     .zone li { margin-bottom: 6px; padding: 4px 0; }
     .btn { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 20px auto; display: block; }
-    .btn.primary { background: #22c55e; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 </head><body>
@@ -1427,11 +1410,11 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       btn.style.display = 'none';
       const element = document.querySelector('.container');
       const opt = {
-        margin: [20, 20, 20, 20],
+        margin: 10,
         filename: ${JSON.stringify(exportFilename)},
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 840 },
-        jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'], avoid: '.zone' }
       };
       html2pdf().set(opt).from(element).save().then(() => {
@@ -1474,94 +1457,44 @@ const gender = (document.getElementById('genderSelect').value) || '';
     `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
   ).join('');
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Orden de Paso</title>
   <style>
-    body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-    .container{max-width:1100px; margin:0 auto;}
-    h1{margin-bottom:16px}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-    .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-    .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-    .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-	    /* Estilos para orden de paso */
-    .order-list {
-      counter-reset: order-counter;
-      margin: 30px 0;
-    }
-    
-    .order-item {
-      counter-increment: order-counter;
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      margin-bottom: 10px;
-      background: #f8fafc;
-      border-radius: 12px;
-      border-left: 4px solid #94E5F2;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    
-    .order-item::before {
-      content: counter(order-counter);
-      background: linear-gradient(135deg, #1B315E, #2d4b8f);
-      color: white;
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1em;
-      margin-right: 20px;
-      flex-shrink: 0;
-    }
-    
-    .order-item:hover {
-      transform: translateX(8px);
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .order-team {
-      font-size: 1.1em;
-      font-weight: 600;
-      color: #1e293b;
-    }
+    body { font-family: system-ui, sans-serif; background: #fff; color: #000; margin: 0; padding: 0; width: 800px; }
+    .container { width: 800px; padding: 20px; box-sizing: border-box; margin: 0; }
+    h1 { margin: 0 0 16px 0; font-size: 2em; color: #1B315E; border-bottom: 2px solid #94E5F2; padding-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip { background: #f1f5f9; color: #1B315E; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .btn { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 20px auto; display: block; }
   </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-  </head><body>
-    <div class="container">
-      <h1>🎲 Orden de Paso</h1>
-      <div class="chips">${chipsHTML}</div>
-      <div>${listHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-    </div>
-     <script>
-      function exportPDF() {
-        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
-        
-        const btn = document.querySelector('.btn.primary');
-        btn.style.display = 'none'; // Ocultamos el botón al imprimir
-        
-        const element = document.querySelector('.container');
-        const opt = {
-          margin: 20,
-          filename: ${JSON.stringify(exportFilename)},
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: 'css', avoid: '.zone' } // ¡La magia que evita que se corten las cajas!
-        };
-        
-        html2pdf().set(opt).from(element).save().then(() => {
-          btn.style.display = 'block'; // Volvemos a mostrar el botón
-        });
-      }
-    <\/script>
-  </body></html>`;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+</head><body>
+  <div class="container">
+    <h1>🎲 Orden de Paso</h1>
+    <div class="chips">${chipsHTML}</div>
+    <div style="font-size:16px; line-height:1.6; margin-top:20px;">${listHTML}</div>
+    <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+  </div>
+  <script>
+    function exportPDF() {
+      if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+      const btn = document.querySelector('.btn.primary');
+      btn.style.display = 'none';
+      const element = document.querySelector('.container');
+      const opt = {
+        margin: 10,
+        filename: ${JSON.stringify(exportFilename)},
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+      html2pdf().set(opt).from(element).save().then(() => {
+        btn.style.display = 'block';
+      });
+    }
+  <\/script>
+</body></html>`;
 
   w.document.open();
   w.document.write(html);
@@ -1792,48 +1725,44 @@ const chipsHTML = [
               `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
             ).join('');
 
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-            <title>Resultado del Sorteo Simple Guardado</title>
-            <style>
-              body{font-family:system-ui; background:#ffffff; color:#000; margin:0; padding:20px;}
-              .container{max-width:1100px; margin:0 auto;}
-              h1{margin-bottom:16px}
-              .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
-              .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
-              .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
-              .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
-            </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-            </head><body>
-              <div class="container">
-                <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
-                <div class="chips">${chipsHTML}</div>
-                <div>${listHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
-              </div>
-                <script>
-      function exportPDF() {
-        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
-        
-        const btn = document.querySelector('.btn.primary');
-        btn.style.display = 'none'; // Ocultamos el botón al imprimir
-        
-        const element = document.querySelector('.container');
-        const opt = {
-          margin: 20,
-          filename: ${JSON.stringify(exportFilename)},
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: 'css', avoid: '.zone' } // ¡La magia que evita que se corten las cajas!
-        };
-        
-        html2pdf().set(opt).from(element).save().then(() => {
-          btn.style.display = 'block'; // Volvemos a mostrar el botón
-        });
-      }
-    <\/script>
-            </body></html>`;
+const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Resultado del Sorteo Simple Guardado</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #fff; color: #000; margin: 0; padding: 0; width: 800px; }
+    .container { width: 800px; padding: 20px; box-sizing: border-box; margin: 0; }
+    h1 { margin: 0 0 16px 0; font-size: 2em; color: #1B315E; border-bottom: 2px solid #94E5F2; padding-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .chip { background: #f1f5f9; color: #1B315E; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .btn { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 20px auto; display: block; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+</head><body>
+  <div class="container">
+    <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
+    <div class="chips">${chipsHTML}</div>
+    <div style="font-size:16px; line-height:1.6; margin-top:20px;">${listHTML}</div>
+    <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+  </div>
+  <script>
+    function exportPDF() {
+      if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+      const btn = document.querySelector('.btn.primary');
+      btn.style.display = 'none';
+      const element = document.querySelector('.container');
+      const opt = {
+        margin: 10,
+        filename: ${JSON.stringify(exportFilename)},
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+      html2pdf().set(opt).from(element).save().then(() => {
+        btn.style.display = 'block';
+      });
+    }
+  <\/script>
+</body></html>`;
 
             w.document.open();
             w.document.write(html);
@@ -1874,20 +1803,20 @@ const chipsHTML = [
               return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
             }).join('');
 
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Resultado del Sorteo Guardado</title>
   <style>
-    body { font-family: system-ui; background: #ffffff; color: #000; margin: 0; padding: 20px; }
-    .container { width: 800px; margin: 0 auto; padding-bottom: 20px; }
-    h1 { margin-bottom: 16px; }
+    body { font-family: system-ui, sans-serif; background: #fff; color: #000; margin: 0; padding: 0; width: 800px; }
+    .container { width: 800px; padding: 20px; box-sizing: border-box; margin: 0; }
+    h1 { margin: 0 0 16px 0; font-size: 2em; color: #1B315E; border-bottom: 2px solid #94E5F2; padding-bottom: 10px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-    .chip { background: #fff; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
-    .grid { display: flex; flex-wrap: wrap; gap: 16px; width: 100%; padding: 10px 0; }
-    .zone { width: calc(50% - 8px); box-sizing: border-box; background: #fff; border: 2px solid #223046; border-radius: 6px; padding: 10px; page-break-inside: avoid; break-inside: avoid; }
-    .zone h4 { margin: 4px 0 8px 0; }
-    .zone ol { margin: 0; padding-left: 18px; }
-    .btn { background: #fff; color: #000; border: 1px solid #223046; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; margin: 20px auto; display: block; }
-    .btn.primary { background: linear-gradient(135deg, #22c55e, #16a34a); border: 0; color: #fff; }
+    .chip { background: #f1f5f9; color: #1B315E; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .grid { display: block; width: 100%; padding: 0; margin-top: 10px; }
+    .zone { display: inline-block; width: 47%; margin: 0 1% 16px 1%; vertical-align: top; box-sizing: border-box; background: #fff; border: 2px solid #223046; border-radius: 8px; padding: 15px; page-break-inside: avoid; break-inside: avoid; }
+    .zone h4 { margin: 0 0 12px 0; color: #1B315E; font-size: 1.1em; border-bottom: 2px solid #94E5F2; padding-bottom: 6px; }
+    .zone ol { margin: 0; padding-left: 20px; }
+    .zone li { margin-bottom: 6px; padding: 4px 0; }
+    .btn { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin: 20px auto; display: block; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 </head><body>
@@ -1904,11 +1833,11 @@ const chipsHTML = [
       btn.style.display = 'none';
       const element = document.querySelector('.container');
       const opt = {
-        margin: [20, 20, 20, 20],
+        margin: 10,
         filename: ${JSON.stringify(exportFilename)},
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 840 },
-        jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'], avoid: '.zone' }
       };
       html2pdf().set(opt).from(element).save().then(() => {
@@ -2174,7 +2103,7 @@ document.getElementById('btnCopy').classList.remove('hidden');
     // Abrir en nueva pestaña
 openSimpleResultInNewTab(list);
 
-/*    if (w) {
+/* if (w) {
       const chipsHTML = [
         disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
         category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
