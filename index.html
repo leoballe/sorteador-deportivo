@@ -1573,8 +1573,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
   </head><body>
     <div class="container">
       <h1>🎲 Resultado del Sorteo</h1>
@@ -1583,25 +1582,25 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
     </div>
     <script>
-      function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-const imgHeight=(canvas.height*pw)/canvas.width;
-let heightLeft=imgHeight; let pos=0;
-pdf.addImage(img,'PNG',0,pos,pw,imgHeight);
-heightLeft-=ph;
-while(heightLeft>0){ pos=heightLeft-imgHeight; pdf.addPage(); pdf.addImage(img,'PNG',0,pos,pw,imgHeight); heightLeft-=ph; }
-pdf.save(${JSON.stringify(exportFilename)});
+<script>
+      function exportPDF() {
+        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+        
+        const btn = document.querySelector('.btn.primary');
+        btn.style.display = 'none'; // Ocultamos el botón al imprimir
+        
+        const element = document.querySelector('.container');
+        const opt = {
+          margin: 20,
+          filename: ${JSON.stringify(exportFilename)},
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+          btn.style.display = 'block'; // Volvemos a mostrar el botón
         });
       }
     <\/script>
@@ -1697,8 +1696,7 @@ const gender = (document.getElementById('genderSelect').value) || '';
       color: #1e293b;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
   </head><body>
     <div class="container">
       <h1>🎲 Orden de Paso</h1>
@@ -1707,25 +1705,25 @@ const gender = (document.getElementById('genderSelect').value) || '';
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
     </div>
     <script>
-      function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-        const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-const imgHeight=(canvas.height*pw)/canvas.width;
-let heightLeft=imgHeight; let pos=0;
-pdf.addImage(img,'PNG',0,pos,pw,imgHeight);
-heightLeft-=ph;
-while(heightLeft>0){ pos=heightLeft-imgHeight; pdf.addPage(); pdf.addImage(img,'PNG',0,pos,pw,imgHeight); heightLeft-=ph; }
-pdf.save(${JSON.stringify(exportFilename)});
+     <script>
+      function exportPDF() {
+        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+        
+        const btn = document.querySelector('.btn.primary');
+        btn.style.display = 'none'; // Ocultamos el botón al imprimir
+        
+        const element = document.querySelector('.container');
+        const opt = {
+          margin: 20,
+          filename: ${JSON.stringify(exportFilename)},
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+          btn.style.display = 'block'; // Volvemos a mostrar el botón
         });
       }
     <\/script>
@@ -1971,8 +1969,7 @@ const chipsHTML = [
               .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
             </style>
-            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
             </head><body>
               <div class="container">
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
@@ -1981,28 +1978,28 @@ const chipsHTML = [
                 <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
               </div>
               <script>
-                function exportPDF(){
-                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-                  const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-                  const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
-                  document.body.appendChild(sheet);
-                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-const imgHeight=(canvas.height*pw)/canvas.width;
-let heightLeft=imgHeight; let pos=0;
-pdf.addImage(img,'PNG',0,pos,pw,imgHeight);
-heightLeft-=ph;
-while(heightLeft>0){ pos=heightLeft-imgHeight; pdf.addPage(); pdf.addImage(img,'PNG',0,pos,pw,imgHeight); heightLeft-=ph; }
-pdf.save(${JSON.stringify(exportFilename)});
-                  });
-                }
-              <\/script>
+                <script>
+      function exportPDF() {
+        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+        
+        const btn = document.querySelector('.btn.primary');
+        btn.style.display = 'none'; // Ocultamos el botón al imprimir
+        
+        const element = document.querySelector('.container');
+        const opt = {
+          margin: 20,
+          filename: ${JSON.stringify(exportFilename)},
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+          btn.style.display = 'block'; // Volvemos a mostrar el botón
+        });
+      }
+    <\/script>
             </body></html>`;
 
             w.document.open();
@@ -2059,8 +2056,7 @@ const chipsHTML = [
               .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
             </style>
-            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
             </head><body>
               <div class="container">
                 <h1>🎲 Resultado del Sorteo (Guardado)</h1>
@@ -2069,28 +2065,28 @@ const chipsHTML = [
                 <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
               </div>
               <script>
-                function exportPDF(){
-                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-                  const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
-                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
-                  document.body.appendChild(sheet);
-                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-const imgHeight=(canvas.height*pw)/canvas.width;
-let heightLeft=imgHeight; let pos=0;
-pdf.addImage(img,'PNG',0,pos,pw,imgHeight);
-heightLeft-=ph;
-while(heightLeft>0){ pos=heightLeft-imgHeight; pdf.addPage(); pdf.addImage(img,'PNG',0,pos,pw,imgHeight); heightLeft-=ph; }
-pdf.save(${JSON.stringify(exportFilename)});
-                  });
-                }
-              <\/script>
+                <script>
+      function exportPDF() {
+        if (!window.html2pdf) { alert('Librería PDF no cargada. Esperá un segundo y volvé a intentar.'); return; }
+        
+        const btn = document.querySelector('.btn.primary');
+        btn.style.display = 'none'; // Ocultamos el botón al imprimir
+        
+        const element = document.querySelector('.container');
+        const opt = {
+          margin: 20,
+          filename: ${JSON.stringify(exportFilename)},
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+          btn.style.display = 'block'; // Volvemos a mostrar el botón
+        });
+      }
+    <\/script>
             </body></html>`;
 
             w.document.open();
