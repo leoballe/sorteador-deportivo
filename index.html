@@ -1744,6 +1744,7 @@ async function saveDrawToCloud(result, meta) {
     }));
 
     const payload = {
+		eventName: document.getElementById('eventNameInput')?.value.trim() || '',
       teamsCount: meta.teamsCount,
       zones: meta.zones,
       format: meta.format,
@@ -1776,6 +1777,7 @@ async function saveSimpleDrawToCloud(list, meta) {
   try {
     const payload = {
       type: 'simple',
+		eventName: document.getElementById('eventNameInput')?.value.trim() || '',
       teamsCount: list.length,
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
@@ -1825,11 +1827,12 @@ function subscribeCloudHistory() {
       snap.forEach(doc => {
         const d = doc.data();
         const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
-        let title = '';
+let title = '';
+        const eventPrefix = d.eventName ? `[${d.eventName}] ` : '';
         if (d.type === 'simple') {
-          title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when} — ${eventPrefix}SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
         } else {
-          title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when} — ${eventPrefix}${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
         }
         
         const item = document.createElement('div');
@@ -1934,7 +1937,8 @@ shareBtn.addEventListener('click', () => {
               return;
             }
             
-            const chipsHTML = [
+const chipsHTML = [
+              d.eventName ? `<span class="chip">Evento: ${escapeHtml(d.eventName)}</span>` : '',
               d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
               d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
               d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
@@ -2007,10 +2011,12 @@ shareBtn.addEventListener('click', () => {
               return;
             }
             
-            const chipsHTML = [
+const chipsHTML = [
+              d.eventName ? `<span class="chip">Evento: ${escapeHtml(d.eventName)}</span>` : '',
               d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
               d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
               d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
+              `<span class="chip">${d.teamsCount || d.list.length} equipos</span>`,
               d.format ? `<span class="chip">Formato: ${escapeHtml(d.format)}</span>` : '',
               `<span class="chip">${d.zones || groups.length} zonas</span>`,
               `<span class="chip">${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—'}</span>`
