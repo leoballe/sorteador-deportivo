@@ -1375,9 +1375,8 @@ function openResultInNewTab(result) {
   }
   
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
-  const category = (document.getElementById('categorySelect').value) || '';
+const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
-const gender = (document.getElementById('genderSelect').value) || '';
   const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
   
   const eventName = document.getElementById('eventNameInput')?.value.trim() || '';
