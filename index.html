@@ -1587,7 +1587,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
         const sheet=document.createElement('div');
         sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
         const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
         const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
         const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
@@ -1711,7 +1711,7 @@ const gender = (document.getElementById('genderSelect').value) || '';
         if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
         const sheet=document.createElement('div');
         sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
         const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
         const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
         const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
@@ -1985,7 +1985,7 @@ const chipsHTML = [
                   if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
                   const sheet=document.createElement('div');
                   sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
                   const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
                   const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
                   const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
@@ -2073,7 +2073,7 @@ const chipsHTML = [
                   if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
                   const sheet=document.createElement('div');
                   sheet.style.width='794px';sheet.style.height='auto';sheet.style.minHeight='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  sheet.style.position='absolute';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
                   const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
                   const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
                   const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
