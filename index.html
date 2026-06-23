@@ -365,9 +365,16 @@ Newell's, Santa Fe
               </div>
             </div>
 
-            <div class="card">
+<div class="card">
               <h3>Parámetros</h3>
-<div class="controls" id="formatRow">
+
+              <div class="controls" style="margin-bottom:12px">
+                <div style="min-width:220px;flex:1">
+                  <label>Nombre del Evento</label>
+                  <input type="text" id="eventNameInput" placeholder="Ej: Juegos Nacionales Evita" style="width:100%">
+                </div>
+              </div>
+              <div class="controls" id="formatRow">
   <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label>
   <label class="pill"><input type="radio" name="format" value="4x6"> 4x6</label>
   <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label>
@@ -1370,10 +1377,13 @@ function openResultInNewTab(result) {
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
+const gender = (document.getElementById('genderSelect').value) || '';
   const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
   
+  const eventName = document.getElementById('eventNameInput')?.value.trim() || '';
   
   const chipsHTML = [
+    eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
     category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
     gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
@@ -1608,11 +1618,13 @@ function openSimpleResultInNewTab(list) {
   
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
-  const gender = (document.getElementById('genderSelect').value) || '';
+const gender = (document.getElementById('genderSelect').value) || '';
   const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
   
+  const eventName = document.getElementById('eventNameInput')?.value.trim() || '';
   
   const chipsHTML = [
+    eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
     category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
     gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
