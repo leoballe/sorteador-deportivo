@@ -1724,7 +1724,7 @@ const gender = (document.getElementById('genderSelect').value) || '';
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+          pagebreak: { mode: 'css', avoid: '.zone' } // ¡La magia que evita que se corten las cajas!
         };
         
         html2pdf().set(opt).from(element).save().then(() => {
@@ -1996,7 +1996,7 @@ const chipsHTML = [
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+          pagebreak: { mode: 'css', avoid: '.zone' } // ¡La magia que evita que se corten las cajas!
         };
         
         html2pdf().set(opt).from(element).save().then(() => {
@@ -2082,7 +2082,7 @@ const chipsHTML = [
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: 'avoid-all' } // ¡La magia que evita que se corten las cajas!
+          pagebreak: { mode: 'css', avoid: '.zone' } // ¡La magia que evita que se corten las cajas!
         };
         
         html2pdf().set(opt).from(element).save().then(() => {
