@@ -310,7 +310,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.2 PDF paginado real</span>
+  <span class="badge">v3.3 PDF paginado real</span>
 </div>
         
       </header>
@@ -1793,7 +1793,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         let y=margin;
 
         function cleanText(value){
-          return String(value||'').replace(/\s+/g,' ').trim();
+          return String(value||'').replace(/\\s+/g,' ').trim();
         }
         function chipsFromHTML(html){
           const box=document.createElement('div');
@@ -2173,7 +2173,7 @@ function openSimpleResultInNewTab(list) {
         let y=margin;
 
         function cleanText(value){
-          return String(value||'').replace(/\s+/g,' ').trim();
+          return String(value||'').replace(/\\s+/g,' ').trim();
         }
         function chipsFromHTML(html){
           const box=document.createElement('div');
@@ -2653,7 +2653,7 @@ shareBtn.addEventListener('click', () => {
         let y=margin;
 
         function cleanText(value){
-          return String(value||'').replace(/\s+/g,' ').trim();
+          return String(value||'').replace(/\\s+/g,' ').trim();
         }
         function chipsFromHTML(html){
           const box=document.createElement('div');
@@ -2947,7 +2947,7 @@ shareBtn.addEventListener('click', () => {
         let y=margin;
 
         function cleanText(value){
-          return String(value||'').replace(/\s+/g,' ').trim();
+          return String(value||'').replace(/\\s+/g,' ').trim();
         }
         function chipsFromHTML(html){
           const box=document.createElement('div');
