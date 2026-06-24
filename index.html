@@ -12,8 +12,6 @@
 
   <!-- Utilidades PDF en la pestaña de resultado -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
-
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
@@ -312,7 +310,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.0 </span>
+  <span class="badge">v3.1 PDF sin cortes</span>
 </div>
         
       </header>
@@ -1581,45 +1579,199 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         background: #f8fafc;
       }
     }
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
   </head><body>
     <div class="container">
       <h1>🎲 Resultado del Sorteo</h1>
       <div class="chips">${chipsHTML}</div>
       <div class="grid">${zonesHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
     </div>
     <script>
       function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
-        const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
-        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML=${JSON.stringify(zonesHTML)}; sheet.appendChild(grid);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+        if(!window.jspdf){alert('Librería PDF no cargada');return}
+        const zonesMarkup=${JSON.stringify(zonesHTML)};
+        const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const { jsPDF }=window.jspdf;
+        const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+        const pageW=pdf.internal.pageSize.getWidth();
+        const pageH=pdf.internal.pageSize.getHeight();
+        const margin=36;
+        const bottomMargin=84;
+        const gap=12;
+        const colW=(pageW-(margin*2)-gap)/2;
+        let y=margin;
+
+        function cleanText(value){
+          return String(value||'').replace(/\s+/g,' ').trim();
+        }
+        function chipsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.querySelectorAll('.chip')).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function zonesFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.children).map(function(el,idx){
+            const titleEl=el.querySelector('h4');
+            const itemEls=Array.from(el.querySelectorAll('li'));
+            return {
+              title: cleanText(titleEl ? titleEl.textContent : ('Zona '+(idx+1))),
+              items: itemEls.map(function(li){return cleanText(li.textContent);}).filter(Boolean)
+            };
+          });
+        }
+        function drawHeader(isContinuation){
+          const title='Resultado del Sorteo' + (isContinuation ? ' - continuación' : '');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(17);
+          pdf.text(title, margin, y);
+          y+=22;
+          const chips=chipsFromHTML(chipsMarkup);
+          if(chips.length){
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(8.5);
+            pdf.setDrawColor(148,229,242);
+            pdf.setFillColor(255,255,255);
+            let x=margin;
+            chips.forEach(function(chip){
+              let chipText=chip;
+              let w=pdf.getTextWidth(chipText)+14;
+              const maxW=pageW-(margin*2);
+              if(w>maxW){
+                chipText=chipText.slice(0,90)+'...';
+                w=Math.min(pdf.getTextWidth(chipText)+14,maxW);
+              }
+              if(x+w>pageW-margin){
+                x=margin;
+                y+=17;
+              }
+              pdf.roundedRect(x,y-10,w,15,7,7,'S');
+              pdf.text(chipText,x+7,y);
+              x+=w+6;
+            });
+            y+=23;
+          }else{
+            y+=8;
           }
-          pdf.save(${JSON.stringify(exportFilename)});
-        });
-      }
-    <\/script>
+        }
+        function wrappedLines(text,width,fontSize,fontStyle){
+          pdf.setFont('helvetica',fontStyle||'normal');
+          pdf.setFontSize(fontSize||10);
+          return pdf.splitTextToSize(cleanText(text),width);
+        }
+        function zoneHeight(zone){
+          let h=42;
+          zone.items.forEach(function(item,idx){
+            const label=(idx+1)+'. '+item;
+            const lines=wrappedLines(label,colW-24,10.5,'normal');
+            h+=lines.length*13+3;
+          });
+          return Math.max(96,h+8);
+        }
+        function drawZone(zone,x,top,w,h){
+          pdf.setDrawColor(34,48,70);
+          pdf.setLineWidth(0.8);
+          pdf.setFillColor(255,255,255);
+          pdf.roundedRect(x,top,w,h,5,5,'S');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(13);
+          pdf.text(zone.title,x+12,top+22);
+          pdf.setDrawColor(148,229,242);
+          pdf.setLineWidth(0.6);
+          pdf.line(x+12,top+31,x+w-12,top+31);
+          let yy=top+53;
+          zone.items.forEach(function(item,idx){
+            const label=(idx+1)+'. '+item;
+            const lines=wrappedLines(label,w-24,10.5,'normal');
+            pdf.setTextColor(15,23,42);
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(10.5);
+            pdf.text(lines,x+12,yy);
+            yy+=lines.length*13+3;
+          });
+        }
+        function addPage(){
+          pdf.addPage();
+          y=margin;
+          drawHeader(true);
+        }
+
+        const zones=zonesFromHTML(zonesMarkup);
+        drawHeader(false);
+        for(let i=0;i<zones.length;i+=2){
+          const left=zones[i];
+          const right=zones[i+1]||null;
+          const leftH=zoneHeight(left);
+          const rightH=right ? zoneHeight(right) : leftH;
+          const rowH=Math.max(leftH,rightH);
+          if(y+rowH>pageH-bottomMargin && y>margin+40){
+            addPage();
+          }
+          if(rowH>pageH-margin-bottomMargin){
+            // Caso extremo: si una zona individual es demasiado alta, se dibuja igualmente desde arriba.
+            // En los sorteos normales no debería ocurrir, pero evita que el PDF falle.
+          }
+          drawZone(left,margin,y,colW,rowH);
+          if(right) drawZone(right,margin+colW+gap,y,colW,rowH);
+          y+=rowH+10;
+        }
+        pdf.save(${JSON.stringify(exportFilename)});
+      }<\/script>
   </body></html>`;
 
   w.document.open();
@@ -1711,45 +1863,147 @@ function openSimpleResultInNewTab(list) {
       font-weight: 600;
       color: #1e293b;
     }
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
   </head><body>
     <div class="container">
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
       <div>${listHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
     </div>
     <script>
       function exportPDF(){
-        if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-        const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
-        const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
-        const listDiv=document.createElement('div'); listDiv.innerHTML=${JSON.stringify(listHTML)}; sheet.appendChild(listDiv);
-        document.body.appendChild(sheet);
-        html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-          const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-          const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-          const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+        if(!window.jspdf){alert('Librería PDF no cargada');return}
+        const listMarkup=${JSON.stringify(listHTML)};
+        const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const { jsPDF }=window.jspdf;
+        const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+        const pageW=pdf.internal.pageSize.getWidth();
+        const pageH=pdf.internal.pageSize.getHeight();
+        const margin=40;
+        const bottomMargin=84;
+        let y=margin;
+
+        function cleanText(value){
+          return String(value||'').replace(/\s+/g,' ').trim();
+        }
+        function chipsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.querySelectorAll('.chip')).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function itemsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.children).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function drawHeader(isContinuation){
+          const title='Orden de Paso' + (isContinuation ? ' - continuación' : '');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(17);
+          pdf.text(title, margin, y);
+          y+=22;
+          const chips=chipsFromHTML(chipsMarkup);
+          if(chips.length){
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(8.5);
+            pdf.setDrawColor(148,229,242);
+            let x=margin;
+            chips.forEach(function(chip){
+              let chipText=chip;
+              let w=pdf.getTextWidth(chipText)+14;
+              const maxW=pageW-(margin*2);
+              if(w>maxW){
+                chipText=chipText.slice(0,90)+'...';
+                w=Math.min(pdf.getTextWidth(chipText)+14,maxW);
+              }
+              if(x+w>pageW-margin){
+                x=margin;
+                y+=17;
+              }
+              pdf.roundedRect(x,y-10,w,15,7,7,'S');
+              pdf.text(chipText,x+7,y);
+              x+=w+6;
+            });
+            y+=24;
+          }else{
+            y+=8;
           }
-          pdf.save(${JSON.stringify(exportFilename)});
+        }
+        function addPage(){
+          pdf.addPage();
+          y=margin;
+          drawHeader(true);
+        }
+
+        const items=itemsFromHTML(listMarkup);
+        drawHeader(false);
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(11);
+        items.forEach(function(item){
+          const lines=pdf.splitTextToSize(item,pageW-(margin*2));
+          const h=lines.length*14+7;
+          if(y+h>pageH-bottomMargin) addPage();
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','normal');
+          pdf.setFontSize(11);
+          pdf.text(lines,margin,y);
+          y+=h;
         });
-      }
-    <\/script>
+        pdf.save(${JSON.stringify(exportFilename)});
+      }<\/script>
   </body></html>`;
 
   w.document.open();
@@ -1991,45 +2245,147 @@ shareBtn.addEventListener('click', () => {
               .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
               .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-            </head><body>
+                      </head><body>
               <div class="container">
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
                 <div class="chips">${chipsHTML}</div>
                 <div>${listHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
               </div>
               <script>
                 function exportPDF(){
-                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-                  const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
-                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
-                  const listDiv=document.createElement('div'); listDiv.innerHTML=${JSON.stringify(listHTML)}; sheet.appendChild(listDiv);
-                  document.body.appendChild(sheet);
-                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+        if(!window.jspdf){alert('Librería PDF no cargada');return}
+        const listMarkup=${JSON.stringify(listHTML)};
+        const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const { jsPDF }=window.jspdf;
+        const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+        const pageW=pdf.internal.pageSize.getWidth();
+        const pageH=pdf.internal.pageSize.getHeight();
+        const margin=40;
+        const bottomMargin=84;
+        let y=margin;
+
+        function cleanText(value){
+          return String(value||'').replace(/\s+/g,' ').trim();
+        }
+        function chipsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.querySelectorAll('.chip')).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function itemsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.children).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function drawHeader(isContinuation){
+          const title='Resultado del Sorteo Simple (Guardado)' + (isContinuation ? ' - continuación' : '');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(17);
+          pdf.text(title, margin, y);
+          y+=22;
+          const chips=chipsFromHTML(chipsMarkup);
+          if(chips.length){
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(8.5);
+            pdf.setDrawColor(148,229,242);
+            let x=margin;
+            chips.forEach(function(chip){
+              let chipText=chip;
+              let w=pdf.getTextWidth(chipText)+14;
+              const maxW=pageW-(margin*2);
+              if(w>maxW){
+                chipText=chipText.slice(0,90)+'...';
+                w=Math.min(pdf.getTextWidth(chipText)+14,maxW);
+              }
+              if(x+w>pageW-margin){
+                x=margin;
+                y+=17;
+              }
+              pdf.roundedRect(x,y-10,w,15,7,7,'S');
+              pdf.text(chipText,x+7,y);
+              x+=w+6;
+            });
+            y+=24;
+          }else{
+            y+=8;
           }
-          pdf.save(${JSON.stringify(exportFilename)});
-                  });
-                }
-              <\/script>
+        }
+        function addPage(){
+          pdf.addPage();
+          y=margin;
+          drawHeader(true);
+        }
+
+        const items=itemsFromHTML(listMarkup);
+        drawHeader(false);
+        pdf.setFont('helvetica','normal');
+        pdf.setFontSize(11);
+        items.forEach(function(item){
+          const lines=pdf.splitTextToSize(item,pageW-(margin*2));
+          const h=lines.length*14+7;
+          if(y+h>pageH-bottomMargin) addPage();
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','normal');
+          pdf.setFontSize(11);
+          pdf.text(lines,margin,y);
+          y+=h;
+        });
+        pdf.save(${JSON.stringify(exportFilename)});
+      }<\/script>
             </body></html>`;
 
             w.document.open();
@@ -2084,45 +2440,199 @@ shareBtn.addEventListener('click', () => {
               .zone ol{margin:0;padding-left:18px}
               .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-            <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"><\/script>
-            </head><body>
+                      </head><body>
               <div class="container">
                 <h1>🎲 Resultado del Sorteo (Guardado)</h1>
                 <div class="chips">${chipsHTML}</div>
                 <div class="grid">${zonesHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF</button>
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
               </div>
               <script>
                 function exportPDF(){
-                  if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
-                  const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
-                  const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
-                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML=${JSON.stringify(zonesHTML)}; sheet.appendChild(grid);
-                  document.body.appendChild(sheet);
-                  html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
-                    const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
-                    const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-                    const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+        if(!window.jspdf){alert('Librería PDF no cargada');return}
+        const zonesMarkup=${JSON.stringify(zonesHTML)};
+        const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const { jsPDF }=window.jspdf;
+        const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+        const pageW=pdf.internal.pageSize.getWidth();
+        const pageH=pdf.internal.pageSize.getHeight();
+        const margin=36;
+        const bottomMargin=84;
+        const gap=12;
+        const colW=(pageW-(margin*2)-gap)/2;
+        let y=margin;
+
+        function cleanText(value){
+          return String(value||'').replace(/\s+/g,' ').trim();
+        }
+        function chipsFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.querySelectorAll('.chip')).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
+        }
+        function zonesFromHTML(html){
+          const box=document.createElement('div');
+          box.innerHTML=html||'';
+          return Array.from(box.children).map(function(el,idx){
+            const titleEl=el.querySelector('h4');
+            const itemEls=Array.from(el.querySelectorAll('li'));
+            return {
+              title: cleanText(titleEl ? titleEl.textContent : ('Zona '+(idx+1))),
+              items: itemEls.map(function(li){return cleanText(li.textContent);}).filter(Boolean)
+            };
+          });
+        }
+        function drawHeader(isContinuation){
+          const title='Resultado del Sorteo (Guardado)' + (isContinuation ? ' - continuación' : '');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(17);
+          pdf.text(title, margin, y);
+          y+=22;
+          const chips=chipsFromHTML(chipsMarkup);
+          if(chips.length){
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(8.5);
+            pdf.setDrawColor(148,229,242);
+            pdf.setFillColor(255,255,255);
+            let x=margin;
+            chips.forEach(function(chip){
+              let chipText=chip;
+              let w=pdf.getTextWidth(chipText)+14;
+              const maxW=pageW-(margin*2);
+              if(w>maxW){
+                chipText=chipText.slice(0,90)+'...';
+                w=Math.min(pdf.getTextWidth(chipText)+14,maxW);
+              }
+              if(x+w>pageW-margin){
+                x=margin;
+                y+=17;
+              }
+              pdf.roundedRect(x,y-10,w,15,7,7,'S');
+              pdf.text(chipText,x+7,y);
+              x+=w+6;
+            });
+            y+=23;
+          }else{
+            y+=8;
           }
-          pdf.save(${JSON.stringify(exportFilename)});
-                  });
-                }
-              <\/script>
+        }
+        function wrappedLines(text,width,fontSize,fontStyle){
+          pdf.setFont('helvetica',fontStyle||'normal');
+          pdf.setFontSize(fontSize||10);
+          return pdf.splitTextToSize(cleanText(text),width);
+        }
+        function zoneHeight(zone){
+          let h=42;
+          zone.items.forEach(function(item,idx){
+            const label=(idx+1)+'. '+item;
+            const lines=wrappedLines(label,colW-24,10.5,'normal');
+            h+=lines.length*13+3;
+          });
+          return Math.max(96,h+8);
+        }
+        function drawZone(zone,x,top,w,h){
+          pdf.setDrawColor(34,48,70);
+          pdf.setLineWidth(0.8);
+          pdf.setFillColor(255,255,255);
+          pdf.roundedRect(x,top,w,h,5,5,'S');
+          pdf.setTextColor(15,23,42);
+          pdf.setFont('helvetica','bold');
+          pdf.setFontSize(13);
+          pdf.text(zone.title,x+12,top+22);
+          pdf.setDrawColor(148,229,242);
+          pdf.setLineWidth(0.6);
+          pdf.line(x+12,top+31,x+w-12,top+31);
+          let yy=top+53;
+          zone.items.forEach(function(item,idx){
+            const label=(idx+1)+'. '+item;
+            const lines=wrappedLines(label,w-24,10.5,'normal');
+            pdf.setTextColor(15,23,42);
+            pdf.setFont('helvetica','normal');
+            pdf.setFontSize(10.5);
+            pdf.text(lines,x+12,yy);
+            yy+=lines.length*13+3;
+          });
+        }
+        function addPage(){
+          pdf.addPage();
+          y=margin;
+          drawHeader(true);
+        }
+
+        const zones=zonesFromHTML(zonesMarkup);
+        drawHeader(false);
+        for(let i=0;i<zones.length;i+=2){
+          const left=zones[i];
+          const right=zones[i+1]||null;
+          const leftH=zoneHeight(left);
+          const rightH=right ? zoneHeight(right) : leftH;
+          const rowH=Math.max(leftH,rightH);
+          if(y+rowH>pageH-bottomMargin && y>margin+40){
+            addPage();
+          }
+          if(rowH>pageH-margin-bottomMargin){
+            // Caso extremo: si una zona individual es demasiado alta, se dibuja igualmente desde arriba.
+            // En los sorteos normales no debería ocurrir, pero evita que el PDF falle.
+          }
+          drawZone(left,margin,y,colW,rowH);
+          if(right) drawZone(right,margin+colW+gap,y,colW,rowH);
+          y+=rowH+10;
+        }
+        pdf.save(${JSON.stringify(exportFilename)});
+      }<\/script>
             </body></html>`;
 
             w.document.open();
@@ -2913,6 +3423,56 @@ function generateSimpleSharedHTML(data) {
     h1{margin-bottom:16px}
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
     .chip{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:20px;font-size:14px}
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
   </style></head>
   <body>
     <div class="container">
@@ -2953,6 +3513,56 @@ function generateZonesSharedHTML(data) {
     .zone{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
     .zone ol{margin:0;padding-left:18px}
+
+
+    /* PDF / impresión sin cortes de tarjetas */
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      .btn, button {
+        display: none !important;
+      }
+      .container {
+        max-width: none !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .header, h1, .chips, .chip {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      .grid {
+        display: block !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        overflow: visible !important;
+      }
+      .zone {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 8mm 0 !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        overflow: visible !important;
+      }
+      .zone ol, .zone li, .order-list, .order-item, .order-row {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    }
   </style></head>
   <body>
     <div class="container">
