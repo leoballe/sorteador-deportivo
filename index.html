@@ -367,6 +367,12 @@ Newell's, Santa Fe
 
             <div class="card">
               <h3>Parámetros</h3>
+<div class="controls" style="margin-bottom:10px">
+  <div style="min-width:220px;flex:1">
+    <label>Nombre del evento</label>
+    <input type="text" id="eventNameInput" placeholder="Ejemplo: Juegos Nacionales Evita 2026">
+  </div>
+</div>
 <div class="controls" id="formatRow">
   <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label>
   <label class="pill"><input type="radio" name="format" value="4x6"> 4x6</label>
@@ -526,7 +532,12 @@ function toast(msg) {
 
 function escapeHtml(text) {
   const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return String(text || '').replace(/[&<>"']/g, m => map[m]);
+}
+
+function getEventName() {
+  const el = document.getElementById('eventNameInput');
+  return el ? el.value.trim() : '';
 }
 
 function downloadText(text, filename) {
@@ -567,6 +578,7 @@ function getSystemParamCurrent() {
 function buildExportFilename(ext, meta) {
   const date = meta?.date || new Date().toISOString().slice(0,10);
   const parts = [
+    safeFilePart(meta?.eventName || ''),
     safeFilePart(meta?.discipline || ''),
     safeFilePart(meta?.category || ''),
     safeFilePart(meta?.gender || ''),
@@ -579,23 +591,25 @@ function buildExportFilename(ext, meta) {
 }
 
 function getCurrentMetaForFilename() {
+  const eventName = getEventName();
   const disciplineText = (document.getElementById('disciplineSelect')?.selectedOptions?.[0]?.text) || '';
   const category = (document.getElementById('categorySelect')?.value) || '';
   const gender = (document.getElementById('genderSelect')?.value) || '';
   const modality = (document.getElementById('modalitySelect')?.value) || '';
   const system = getSystemParamCurrent();
   const date = new Date().toISOString().slice(0,10);
-  return { discipline: disciplineText, category, gender, modality, system, date };
+  return { eventName, discipline: disciplineText, category, gender, modality, system, date };
 }
 
 function getCloudMetaForFilename(d) {
+  const eventName = d?.eventName || '';
   const discipline = d?.discipline || '';
   const category = d?.category || '';
   const gender = d?.gender || '';
   const modality = d?.modality || '';
   const system = (d?.type === 'simple') ? 'orden_paso' : (d?.format || 'zonas');
   const date = (d?.createdAt?.toDate) ? d.createdAt.toDate().toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
-  return { discipline, category, gender, modality, system, date };
+  return { eventName, discipline, category, gender, modality, system, date };
 }
 
 function copyText(text) {
@@ -893,6 +907,7 @@ document.getElementById('btnShare').addEventListener('click', async () => {
   }
   
   const fmt = getFormat();
+  const eventName = getEventName();
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
@@ -901,6 +916,7 @@ document.getElementById('btnShare').addEventListener('click', async () => {
   const drawData = {
     type: fmt === 'simple' ? 'simple' : 'zones',
     teamsCount: teams.length,
+    eventName: eventName,
     discipline: disciplineText,
     category: category,
     gender: gender,
@@ -1367,6 +1383,7 @@ function openResultInNewTab(result) {
     return;
   }
   
+  const eventName = getEventName();
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
@@ -1374,6 +1391,7 @@ function openResultInNewTab(result) {
   
   
   const chipsHTML = [
+    eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
     category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
     gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
@@ -1577,17 +1595,28 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       function exportPDF(){
         if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
         const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
         const h=document.createElement('h2'); h.textContent='Resultado del Sorteo'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
+        const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML=${JSON.stringify(zonesHTML)}; sheet.appendChild(grid);
         document.body.appendChild(sheet);
         html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
+          const imgWidth = pw;
+          const imgHeight = canvas.height * imgWidth / canvas.width;
+          let position = 0;
+          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+          let heightLeft = imgHeight - ph;
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+            heightLeft -= ph;
+          }
+          pdf.save(${JSON.stringify(exportFilename)});
         });
       }
     <\/script>
@@ -1606,6 +1635,7 @@ function openSimpleResultInNewTab(list) {
     return;
   }
   
+  const eventName = getEventName();
   const disciplineText = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
@@ -1613,6 +1643,7 @@ function openSimpleResultInNewTab(list) {
   
   
   const chipsHTML = [
+    eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
     disciplineText ? `<span class="chip">Disciplina: ${escapeHtml(disciplineText)}</span>` : '',
     category ? `<span class="chip">Categoría: ${escapeHtml(category)}</span>` : '',
     gender ? `<span class="chip">Género: ${escapeHtml(gender)}</span>` : '',
@@ -1694,17 +1725,28 @@ function openSimpleResultInNewTab(list) {
       function exportPDF(){
         if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
         const sheet=document.createElement('div');
-        sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+        sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
+        sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
         const h=document.createElement('h2'); h.textContent='Orden de Paso'; sheet.appendChild(h);
-        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-        const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+        const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
+        const listDiv=document.createElement('div'); listDiv.innerHTML=${JSON.stringify(listHTML)}; sheet.appendChild(listDiv);
         document.body.appendChild(sheet);
         html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
+          const imgWidth = pw;
+          const imgHeight = canvas.height * imgWidth / canvas.width;
+          let position = 0;
+          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+          let heightLeft = imgHeight - ph;
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+            heightLeft -= ph;
+          }
+          pdf.save(${JSON.stringify(exportFilename)});
         });
       }
     <\/script>
@@ -1736,6 +1778,7 @@ async function saveDrawToCloud(result, meta) {
       teamsCount: meta.teamsCount,
       zones: meta.zones,
       format: meta.format,
+      eventName: meta.eventName || '',
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
@@ -1766,6 +1809,7 @@ async function saveSimpleDrawToCloud(list, meta) {
     const payload = {
       type: 'simple',
       teamsCount: list.length,
+      eventName: meta.eventName || '',
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
@@ -1816,9 +1860,9 @@ function subscribeCloudHistory() {
         const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
         let title = '';
         if (d.type === 'simple') {
-          title = `${when} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
         } else {
-          title = `${when} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
         }
         
         const item = document.createElement('div');
@@ -1890,6 +1934,7 @@ shareBtn.addEventListener('click', () => {
   const drawData = {
     type: d.type || 'zones',
     teamsCount: d.teamsCount,
+    eventName: d.eventName || '',
     discipline: d.discipline || '',
     category: d.category || '',
     gender: d.gender || '',
@@ -1924,6 +1969,7 @@ shareBtn.addEventListener('click', () => {
             }
             
             const chipsHTML = [
+              d.eventName ? `<span class="chip">Evento: ${escapeHtml(d.eventName)}</span>` : '',
               d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
               d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
               d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
@@ -1959,17 +2005,28 @@ shareBtn.addEventListener('click', () => {
                 function exportPDF(){
                   if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
                   const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
                   const h=document.createElement('h2'); h.textContent='Resultado del Sorteo Simple (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-                  const listDiv=document.createElement('div'); listDiv.innerHTML='${listHTML.replace(/'/g,"\\'")}'; sheet.appendChild(listDiv);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
+                  const listDiv=document.createElement('div'); listDiv.innerHTML=${JSON.stringify(listHTML)}; sheet.appendChild(listDiv);
                   document.body.appendChild(sheet);
                   html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
+                    const imgWidth = pw;
+          const imgHeight = canvas.height * imgWidth / canvas.width;
+          let position = 0;
+          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+          let heightLeft = imgHeight - ph;
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+            heightLeft -= ph;
+          }
+          pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
               <\/script>
@@ -1997,6 +2054,7 @@ shareBtn.addEventListener('click', () => {
             }
             
             const chipsHTML = [
+              d.eventName ? `<span class="chip">Evento: ${escapeHtml(d.eventName)}</span>` : '',
               d.discipline ? `<span class="chip">Disciplina: ${escapeHtml(d.discipline)}</span>` : '',
               d.category ? `<span class="chip">Categoría: ${escapeHtml(d.category)}</span>` : '',
               d.gender ? `<span class="chip">Género: ${escapeHtml(d.gender)}</span>` : '',
@@ -2040,17 +2098,28 @@ shareBtn.addEventListener('click', () => {
                 function exportPDF(){
                   if(!window.jspdf||!window.html2canvas){alert('Librerías PDF no cargadas');return}
                   const sheet=document.createElement('div');
-                  sheet.style.width='794px';sheet.style.height='1123px';sheet.style.background='#fff';sheet.style.color='#0f172a';
-                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';
+                  sheet.style.width='794px';sheet.style.minHeight='1123px';sheet.style.height='auto';sheet.style.background='#fff';sheet.style.color='#0f172a';
+                  sheet.style.position='fixed';sheet.style.left='-9999px';sheet.style.top='0';sheet.style.display='flex';sheet.style.flexDirection='column';sheet.style.fontFamily='system-ui, sans-serif';sheet.style.padding='20px';sheet.style.boxSizing='border-box';
                   const h=document.createElement('h2'); h.textContent='Resultado del Sorteo (Guardado)'; sheet.appendChild(h);
-                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML='${chipsHTML.replace(/'/g,"\\'")}'; sheet.appendChild(chips);
-                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML='${zonesHTML.replace(/'/g,"\\'")}'; sheet.appendChild(grid);
+                  const chips=document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px'; chips.innerHTML=${JSON.stringify(chipsHTML)}; sheet.appendChild(chips);
+                  const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;flex:0'; grid.innerHTML=${JSON.stringify(zonesHTML)}; sheet.appendChild(grid);
                   document.body.appendChild(sheet);
                   html2canvas(sheet,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(canvas=>{
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    pdf.addImage(img,'PNG',0,0,pw,ph); pdf.save(${JSON.stringify(exportFilename)});
+                    const imgWidth = pw;
+          const imgHeight = canvas.height * imgWidth / canvas.width;
+          let position = 0;
+          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+          let heightLeft = imgHeight - ph;
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
+            heightLeft -= ph;
+          }
+          pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
               <\/script>
@@ -2350,12 +2419,14 @@ openSimpleResultInNewTab(list);
 
 
 // Guardar en la nube
+const eventName = getEventName();
 const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
 const cat = (document.getElementById('categorySelect').value) || '';
 const gen = (document.getElementById('genderSelect').value) || '';
 const mod = (document.getElementById('modalitySelect').value) || '';
 const meta = {
   teamsCount: teams.length,
+  eventName: eventName,
   discipline: discTxt,
   disciplineSeed: base,
   category: cat,
@@ -2378,11 +2449,12 @@ document.getElementById('btnShare').classList.remove('hidden');
       const now = new Date().toLocaleString();
       const item = document.createElement('div');
       item.className = 'item';
+      const eventName = getEventName();
       const discTxt = (document.getElementById('disciplineSelect').selectedOptions[0]?.text) || '';
       const cat = (document.getElementById('categorySelect').value) || '';
       const gen = (document.getElementById('genderSelect').value) || '';
       const mod = (document.getElementById('modalitySelect').value) || '';
-      item.textContent = `${now} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
+      item.textContent = `${now}${eventName ? ' — ' + eventName : ''} — ${teams.length} equipos · ${z} zonas${fmt ? ' · ' + fmt : ''}${discTxt ? ' · ' + discTxt : ''}${cat ? ' · ' + cat : ''}${gen ? ' · ' + gen : ''}`;
       document.getElementById('cloudHistoryList').prepend(item);
 
       // Guardar en la nube
@@ -2390,6 +2462,7 @@ document.getElementById('btnShare').classList.remove('hidden');
         teamsCount: teams.length,
         zones: z,
         format: fmt,
+        eventName: eventName,
         discipline: discTxt,
         disciplineSeed: base,
         category: cat,
@@ -2786,7 +2859,7 @@ function loadSharedDrawFromURL() {
       const drawData = JSON.parse(decodeURIComponent(sharedData));
       
       // Mostrar diálogo de confirmación
-      if (confirm(`¿Querés ver el sorteo compartido?\n${drawData.discipline ? 'Disciplina: ' + drawData.discipline + '\n' : ''}${drawData.teamsCount} equipos`)) {
+      if (confirm(`¿Querés ver el sorteo compartido?\n${drawData.eventName ? 'Evento: ' + drawData.eventName + '\n' : ''}${drawData.discipline ? 'Disciplina: ' + drawData.discipline + '\n' : ''}${drawData.teamsCount} equipos`)) {
         showSharedDraw(drawData);
       }
     } catch (e) {
@@ -2820,6 +2893,7 @@ function showSharedDraw(drawData) {
 
 function generateSimpleSharedHTML(data) {
   const chipsHTML = [
+    data.eventName ? `<span class="chip">Evento: ${escapeHtml(data.eventName)}</span>` : '',
     data.discipline ? `<span class="chip">Disciplina: ${escapeHtml(data.discipline)}</span>` : '',
     data.category ? `<span class="chip">Categoría: ${escapeHtml(data.category)}</span>` : '',
     data.gender ? `<span class="chip">Género: ${escapeHtml(data.gender)}</span>` : '',
@@ -2851,6 +2925,7 @@ function generateSimpleSharedHTML(data) {
 
 function generateZonesSharedHTML(data) {
   const chipsHTML = [
+    data.eventName ? `<span class="chip">Evento: ${escapeHtml(data.eventName)}</span>` : '',
     data.discipline ? `<span class="chip">Disciplina: ${escapeHtml(data.discipline)}</span>` : '',
     data.category ? `<span class="chip">Categoría: ${escapeHtml(data.category)}</span>` : '',
     data.gender ? `<span class="chip">Género: ${escapeHtml(data.gender)}</span>` : '',
