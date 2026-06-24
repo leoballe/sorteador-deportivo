@@ -1605,16 +1605,26 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+          const pageMargin = 36; // margen superior/inferior e izquierdo/derecho del PDF
+          const printableWidth = pw - (pageMargin * 2);
+          const printableHeight = ph - (pageMargin * 2);
+          const scaleToPdf = printableWidth / canvas.width;
+          const sliceHeightPx = Math.floor(printableHeight / scaleToPdf);
+          let sourceY = 0;
+          let pageNumber = 0;
+          while (sourceY < canvas.height) {
+            if (pageNumber > 0) pdf.addPage();
+            const cropHeight = Math.min(sliceHeightPx, canvas.height - sourceY);
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = cropHeight;
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, sourceY, canvas.width, cropHeight, 0, 0, canvas.width, cropHeight);
+            const pageImg = pageCanvas.toDataURL('image/png');
+            const pageImgHeight = cropHeight * scaleToPdf;
+            pdf.addImage(pageImg,'PNG',pageMargin,pageMargin,printableWidth,pageImgHeight);
+            sourceY += cropHeight;
+            pageNumber++;
           }
           pdf.save(${JSON.stringify(exportFilename)});
         });
@@ -1735,16 +1745,26 @@ function openSimpleResultInNewTab(list) {
           const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
           const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
           const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-          const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
+          const pageMargin = 36; // margen superior/inferior e izquierdo/derecho del PDF
+          const printableWidth = pw - (pageMargin * 2);
+          const printableHeight = ph - (pageMargin * 2);
+          const scaleToPdf = printableWidth / canvas.width;
+          const sliceHeightPx = Math.floor(printableHeight / scaleToPdf);
+          let sourceY = 0;
+          let pageNumber = 0;
+          while (sourceY < canvas.height) {
+            if (pageNumber > 0) pdf.addPage();
+            const cropHeight = Math.min(sliceHeightPx, canvas.height - sourceY);
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = cropHeight;
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, sourceY, canvas.width, cropHeight, 0, 0, canvas.width, cropHeight);
+            const pageImg = pageCanvas.toDataURL('image/png');
+            const pageImgHeight = cropHeight * scaleToPdf;
+            pdf.addImage(pageImg,'PNG',pageMargin,pageMargin,printableWidth,pageImgHeight);
+            sourceY += cropHeight;
+            pageNumber++;
           }
           pdf.save(${JSON.stringify(exportFilename)});
         });
@@ -2015,17 +2035,27 @@ shareBtn.addEventListener('click', () => {
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
-          }
+                    const pageMargin = 36; // margen superior/inferior e izquierdo/derecho del PDF
+                    const printableWidth = pw - (pageMargin * 2);
+                    const printableHeight = ph - (pageMargin * 2);
+                    const scaleToPdf = printableWidth / canvas.width;
+                    const sliceHeightPx = Math.floor(printableHeight / scaleToPdf);
+                    let sourceY = 0;
+                    let pageNumber = 0;
+                    while (sourceY < canvas.height) {
+                      if (pageNumber > 0) pdf.addPage();
+                      const cropHeight = Math.min(sliceHeightPx, canvas.height - sourceY);
+                      const pageCanvas = document.createElement('canvas');
+                      pageCanvas.width = canvas.width;
+                      pageCanvas.height = cropHeight;
+                      const ctx = pageCanvas.getContext('2d');
+                      ctx.drawImage(canvas, 0, sourceY, canvas.width, cropHeight, 0, 0, canvas.width, cropHeight);
+                      const pageImg = pageCanvas.toDataURL('image/png');
+                      const pageImgHeight = cropHeight * scaleToPdf;
+                      pdf.addImage(pageImg,'PNG',pageMargin,pageMargin,printableWidth,pageImgHeight);
+                      sourceY += cropHeight;
+                      pageNumber++;
+                    }
           pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
@@ -2108,17 +2138,27 @@ shareBtn.addEventListener('click', () => {
                     const img=canvas.toDataURL('image/png'); document.body.removeChild(sheet);
                     const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
                     const pw=pdf.internal.pageSize.getWidth(); const ph=pdf.internal.pageSize.getHeight();
-                    const imgWidth = pw;
-          const imgHeight = canvas.height * imgWidth / canvas.width;
-          let position = 0;
-          pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-          let heightLeft = imgHeight - ph;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(img,'PNG',0,position,imgWidth,imgHeight);
-            heightLeft -= ph;
-          }
+                    const pageMargin = 36; // margen superior/inferior e izquierdo/derecho del PDF
+                    const printableWidth = pw - (pageMargin * 2);
+                    const printableHeight = ph - (pageMargin * 2);
+                    const scaleToPdf = printableWidth / canvas.width;
+                    const sliceHeightPx = Math.floor(printableHeight / scaleToPdf);
+                    let sourceY = 0;
+                    let pageNumber = 0;
+                    while (sourceY < canvas.height) {
+                      if (pageNumber > 0) pdf.addPage();
+                      const cropHeight = Math.min(sliceHeightPx, canvas.height - sourceY);
+                      const pageCanvas = document.createElement('canvas');
+                      pageCanvas.width = canvas.width;
+                      pageCanvas.height = cropHeight;
+                      const ctx = pageCanvas.getContext('2d');
+                      ctx.drawImage(canvas, 0, sourceY, canvas.width, cropHeight, 0, 0, canvas.width, cropHeight);
+                      const pageImg = pageCanvas.toDataURL('image/png');
+                      const pageImgHeight = cropHeight * scaleToPdf;
+                      pdf.addImage(pageImg,'PNG',pageMargin,pageMargin,printableWidth,pageImgHeight);
+                      sourceY += cropHeight;
+                      pageNumber++;
+                    }
           pdf.save(${JSON.stringify(exportFilename)});
                   });
                 }
