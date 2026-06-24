@@ -310,7 +310,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.1 PDF sin cortes</span>
+  <span class="badge">v3.2 PDF paginado real</span>
 </div>
         
       </header>
@@ -1374,6 +1374,48 @@ function renderGroups(target, result) {
   lastResult = result;
 }
 
+
+
+/* ====================== HTML paginado para imprimir/guardar PDF sin cortes ====================== */
+function estimateRowsPerPrintedPage(groups) {
+  const maxTeams = Math.max(0, ...groups.map(g => Array.isArray(g) ? g.length : 0));
+  if (maxTeams <= 3) return 4;   // 8 zonas por página
+  if (maxTeams <= 4) return 3;   // 6 zonas por página
+  if (maxTeams <= 6) return 2;   // 4 zonas por página
+  return 1;                      // zonas grandes: 2 zonas por página
+}
+
+function buildPagedZonesHTML(groups, chipsHTML, title) {
+  const rowsPerPage = estimateRowsPerPrintedPage(groups);
+  const zonesPerPage = rowsPerPage * 2;
+  const pages = [];
+
+  for (let start = 0; start < groups.length; start += zonesPerPage) {
+    const pageGroups = groups.slice(start, start + zonesPerPage);
+    const pageIndex = pages.length;
+    const zones = pageGroups.map((arr, localIndex) => {
+      const gi = start + localIndex;
+      const items = (arr || []).map(t => {
+        const name = escapeHtml((t && t.name) ? t.name : String(t || ''));
+        const province = (t && t.province) ? ` — ${escapeHtml(t.province)}` : '';
+        const head = (t && t.head) ? ' (cabeza)' : '';
+        return `<li><b>${name}</b>${province}${head}</li>`;
+      }).join('');
+      return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+    }).join('');
+
+    pages.push(`
+      <section class="pdf-page">
+        <h1>${escapeHtml(title)}${pageIndex ? ' - continuación' : ''}</h1>
+        <div class="chips">${chipsHTML}</div>
+        <div class="page-grid">${zones}</div>
+      </section>
+    `);
+  }
+
+  return `<div class="pdf-pages">${pages.join('')}</div>`;
+}
+
 function openResultInNewTab(result) {
   const w = window.open('about:blank', '_blank');
   if (!w) {
@@ -1401,6 +1443,7 @@ function openResultInNewTab(result) {
     const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
+  const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo');
 
 const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>🎲 Sorteo Mejorado - Juegos Nacionales</title>
@@ -1581,6 +1624,49 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     }
 
 
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
+
+
     /* PDF / impresión sin cortes de tarjetas */
     @page {
       size: A4 portrait;
@@ -1629,14 +1715,67 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         page-break-inside: avoid !important;
       }
     }
+
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        width: 210mm !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .btn, button { display: none !important; }
+      .container {
+        width: 210mm !important;
+        max-width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .pdf-pages {
+        display: block !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .pdf-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .page-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .page-grid .zone {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   </head><body>
     <div class="container">
-      <h1>🎲 Resultado del Sorteo</h1>
-      <div class="chips">${chipsHTML}</div>
-      <div class="grid">${zonesHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+      ${pagedZonesHTML}
+      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
     </div>
     <script>
       function exportPDF(){
@@ -1865,6 +2004,49 @@ function openSimpleResultInNewTab(list) {
     }
 
 
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
+
+
     /* PDF / impresión sin cortes de tarjetas */
     @page {
       size: A4 portrait;
@@ -1911,6 +2093,61 @@ function openSimpleResultInNewTab(list) {
       .zone ol, .zone li, .order-list, .order-item, .order-row {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
+      }
+    }
+
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        width: 210mm !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .btn, button { display: none !important; }
+      .container {
+        width: 210mm !important;
+        max-width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .pdf-pages {
+        display: block !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .pdf-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .page-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .page-grid .zone {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
       }
     }
   </style>
@@ -2247,6 +2484,49 @@ shareBtn.addEventListener('click', () => {
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
 
 
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
+
+
     /* PDF / impresión sin cortes de tarjetas */
     @page {
       size: A4 portrait;
@@ -2293,6 +2573,61 @@ shareBtn.addEventListener('click', () => {
       .zone ol, .zone li, .order-list, .order-item, .order-row {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
+      }
+    }
+
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        width: 210mm !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .btn, button { display: none !important; }
+      .container {
+        width: 210mm !important;
+        max-width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .pdf-pages {
+        display: block !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .pdf-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .page-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .page-grid .zone {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
       }
     }
             </style>
@@ -2425,6 +2760,7 @@ shareBtn.addEventListener('click', () => {
               ).join('');
               return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
             }).join('');
+            const pagedZonesHTML = buildPagedZonesHTML(groups, chipsHTML, '🎲 Resultado del Sorteo (Guardado)');
 
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
             <title>Resultado del Sorteo Guardado</title>
@@ -2440,6 +2776,49 @@ shareBtn.addEventListener('click', () => {
               .zone ol{margin:0;padding-left:18px}
               .btn{background:#fff;color:#000;border:1px solid #223046;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;margin-top:14px}
               .btn.primary{background:linear-gradient(135deg,#22c55e,#16a34a);border:0;color:#fff}
+
+
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
 
 
     /* PDF / impresión sin cortes de tarjetas */
@@ -2490,14 +2869,67 @@ shareBtn.addEventListener('click', () => {
         page-break-inside: avoid !important;
       }
     }
+
+
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        width: 210mm !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .btn, button { display: none !important; }
+      .container {
+        width: 210mm !important;
+        max-width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .pdf-pages {
+        display: block !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .pdf-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 12mm !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .page-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+      }
+      .page-grid .zone {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+    }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
                       </head><body>
               <div class="container">
-                <h1>🎲 Resultado del Sorteo (Guardado)</h1>
-                <div class="chips">${chipsHTML}</div>
-                <div class="grid">${zonesHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+                ${pagedZonesHTML}
+                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
               </div>
               <script>
                 function exportPDF(){
@@ -3425,6 +3857,49 @@ function generateSimpleSharedHTML(data) {
     .chip{background:#f1f5f9;border:1px solid #cbd5e1;padding:6px 12px;border-radius:20px;font-size:14px}
 
 
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
+
+
     /* PDF / impresión sin cortes de tarjetas */
     @page {
       size: A4 portrait;
@@ -3513,6 +3988,49 @@ function generateZonesSharedHTML(data) {
     .zone{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px}
     .zone h4{margin:4px 0 8px 0}
     .zone ol{margin:0;padding-left:18px}
+
+
+    /* Páginas físicas A4: evita que el navegador corte tarjetas al imprimir/guardar como PDF */
+    .pdf-pages {
+      display: block;
+      background: #f1f5f9;
+      padding: 0;
+    }
+    .pdf-page {
+      width: 210mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      margin: 0 auto 20px auto;
+      padding: 12mm;
+      background: #ffffff;
+      box-shadow: 0 3px 18px rgba(15,23,42,.18);
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .pdf-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .pdf-page h1 {
+      margin: 0 0 10px 0;
+      color: #1B315E;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .page-grid .zone {
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-sizing: border-box;
+      box-shadow: none;
+    }
 
 
     /* PDF / impresión sin cortes de tarjetas */
