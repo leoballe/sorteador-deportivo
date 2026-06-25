@@ -243,7 +243,38 @@
   color: #1e293b;
   border: 1px solid #cbd5e1;
 }
-  </style>
+  
+
+    /* Encabezado personalizado para PDF */
+    .pdfHeaderPreviewBox{
+      margin: 0 0 12px 0;
+      padding: 10px;
+      border: 1px dashed #334155;
+      border-radius: 12px;
+      background: #0b1220;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .pdfHeaderPreviewImg{
+      width: min(360px, 100%);
+      max-height: 60px;
+      object-fit: contain;
+      background: #ffffff;
+      border: 1px solid #223046;
+      border-radius: 8px;
+      padding: 4px;
+    }
+    .pdfHeaderPreviewInfo{flex:1;min-width:180px}
+    [data-theme="light"] .pdfHeaderPreviewBox{
+      background:#ffffff;
+      border-color:#cbd5e1;
+    }
+    [data-theme="light"] .pdfHeaderPreviewImg{
+      border-color:#cbd5e1;
+    }
+</style>
 </head>
 <body>
 
@@ -311,7 +342,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.9 </span>
+  <span class="badge">v4.0 Encabezado PDF</span>
 </div>
         
       </header>
@@ -323,7 +354,7 @@
           <div class="row">
             <div class="card">
               <h3>Equipos</h3>
-              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">, *</span> para cabeza de serie. Para cabezas con sembrado agregá en cada línea <span class="pill">, 1* (cabeza de zona 1) - 2* (cabeza de zona 2) , etc. </span> </label>
+              <label>Pegá la lista (una línea por equipo). Opcional: <span class="pill">, *</span> para cabeza de serie.</label>
               <textarea id="teamsInput" placeholder="Ejemplos:
 River Plate, CABA, *
 Boca Juniors, CABA
@@ -366,11 +397,24 @@ Newell's, Santa Fe
 
             <div class="card">
               <h3>Parámetros</h3>
-<div class="controls" style="margin-bottom:10px">
+<div class="controls" style="margin-bottom:10px;align-items:flex-end">
   <div style="min-width:220px;flex:1">
     <label>Nombre del evento</label>
     <input type="text" id="eventNameInput" placeholder="Ejemplo: Juegos Nacionales Evita 2026">
   </div>
+  <div style="min-width:190px">
+    <label>Encabezado para PDF</label>
+    <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;width:100%">🖼️ Subir JPG/PNG</label>
+    <input id="pdfHeaderFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden" />
+  </div>
+</div>
+<div id="pdfHeaderPreviewBox" class="pdfHeaderPreviewBox hidden">
+  <img id="pdfHeaderPreviewImg" class="pdfHeaderPreviewImg" alt="Vista previa del encabezado PDF">
+  <div class="pdfHeaderPreviewInfo">
+    <div><b id="pdfHeaderPreviewName">Encabezado cargado</b></div>
+    <div id="pdfHeaderPreviewDetails" class="tiny"></div>
+  </div>
+  <button class="btn tiny warn" id="btnRemovePdfHeader" type="button">Eliminar</button>
 </div>
 <div class="controls" id="formatRow">
   <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label>
@@ -538,6 +582,228 @@ function escapeHtml(text) {
 function getEventName() {
   const el = document.getElementById('eventNameInput');
   return el ? el.value.trim() : '';
+}
+
+
+/* ====================== Encabezado personalizado para PDF ====================== */
+const PDF_HEADER_STORAGE_KEY = 'sorteador_pdf_header_image_v1';
+let currentPdfHeaderImage = null;
+
+function getCurrentPdfHeaderImage() {
+  return currentPdfHeaderImage && currentPdfHeaderImage.dataUrl ? currentPdfHeaderImage : null;
+}
+
+function buildPdfHeaderImageTag(headerImage) {
+  if (!headerImage || !headerImage.dataUrl) return '';
+  return `<div class="pdf-header-image-wrap" style="text-align:center;margin:0 0 10px 0;break-inside:avoid;page-break-inside:avoid;"><img src="${escapeHtml(headerImage.dataUrl)}" alt="Encabezado" style="max-width:100%;max-height:50px;object-fit:contain;display:inline-block;"></div>`;
+}
+
+function renderPdfHeaderPreview() {
+  const box = document.getElementById('pdfHeaderPreviewBox');
+  const img = document.getElementById('pdfHeaderPreviewImg');
+  const nameEl = document.getElementById('pdfHeaderPreviewName');
+  const detailsEl = document.getElementById('pdfHeaderPreviewDetails');
+  const header = getCurrentPdfHeaderImage();
+  if (!box || !img || !nameEl || !detailsEl) return;
+  if (!header) {
+    box.classList.add('hidden');
+    img.removeAttribute('src');
+    nameEl.textContent = '';
+    detailsEl.textContent = '';
+    return;
+  }
+  img.src = header.dataUrl;
+  nameEl.textContent = header.name || 'Encabezado cargado';
+  const sizeText = header.width && header.height ? `${header.width} × ${header.height}px` : '';
+  const dpiText = header.dpi ? ` · ${Math.round(header.dpi)} dpi` : ' · DPI no informado';
+  detailsEl.textContent = `${sizeText}${dpiText}`;
+  box.classList.remove('hidden');
+}
+
+function savePdfHeaderImageToStorage() {
+  try {
+    if (currentPdfHeaderImage) {
+      localStorage.setItem(PDF_HEADER_STORAGE_KEY, JSON.stringify(currentPdfHeaderImage));
+    } else {
+      localStorage.removeItem(PDF_HEADER_STORAGE_KEY);
+    }
+  } catch (err) {
+    console.warn('No se pudo guardar encabezado en localStorage:', err);
+    toast('No se pudo guardar la imagen en este navegador. Probá con un JPG más liviano.');
+  }
+}
+
+function loadPdfHeaderImageFromStorage() {
+  try {
+    const raw = localStorage.getItem(PDF_HEADER_STORAGE_KEY);
+    currentPdfHeaderImage = raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    currentPdfHeaderImage = null;
+  }
+  renderPdfHeaderPreview();
+}
+
+function parsePngDpi(bytes) {
+  const sig = [137,80,78,71,13,10,26,10];
+  if (!bytes || bytes.length < 33) return null;
+  for (let i = 0; i < sig.length; i++) if (bytes[i] !== sig[i]) return null;
+  let pos = 8;
+  while (pos + 12 <= bytes.length) {
+    const len = (bytes[pos] << 24) | (bytes[pos+1] << 16) | (bytes[pos+2] << 8) | bytes[pos+3];
+    const type = String.fromCharCode(bytes[pos+4], bytes[pos+5], bytes[pos+6], bytes[pos+7]);
+    if (type === 'pHYs' && len >= 9 && pos + 17 <= bytes.length) {
+      const xppm = (bytes[pos+8] << 24) | (bytes[pos+9] << 16) | (bytes[pos+10] << 8) | bytes[pos+11];
+      const yppm = (bytes[pos+12] << 24) | (bytes[pos+13] << 16) | (bytes[pos+14] << 8) | bytes[pos+15];
+      const unit = bytes[pos+16];
+      if (unit === 1 && xppm > 0 && yppm > 0) return Math.max(xppm, yppm) * 0.0254;
+      return null;
+    }
+    pos += 12 + len;
+  }
+  return null;
+}
+
+function parseJpegDpi(bytes) {
+  if (!bytes || bytes.length < 20 || bytes[0] !== 0xFF || bytes[1] !== 0xD8) return null;
+  let pos = 2;
+  while (pos + 9 < bytes.length) {
+    if (bytes[pos] !== 0xFF) break;
+    const marker = bytes[pos + 1];
+    const len = (bytes[pos + 2] << 8) | bytes[pos + 3];
+    if (len < 2 || pos + 2 + len > bytes.length) break;
+    if (marker === 0xE0) {
+      const id = String.fromCharCode(bytes[pos+4], bytes[pos+5], bytes[pos+6], bytes[pos+7], bytes[pos+8]);
+      if (id === 'JFIF\0') {
+        const unit = bytes[pos + 11];
+        const xden = (bytes[pos + 12] << 8) | bytes[pos + 13];
+        const yden = (bytes[pos + 14] << 8) | bytes[pos + 15];
+        if (xden > 0 && yden > 0) {
+          if (unit === 1) return Math.max(xden, yden);
+          if (unit === 2) return Math.max(xden, yden) * 2.54;
+        }
+      }
+    }
+    pos += 2 + len;
+  }
+  return null;
+}
+
+function parseImageDpiFromBuffer(file, buffer) {
+  const bytes = new Uint8Array(buffer || []);
+  if ((file.type || '').toLowerCase().includes('png')) return parsePngDpi(bytes);
+  if ((file.type || '').toLowerCase().includes('jpeg') || /\.jpe?g$/i.test(file.name || '')) return parseJpegDpi(bytes);
+  return null;
+}
+
+function loadImageDimensionsFromObjectUrl(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePdfHeaderFileChange(e) {
+  const input = e && e.target ? e.target : document.getElementById('pdfHeaderFile');
+  const file = input && input.files ? input.files[0] : null;
+  if (!file) return;
+
+  const type = (file.type || '').toLowerCase();
+  const validType = type === 'image/png' || type === 'image/jpeg' || /\.(png|jpe?g)$/i.test(file.name || '');
+  if (!validType) {
+    toast('El encabezado debe ser JPG o PNG');
+    input.value = '';
+    return;
+  }
+
+  let buffer;
+  try {
+    buffer = await file.arrayBuffer();
+  } catch (err) {
+    toast('No se pudo leer el archivo');
+    input.value = '';
+    return;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  let dims;
+  try {
+    dims = await loadImageDimensionsFromObjectUrl(objectUrl);
+  } catch (err) {
+    URL.revokeObjectURL(objectUrl);
+    toast('No se pudo validar la imagen');
+    input.value = '';
+    return;
+  }
+  URL.revokeObjectURL(objectUrl);
+
+  if (dims.width > 1800 || dims.height > 150) {
+    toast('El encabezado no puede superar 1800 px de ancho por 150 px de alto');
+    input.value = '';
+    return;
+  }
+
+  const dpi = parseImageDpiFromBuffer(file, buffer);
+  if (dpi && dpi > 160.5) {
+    toast('El encabezado no puede superar 160 dpi');
+    input.value = '';
+    return;
+  }
+
+  let dataUrl;
+  try {
+    dataUrl = await fileToDataUrl(file);
+  } catch (err) {
+    toast('No se pudo cargar la imagen');
+    input.value = '';
+    return;
+  }
+
+  if (dataUrl.length > 800000) {
+    toast('La imagen es muy pesada para guardarla en la nube. Probá con un JPG más liviano.');
+    input.value = '';
+    return;
+  }
+
+  currentPdfHeaderImage = {
+    dataUrl,
+    name: file.name || 'encabezado',
+    type: type || (dataUrl.indexOf('image/jpeg') >= 0 ? 'image/jpeg' : 'image/png'),
+    width: dims.width,
+    height: dims.height,
+    dpi: dpi ? Math.round(dpi) : null,
+    savedAt: new Date().toISOString()
+  };
+  savePdfHeaderImageToStorage();
+  renderPdfHeaderPreview();
+  input.value = '';
+  toast('Encabezado PDF cargado ✓');
+}
+
+function removePdfHeaderImage() {
+  currentPdfHeaderImage = null;
+  savePdfHeaderImageToStorage();
+  renderPdfHeaderPreview();
+  const input = document.getElementById('pdfHeaderFile');
+  if (input) input.value = '';
+  toast('Encabezado PDF eliminado');
+}
+
+function setupPdfHeaderControls() {
+  const input = document.getElementById('pdfHeaderFile');
+  const removeBtn = document.getElementById('btnRemovePdfHeader');
+  if (input) input.addEventListener('change', handlePdfHeaderFileChange);
+  if (removeBtn) removeBtn.addEventListener('click', removePdfHeaderImage);
 }
 
 function downloadText(text, filename) {
@@ -1481,7 +1747,7 @@ function estimateRowsPerPrintedPage(groups) {
   return 1;                      // zonas grandes: 2 zonas por página
 }
 
-function buildPagedZonesHTML(groups, chipsHTML, title) {
+function buildPagedZonesHTML(groups, chipsHTML, title, headerImage) {
   const rowsPerPage = estimateRowsPerPrintedPage(groups);
   const zonesPerPage = rowsPerPage * 2;
   const pages = [];
@@ -1502,6 +1768,7 @@ function buildPagedZonesHTML(groups, chipsHTML, title) {
 
     pages.push(`
       <section class="pdf-page">
+        ${buildPdfHeaderImageTag(headerImage)}
         <h1>${escapeHtml(title)}${pageIndex ? ' - continuación' : ''}</h1>
         <div class="chips">${chipsHTML}</div>
         <div class="page-grid">${zones}</div>
@@ -1524,7 +1791,8 @@ function openResultInNewTab(result) {
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
   const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
-  
+  const pdfHeaderImage = getCurrentPdfHeaderImage();
+  const headerHTML = buildPdfHeaderImageTag(pdfHeaderImage);
   
   const chipsHTML = [
     eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
@@ -1539,7 +1807,7 @@ function openResultInNewTab(result) {
     const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? (t.seedZone ? ' (cabeza zona ' + t.seedZone + ')' : ' (cabeza)') : ''}</li>`).join('');
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
-  const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo');
+  const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo', pdfHeaderImage);
 
 const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>🎲 Sorteo Mejorado - Juegos Nacionales</title>
@@ -2041,6 +2309,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const zonesMarkup=${JSON.stringify(zonesHTML)};
         const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const pdfHeaderImage=${JSON.stringify((typeof pdfHeaderImage !== 'undefined' && pdfHeaderImage) ? pdfHeaderImage : null)};
         const { jsPDF }=window.jspdf;
         const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
         const pageW=pdf.internal.pageSize.getWidth();
@@ -2050,6 +2319,27 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         const gap=12;
         const colW=(pageW-(margin*2)-gap)/2;
         let y=margin;
+
+        function pdfHeaderImageType(dataUrl){
+          return String(dataUrl || '').indexOf('image/jpeg') >= 0 ? 'JPEG' : 'PNG';
+        }
+        function drawPdfHeaderImage(){
+          if(!pdfHeaderImage || !pdfHeaderImage.dataUrl) return;
+          const maxW=pageW-(margin*2);
+          const maxH=50;
+          const imgW=Number(pdfHeaderImage.width)||maxW;
+          const imgH=Number(pdfHeaderImage.height)||40;
+          let drawW=Math.min(maxW,imgW);
+          let drawH=drawW*imgH/imgW;
+          if(drawH>maxH){drawH=maxH;drawW=drawH*imgW/imgH;}
+          const x=margin+(maxW-drawW)/2;
+          try{
+            pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
+            y+=drawH+12;
+          }catch(e){
+            console.warn('No se pudo dibujar el encabezado PDF',e);
+          }
+        }
 
         function cleanText(value){
           let text = String(value || '');
@@ -2078,6 +2368,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
           });
         }
         function drawHeader(isContinuation){
+          drawPdfHeaderImage();
           const title='Resultado del Sorteo' + (isContinuation ? ' - continuación' : '');
           pdf.setTextColor(15,23,42);
           pdf.setFont('helvetica','bold');
@@ -2196,7 +2487,8 @@ function openSimpleResultInNewTab(list) {
   const category = (document.getElementById('categorySelect').value) || '';
   const gender = (document.getElementById('genderSelect').value) || '';
   const exportFilename = buildExportFilename('pdf', getCurrentMetaForFilename());
-  
+  const pdfHeaderImage = getCurrentPdfHeaderImage();
+  const headerHTML = buildPdfHeaderImageTag(pdfHeaderImage);
   
   const chipsHTML = [
     eventName ? `<span class="chip">Evento: ${escapeHtml(eventName)}</span>` : '',
@@ -2569,6 +2861,7 @@ function openSimpleResultInNewTab(list) {
       <div class="loader-subtitle">El bolillero virtual está girando</div>
     </div>
     <div class="container hidden-result" id="resultContainer">
+      ${headerHTML}
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
       <div>${listHTML}</div>
@@ -2592,6 +2885,7 @@ function openSimpleResultInNewTab(list) {
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const listMarkup=${JSON.stringify(listHTML)};
         const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const pdfHeaderImage=${JSON.stringify((typeof pdfHeaderImage !== 'undefined' && pdfHeaderImage) ? pdfHeaderImage : null)};
         const { jsPDF }=window.jspdf;
         const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
         const pageW=pdf.internal.pageSize.getWidth();
@@ -2599,6 +2893,27 @@ function openSimpleResultInNewTab(list) {
         const margin=40;
         const bottomMargin=84;
         let y=margin;
+
+        function pdfHeaderImageType(dataUrl){
+          return String(dataUrl || '').indexOf('image/jpeg') >= 0 ? 'JPEG' : 'PNG';
+        }
+        function drawPdfHeaderImage(){
+          if(!pdfHeaderImage || !pdfHeaderImage.dataUrl) return;
+          const maxW=pageW-(margin*2);
+          const maxH=50;
+          const imgW=Number(pdfHeaderImage.width)||maxW;
+          const imgH=Number(pdfHeaderImage.height)||40;
+          let drawW=Math.min(maxW,imgW);
+          let drawH=drawW*imgH/imgW;
+          if(drawH>maxH){drawH=maxH;drawW=drawH*imgW/imgH;}
+          const x=margin+(maxW-drawW)/2;
+          try{
+            pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
+            y+=drawH+12;
+          }catch(e){
+            console.warn('No se pudo dibujar el encabezado PDF',e);
+          }
+        }
 
         function cleanText(value){
           let text = String(value || '');
@@ -2620,6 +2935,7 @@ function openSimpleResultInNewTab(list) {
           return Array.from(box.children).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
         }
         function drawHeader(isContinuation){
+          drawPdfHeaderImage();
           const title='Orden de Paso' + (isContinuation ? ' - continuación' : '');
           pdf.setTextColor(15,23,42);
           pdf.setFont('helvetica','bold');
@@ -2705,6 +3021,7 @@ async function saveDrawToCloud(result, meta) {
       zones: meta.zones,
       format: meta.format,
       eventName: meta.eventName || '',
+      pdfHeaderImage: meta.pdfHeaderImage || null,
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
@@ -2736,6 +3053,7 @@ async function saveSimpleDrawToCloud(list, meta) {
       type: 'simple',
       teamsCount: list.length,
       eventName: meta.eventName || '',
+      pdfHeaderImage: meta.pdfHeaderImage || null,
       discipline: meta.discipline,
       disciplineSeed: meta.disciplineSeed,
       category: meta.category,
@@ -2886,6 +3204,8 @@ shareBtn.addEventListener('click', () => {
 });
         openBtn.addEventListener('click', () => {
   const exportFilename = buildExportFilename('pdf', getCloudMetaForFilename(d));
+  const pdfHeaderImage = (d && d.pdfHeaderImage) ? d.pdfHeaderImage : null;
+  const headerHTML = buildPdfHeaderImageTag(pdfHeaderImage);
           if (d.type === 'simple') {
             // Abrir sorteo simple
             const w = window.open('about:blank', '_blank');
@@ -3069,6 +3389,7 @@ shareBtn.addEventListener('click', () => {
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
                       </head><body>
               <div class="container">
+                ${headerHTML}
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
                 <div class="chips">${chipsHTML}</div>
                 <div>${listHTML}</div>
@@ -3079,6 +3400,7 @@ shareBtn.addEventListener('click', () => {
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const listMarkup=${JSON.stringify(listHTML)};
         const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const pdfHeaderImage=${JSON.stringify((typeof pdfHeaderImage !== 'undefined' && pdfHeaderImage) ? pdfHeaderImage : null)};
         const { jsPDF }=window.jspdf;
         const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
         const pageW=pdf.internal.pageSize.getWidth();
@@ -3086,6 +3408,27 @@ shareBtn.addEventListener('click', () => {
         const margin=40;
         const bottomMargin=84;
         let y=margin;
+
+        function pdfHeaderImageType(dataUrl){
+          return String(dataUrl || '').indexOf('image/jpeg') >= 0 ? 'JPEG' : 'PNG';
+        }
+        function drawPdfHeaderImage(){
+          if(!pdfHeaderImage || !pdfHeaderImage.dataUrl) return;
+          const maxW=pageW-(margin*2);
+          const maxH=50;
+          const imgW=Number(pdfHeaderImage.width)||maxW;
+          const imgH=Number(pdfHeaderImage.height)||40;
+          let drawW=Math.min(maxW,imgW);
+          let drawH=drawW*imgH/imgW;
+          if(drawH>maxH){drawH=maxH;drawW=drawH*imgW/imgH;}
+          const x=margin+(maxW-drawW)/2;
+          try{
+            pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
+            y+=drawH+12;
+          }catch(e){
+            console.warn('No se pudo dibujar el encabezado PDF',e);
+          }
+        }
 
         function cleanText(value){
           let text = String(value || '');
@@ -3107,6 +3450,7 @@ shareBtn.addEventListener('click', () => {
           return Array.from(box.children).map(function(el){return cleanText(el.textContent);}).filter(Boolean);
         }
         function drawHeader(isContinuation){
+          drawPdfHeaderImage();
           const title='Resultado del Sorteo Simple (Guardado)' + (isContinuation ? ' - continuación' : '');
           pdf.setTextColor(15,23,42);
           pdf.setFont('helvetica','bold');
@@ -3202,7 +3546,7 @@ shareBtn.addEventListener('click', () => {
               ).join('');
               return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
             }).join('');
-            const pagedZonesHTML = buildPagedZonesHTML(groups, chipsHTML, '🎲 Resultado del Sorteo (Guardado)');
+            const pagedZonesHTML = buildPagedZonesHTML(groups, chipsHTML, '🎲 Resultado del Sorteo (Guardado)', pdfHeaderImage);
 
             const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
             <title>Resultado del Sorteo Guardado</title>
@@ -3378,6 +3722,7 @@ shareBtn.addEventListener('click', () => {
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const zonesMarkup=${JSON.stringify(zonesHTML)};
         const chipsMarkup=${JSON.stringify(chipsHTML)};
+        const pdfHeaderImage=${JSON.stringify((typeof pdfHeaderImage !== 'undefined' && pdfHeaderImage) ? pdfHeaderImage : null)};
         const { jsPDF }=window.jspdf;
         const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
         const pageW=pdf.internal.pageSize.getWidth();
@@ -3387,6 +3732,27 @@ shareBtn.addEventListener('click', () => {
         const gap=12;
         const colW=(pageW-(margin*2)-gap)/2;
         let y=margin;
+
+        function pdfHeaderImageType(dataUrl){
+          return String(dataUrl || '').indexOf('image/jpeg') >= 0 ? 'JPEG' : 'PNG';
+        }
+        function drawPdfHeaderImage(){
+          if(!pdfHeaderImage || !pdfHeaderImage.dataUrl) return;
+          const maxW=pageW-(margin*2);
+          const maxH=50;
+          const imgW=Number(pdfHeaderImage.width)||maxW;
+          const imgH=Number(pdfHeaderImage.height)||40;
+          let drawW=Math.min(maxW,imgW);
+          let drawH=drawW*imgH/imgW;
+          if(drawH>maxH){drawH=maxH;drawW=drawH*imgW/imgH;}
+          const x=margin+(maxW-drawW)/2;
+          try{
+            pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
+            y+=drawH+12;
+          }catch(e){
+            console.warn('No se pudo dibujar el encabezado PDF',e);
+          }
+        }
 
         function cleanText(value){
           let text = String(value || '');
@@ -3415,6 +3781,7 @@ shareBtn.addEventListener('click', () => {
           });
         }
         function drawHeader(isContinuation){
+          drawPdfHeaderImage();
           const title='Resultado del Sorteo (Guardado)' + (isContinuation ? ' - continuación' : '');
           pdf.setTextColor(15,23,42);
           pdf.setFont('helvetica','bold');
@@ -3638,6 +4005,7 @@ function generateCloudDrawPDFBlob(d) {
   const gap = 12;
   const colW = (pageW - (margin * 2) - gap) / 2;
   let y = margin;
+  const pdfHeaderImage = d && d.pdfHeaderImage ? d.pdfHeaderImage : null;
 
   const isSimple = d && d.type === 'simple';
   const groups = isSimple ? [] : normalizeCloudGroupsForPDF(d);
@@ -3655,7 +4023,33 @@ function generateCloudDrawPDFBlob(d) {
     cloudDrawDateString(d)
   ].map(pdfCleanText).filter(Boolean);
 
+
+  function pdfHeaderImageType(dataUrl) {
+    return String(dataUrl || '').indexOf('image/jpeg') >= 0 ? 'JPEG' : 'PNG';
+  }
+
+  function drawPdfHeaderImage() {
+    if (!pdfHeaderImage || !pdfHeaderImage.dataUrl) return;
+    const maxW = pageW - (margin * 2);
+    const maxH = 50;
+    const imgW = Number(pdfHeaderImage.width) || maxW;
+    const imgH = Number(pdfHeaderImage.height) || 40;
+    let drawW = Math.min(maxW, imgW);
+    let drawH = drawW * imgH / imgW;
+    if (drawH > maxH) {
+      drawH = maxH;
+      drawW = drawH * imgW / imgH;
+    }
+    const x = margin + ((maxW - drawW) / 2);
+    try {
+      pdf.addImage(pdfHeaderImage.dataUrl, pdfHeaderImageType(pdfHeaderImage.dataUrl), x, y, drawW, drawH);
+      y += drawH + 12;
+    } catch (e) {
+      console.warn('No se pudo dibujar el encabezado PDF', e);
+    }
+  }
   function drawHeader(isContinuation) {
+    drawPdfHeaderImage();
     const headerTitle = title + (isContinuation ? ' - continuación' : '');
     pdf.setTextColor(15, 23, 42);
     pdf.setFont('helvetica', 'bold');
@@ -3887,6 +4281,9 @@ function updateCapInfo() {
 
 /* ====================== DOM Ready ====================== */
 document.addEventListener('DOMContentLoaded', function() {
+  setupPdfHeaderControls();
+  loadPdfHeaderImageFromStorage();
+
   // Tabs app
   document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -4117,6 +4514,7 @@ const mod = (document.getElementById('modalitySelect').value) || '';
 const meta = {
   teamsCount: teams.length,
   eventName: eventName,
+  pdfHeaderImage: getCurrentPdfHeaderImage(),
   discipline: discTxt,
   disciplineSeed: base,
   category: cat,
@@ -4153,6 +4551,7 @@ document.getElementById('btnShare').classList.remove('hidden');
         zones: z,
         format: fmt,
         eventName: eventName,
+        pdfHeaderImage: getCurrentPdfHeaderImage(),
         discipline: discTxt,
         disciplineSeed: base,
         category: cat,
