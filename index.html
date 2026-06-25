@@ -310,7 +310,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.4 PDF paginado real</span>
+  <span class="badge">v3.5 Animación sorteo</span>
 </div>
         
       </header>
@@ -1770,14 +1770,177 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
         overflow: hidden !important;
       }
     }
+
+
+    /* Animación previa al resultado del sorteo */
+    .draw-loader {
+      min-height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: radial-gradient(circle at center, #ffffff 0%, #eef8fb 48%, #dbeafe 100%);
+      color: #1B315E;
+      border-radius: 12px;
+      padding: 28px;
+      box-sizing: border-box;
+    }
+    .loader-title {
+      margin-top: 18px;
+      font-size: 28px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .loader-subtitle {
+      margin-top: 8px;
+      font-size: 15px;
+      color: #475569;
+      font-weight: 600;
+    }
+    .lottery-machine {
+      width: 190px;
+      height: 210px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lottery-drum {
+      width: 150px;
+      height: 150px;
+      border: 8px solid #1B315E;
+      border-radius: 50%;
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 0 28px rgba(27,49,94,.14), 0 12px 32px rgba(27,49,94,.18);
+      position: relative;
+      animation: drumSpin 1s linear infinite;
+    }
+    .lottery-drum:before,
+    .lottery-drum:after {
+      content: '';
+      position: absolute;
+      background: #94E5F2;
+      opacity: .9;
+    }
+    .lottery-drum:before {
+      width: 132px;
+      height: 4px;
+      left: 9px;
+      top: 73px;
+      border-radius: 4px;
+    }
+    .lottery-drum:after {
+      width: 4px;
+      height: 132px;
+      left: 73px;
+      top: 9px;
+      border-radius: 4px;
+    }
+    .lottery-ball {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 3px solid #1B315E;
+      color: #1B315E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      position: absolute;
+      z-index: 2;
+      box-shadow: 0 3px 7px rgba(15,23,42,.18);
+    }
+    .lottery-ball.b1 { left: 28px; top: 42px; }
+    .lottery-ball.b2 { right: 30px; top: 38px; }
+    .lottery-ball.b3 { left: 58px; bottom: 24px; }
+    .lottery-ball.b4 { right: 42px; bottom: 42px; }
+    .lottery-ball.b5 { left: 36px; bottom: 58px; }
+    .lottery-stand {
+      position: absolute;
+      width: 118px;
+      height: 48px;
+      border-left: 8px solid #1B315E;
+      border-right: 8px solid #1B315E;
+      border-bottom: 8px solid #1B315E;
+      border-radius: 0 0 16px 16px;
+      left: 36px;
+      bottom: 0;
+    }
+    .lottery-handle {
+      position: absolute;
+      width: 42px;
+      height: 8px;
+      background: #1B315E;
+      border-radius: 999px;
+      right: 0;
+      top: 88px;
+      transform-origin: left center;
+      animation: handleSpin 1s linear infinite;
+    }
+    .loader-out { animation: loaderFade .3s ease-in forwards; }
+    .hidden-result { display: none; }
+    .result-in { animation: resultFade .45s ease-out both; }
+    @keyframes drumSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes handleSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes loaderFade {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(.98); }
+    }
+    @keyframes resultFade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media print {
+      .draw-loader { display: none !important; }
+      .hidden-result { display: block !important; }
+      .result-in { animation: none !important; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   </head><body>
-    <div class="container">
+    <div id="drawLoader" class="draw-loader">
+      <div class="lottery-machine" aria-hidden="true">
+        <div class="lottery-stand"></div>
+        <div class="lottery-handle"></div>
+        <div class="lottery-drum">
+          <span class="lottery-ball b1">1</span>
+          <span class="lottery-ball b2">2</span>
+          <span class="lottery-ball b3">3</span>
+          <span class="lottery-ball b4">4</span>
+          <span class="lottery-ball b5">5</span>
+        </div>
+      </div>
+      <div class="loader-title">Realizando sorteo...</div>
+      <div class="loader-subtitle">El bolillero virtual está girando</div>
+    </div>
+    <div class="container hidden-result" id="resultContainer">
       ${pagedZonesHTML}
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
     </div>
     <script>
+      setTimeout(function(){
+        var loader = document.getElementById('drawLoader');
+        var result = document.getElementById('resultContainer');
+        if (loader) {
+          loader.classList.add('loader-out');
+          setTimeout(function(){ loader.style.display = 'none'; }, 300);
+        }
+        if (result) {
+          result.classList.remove('hidden-result');
+          result.classList.add('result-in');
+        }
+      }, 2000);
+
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const zonesMarkup=${JSON.stringify(zonesHTML)};
@@ -2156,16 +2319,179 @@ function openSimpleResultInNewTab(list) {
         overflow: hidden !important;
       }
     }
+
+
+    /* Animación previa al resultado del sorteo */
+    .draw-loader {
+      min-height: calc(100vh - 40px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: radial-gradient(circle at center, #ffffff 0%, #eef8fb 48%, #dbeafe 100%);
+      color: #1B315E;
+      border-radius: 12px;
+      padding: 28px;
+      box-sizing: border-box;
+    }
+    .loader-title {
+      margin-top: 18px;
+      font-size: 28px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .loader-subtitle {
+      margin-top: 8px;
+      font-size: 15px;
+      color: #475569;
+      font-weight: 600;
+    }
+    .lottery-machine {
+      width: 190px;
+      height: 210px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lottery-drum {
+      width: 150px;
+      height: 150px;
+      border: 8px solid #1B315E;
+      border-radius: 50%;
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 0 28px rgba(27,49,94,.14), 0 12px 32px rgba(27,49,94,.18);
+      position: relative;
+      animation: drumSpin 1s linear infinite;
+    }
+    .lottery-drum:before,
+    .lottery-drum:after {
+      content: '';
+      position: absolute;
+      background: #94E5F2;
+      opacity: .9;
+    }
+    .lottery-drum:before {
+      width: 132px;
+      height: 4px;
+      left: 9px;
+      top: 73px;
+      border-radius: 4px;
+    }
+    .lottery-drum:after {
+      width: 4px;
+      height: 132px;
+      left: 73px;
+      top: 9px;
+      border-radius: 4px;
+    }
+    .lottery-ball {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 3px solid #1B315E;
+      color: #1B315E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      position: absolute;
+      z-index: 2;
+      box-shadow: 0 3px 7px rgba(15,23,42,.18);
+    }
+    .lottery-ball.b1 { left: 28px; top: 42px; }
+    .lottery-ball.b2 { right: 30px; top: 38px; }
+    .lottery-ball.b3 { left: 58px; bottom: 24px; }
+    .lottery-ball.b4 { right: 42px; bottom: 42px; }
+    .lottery-ball.b5 { left: 36px; bottom: 58px; }
+    .lottery-stand {
+      position: absolute;
+      width: 118px;
+      height: 48px;
+      border-left: 8px solid #1B315E;
+      border-right: 8px solid #1B315E;
+      border-bottom: 8px solid #1B315E;
+      border-radius: 0 0 16px 16px;
+      left: 36px;
+      bottom: 0;
+    }
+    .lottery-handle {
+      position: absolute;
+      width: 42px;
+      height: 8px;
+      background: #1B315E;
+      border-radius: 999px;
+      right: 0;
+      top: 88px;
+      transform-origin: left center;
+      animation: handleSpin 1s linear infinite;
+    }
+    .loader-out { animation: loaderFade .3s ease-in forwards; }
+    .hidden-result { display: none; }
+    .result-in { animation: resultFade .45s ease-out both; }
+    @keyframes drumSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes handleSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes loaderFade {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(.98); }
+    }
+    @keyframes resultFade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media print {
+      .draw-loader { display: none !important; }
+      .hidden-result { display: block !important; }
+      .result-in { animation: none !important; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   </head><body>
-    <div class="container">
+    <div id="drawLoader" class="draw-loader">
+      <div class="lottery-machine" aria-hidden="true">
+        <div class="lottery-stand"></div>
+        <div class="lottery-handle"></div>
+        <div class="lottery-drum">
+          <span class="lottery-ball b1">1</span>
+          <span class="lottery-ball b2">2</span>
+          <span class="lottery-ball b3">3</span>
+          <span class="lottery-ball b4">4</span>
+          <span class="lottery-ball b5">5</span>
+        </div>
+      </div>
+      <div class="loader-title">Realizando sorteo...</div>
+      <div class="loader-subtitle">El bolillero virtual está girando</div>
+    </div>
+    <div class="container hidden-result" id="resultContainer">
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
       <div>${listHTML}</div>
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
     </div>
     <script>
+      setTimeout(function(){
+        var loader = document.getElementById('drawLoader');
+        var result = document.getElementById('resultContainer');
+        if (loader) {
+          loader.classList.add('loader-out');
+          setTimeout(function(){ loader.style.display = 'none'; }, 300);
+        }
+        if (result) {
+          result.classList.remove('hidden-result');
+          result.classList.add('result-in');
+        }
+      }, 2000);
+
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
         const listMarkup=${JSON.stringify(listHTML)};
