@@ -311,7 +311,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.8 Cabezas por zona corregidas</span>
+  <span class="badge">v3.9 Cabezas fijas OK</span>
 </div>
         
       </header>
@@ -1172,7 +1172,8 @@ function selectAll(selector) {
 }
 
 function getActiveTeamsLive() {
-  // 1) Leer SIEMPRE lo que hay actualmente en el textarea
+  // Leer SIEMPRE lo que hay actualmente en el textarea.
+  // Importante: esta versión usa parseHeadMarker para respetar cabezas fijas tipo "1*", "2*", etc.
   const lines = document.getElementById('teamsInput').value
     .split(/\r?\n/)
     .filter(l => l.trim());
@@ -1189,23 +1190,32 @@ function getActiveTeamsLive() {
     const parts = rawLine.split(delim).map(p => p.trim());
 
     const rawName = parts[0] || '';
-    const name = rawName.replace(/\s*\*+\s*$/, '').trim();
+    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
+    const parsedHead = parseHeadMarker(rawName, rawThird, rawLine);
+    const name = parsedHead.name;
     if (!name) continue;
 
     const key = name.toLowerCase();
     if (uniq.has(key)) continue;
     uniq.add(key);
 
-    const province = (parts[1] || '').replace(/\s*\*+\s*$/, '').trim();
+    // Si hay solo dos columnas y la segunda es "1*", "2*" o "*", NO es provincia: es marcador de cabeza.
+    // Si hay tres columnas, la segunda sí puede ser provincia y la tercera puede ser el marcador.
+    let province = '';
+    if (parts.length >= 3) {
+      province = (parts[1] || '').replace(/\s*(?:\d+)?\*+\s*$/, '').trim();
+    } else if (parts.length === 2) {
+      const second = String(parts[1] || '').trim();
+      const secondIsMarker = /^(\d+\*|\*|si|sí|true|1|x|cs|head|seed)$/i.test(second);
+      province = secondIsMarker ? '' : second.replace(/\s*(?:\d+)?\*+\s*$/, '').trim();
+    }
 
-    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
-    const rawThirdLow = rawThird.toLowerCase();
-
-    const headByThird = /^(si|sí|true|1|\*|x|cs|head|seed)$/i.test(rawThirdLow);
-    const headBySuffix = /\*\s*$/.test(rawLine);
-    const head = headByThird || headBySuffix;
-
-    const team = { name, province, head };
+    const team = {
+      name,
+      province,
+      head: parsedHead.head,
+      seedZone: parsedHead.seedZone
+    };
     textTeams.push(team);
     mapByName.set(key, team);
   }
@@ -1215,21 +1225,19 @@ function getActiveTeamsLive() {
     .classList
     .contains('hidden');
 
-  // 2) Si NO estás usando la vista de Activos/Descartados,
-  //    usamos lo que hay escrito en el textarea.
+  // Si NO estás usando la vista de Activos/Descartados, usamos lo que hay escrito en el textarea.
   if (!checkListsVisible) {
     return textTeams;
   }
 
-  // 3) Si la vista está visible, respetamos activos/inactivos,
-  //    pero ACTUALIZAMOS head según el textarea
+  // Si la vista está visible, respetamos activos/inactivos, pero actualizamos head y seedZone según el textarea.
   const updatedActive = activeTeams.map(t => {
     const key = t.name.toLowerCase();
     const fromText = mapByName.get(key);
     if (fromText) {
       return {
         name: t.name,
-        province: t.province,
+        province: fromText.province || t.province || '',
         head: fromText.head,
         seedZone: fromText.seedZone
       };
@@ -1239,6 +1247,7 @@ function getActiveTeamsLive() {
 
   return updatedActive;
 }
+
 
 
 
