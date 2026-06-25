@@ -12,6 +12,7 @@
 
   <!-- Utilidades PDF en la pestaña de resultado -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
   <style>
     :root{--bg:#0f172a;--panel:#111827;--card:#1f2937;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--accent2:#38bdf8;--danger:#ef4444;--warn:#f59e0b}
     *{box-sizing:border-box}
@@ -310,7 +311,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.5 Animación sorteo</span>
+  <span class="badge">v3.6 ZIP PDFs</span>
 </div>
         
       </header>
@@ -490,6 +491,7 @@ Newell's, Santa Fe
     <label class="pill">
       <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos
     </label>
+    <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">⬇️ Descargar ZIP de PDFs</button>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
 <div id="cloudHistoryList" class="history"></div>
@@ -3451,6 +3453,305 @@ shareBtn.addEventListener('click', () => {
     });
 }
 
+
+/* ====================== ZIP de PDFs seleccionados en nube ====================== */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function() {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function pdfCleanText(value) {
+  let text = String(value == null ? '' : value);
+  text = text.split(String.fromCharCode(160)).join(' ');
+  text = text.split(String.fromCharCode(9)).join(' ');
+  text = text.split(String.fromCharCode(10)).join(' ');
+  text = text.split(String.fromCharCode(13)).join(' ');
+  while (text.indexOf('  ') !== -1) text = text.split('  ').join(' ');
+  return text.trim();
+}
+
+function cloudDrawDateString(d) {
+  try {
+    if (d && d.createdAt && typeof d.createdAt.toDate === 'function') {
+      return d.createdAt.toDate().toLocaleString();
+    }
+  } catch(e) {}
+  return '—';
+}
+
+function normalizeCloudGroupsForPDF(d) {
+  const rawGroups = Array.isArray(d && d.groups) ? d.groups : [];
+  return rawGroups.map(function(group) {
+    const teams = Array.isArray(group) ? group : (Array.isArray(group && group.teams) ? group.teams : []);
+    return teams.map(function(team) {
+      if (typeof team === 'string') {
+        return { name: team, province: '', head: false };
+      }
+      return {
+        name: (team && team.name) ? String(team.name) : '',
+        province: (team && team.province) ? String(team.province) : '',
+        head: !!(team && team.head)
+      };
+    }).filter(function(team) {
+      return !!team.name;
+    });
+  });
+}
+
+function makeUniqueZipFilename(filename, usedNames) {
+  let base = String(filename || 'sorteo.pdf');
+  if (base.toLowerCase().slice(-4) !== '.pdf') base += '.pdf';
+  let candidate = base;
+  let counter = 2;
+  while (usedNames[candidate]) {
+    const lower = base.toLowerCase();
+    const stem = lower.slice(-4) === '.pdf' ? base.slice(0, -4) : base;
+    candidate = stem + '_' + counter + '.pdf';
+    counter++;
+  }
+  usedNames[candidate] = true;
+  return candidate;
+}
+
+function selectedCloudDrawIds() {
+  return Array.from(document.querySelectorAll('input.cloud-draw-checkbox:checked'))
+    .map(function(cb) { return cb.dataset.docId || ''; })
+    .filter(Boolean);
+}
+
+function generateCloudDrawPDFBlob(d) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    throw new Error('Librería PDF no cargada');
+  }
+
+  const jsPDF = window.jspdf.jsPDF;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 36;
+  const bottomMargin = 70;
+  const gap = 12;
+  const colW = (pageW - (margin * 2) - gap) / 2;
+  let y = margin;
+
+  const isSimple = d && d.type === 'simple';
+  const groups = isSimple ? [] : normalizeCloudGroupsForPDF(d);
+  const list = Array.isArray(d && d.list) ? d.list.map(function(item) { return pdfCleanText(item); }).filter(Boolean) : [];
+  const title = isSimple ? 'Resultado del Sorteo Simple (Guardado)' : 'Resultado del Sorteo (Guardado)';
+
+  const chips = [
+    d && d.eventName ? 'Evento: ' + d.eventName : '',
+    d && d.discipline ? 'Disciplina: ' + d.discipline : '',
+    d && d.category ? 'Categoría: ' + d.category : '',
+    d && d.gender ? 'Género: ' + d.gender : '',
+    d && d.modality ? 'Modalidad: ' + d.modality : '',
+    (!isSimple && d && d.format) ? 'Formato: ' + d.format : '',
+    isSimple ? ((d && d.teamsCount) || list.length || 0) + ' equipos' : ((d && d.zones) || groups.length || 0) + ' zonas',
+    cloudDrawDateString(d)
+  ].map(pdfCleanText).filter(Boolean);
+
+  function drawHeader(isContinuation) {
+    const headerTitle = title + (isContinuation ? ' - continuación' : '');
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(17);
+    pdf.text(headerTitle, margin, y);
+    y += 22;
+
+    if (chips.length) {
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.setDrawColor(148, 229, 242);
+      pdf.setFillColor(255, 255, 255);
+      let x = margin;
+
+      chips.forEach(function(chip) {
+        let chipText = pdfCleanText(chip);
+        let w = pdf.getTextWidth(chipText) + 14;
+        const maxW = pageW - (margin * 2);
+        if (w > maxW) {
+          chipText = chipText.slice(0, 90) + '...';
+          w = Math.min(pdf.getTextWidth(chipText) + 14, maxW);
+        }
+        if (x + w > pageW - margin) {
+          x = margin;
+          y += 17;
+        }
+        pdf.roundedRect(x, y - 10, w, 15, 7, 7, 'S');
+        pdf.text(chipText, x + 7, y);
+        x += w + 6;
+      });
+      y += 23;
+    } else {
+      y += 8;
+    }
+  }
+
+  function addPage() {
+    pdf.addPage();
+    y = margin;
+    drawHeader(true);
+  }
+
+  function wrappedLines(text, width, fontSize, fontStyle) {
+    pdf.setFont('helvetica', fontStyle || 'normal');
+    pdf.setFontSize(fontSize || 10);
+    return pdf.splitTextToSize(pdfCleanText(text), width);
+  }
+
+  function teamLabel(team, index) {
+    let label = (index + 1) + '. ' + (team.name || '');
+    if (team.province) label += ' — ' + team.province;
+    if (team.head) label += ' cabeza';
+    return label;
+  }
+
+  function zoneHeight(zone) {
+    let h = 42;
+    zone.forEach(function(team, idx) {
+      const lines = wrappedLines(teamLabel(team, idx), colW - 24, 10.5, 'normal');
+      h += (lines.length * 13) + 3;
+    });
+    return Math.max(96, h + 8);
+  }
+
+  function drawZone(zone, zoneIndex, x, top, w, h) {
+    pdf.setDrawColor(34, 48, 70);
+    pdf.setLineWidth(0.8);
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(x, top, w, h, 5, 5, 'S');
+
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text('Zona ' + (zoneIndex + 1), x + 12, top + 22);
+
+    pdf.setDrawColor(148, 229, 242);
+    pdf.setLineWidth(0.6);
+    pdf.line(x + 12, top + 31, x + w - 12, top + 31);
+
+    let yy = top + 53;
+    zone.forEach(function(team, idx) {
+      const lines = wrappedLines(teamLabel(team, idx), w - 24, 10.5, 'normal');
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10.5);
+      pdf.text(lines, x + 12, yy);
+      yy += (lines.length * 13) + 3;
+    });
+  }
+
+  drawHeader(false);
+
+  if (isSimple) {
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    list.forEach(function(name, idx) {
+      const item = (idx + 1) + '. ' + name;
+      const lines = pdf.splitTextToSize(pdfCleanText(item), pageW - (margin * 2));
+      const h = (lines.length * 14) + 7;
+      if (y + h > pageH - bottomMargin) addPage();
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(11);
+      pdf.text(lines, margin, y);
+      y += h;
+    });
+  } else {
+    for (let i = 0; i < groups.length; i += 2) {
+      const left = groups[i];
+      const right = groups[i + 1] || null;
+      const leftH = zoneHeight(left);
+      const rightH = right ? zoneHeight(right) : leftH;
+      const rowH = Math.max(leftH, rightH);
+
+      if (y + rowH > pageH - bottomMargin && y > margin + 40) {
+        addPage();
+      }
+
+      drawZone(left, i, margin, y, colW, rowH);
+      if (right) drawZone(right, i + 1, margin + colW + gap, y, colW, rowH);
+      y += rowH + 10;
+    }
+  }
+
+  return pdf.output('blob');
+}
+
+async function downloadSelectedCloudPDFsZip(buttonEl) {
+  const ids = selectedCloudDrawIds();
+  if (!ids.length) {
+    toast('No hay sorteos seleccionados');
+    return;
+  }
+  if (!auth.currentUser) {
+    toast('No estás autenticado');
+    return;
+  }
+  if (!window.JSZip) {
+    toast('No se cargó la librería ZIP. Probá recargar la página.');
+    return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    toast('No se cargó la librería PDF. Probá recargar la página.');
+    return;
+  }
+
+  const originalText = buttonEl ? buttonEl.textContent : '';
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Preparando ZIP...';
+  }
+
+  try {
+    const user = auth.currentUser;
+    const zip = new JSZip();
+    const usedNames = {};
+    let added = 0;
+
+    for (let i = 0; i < ids.length; i++) {
+      if (buttonEl) buttonEl.textContent = 'Preparando PDF ' + (i + 1) + ' de ' + ids.length + '...';
+
+      const snap = await db.collection('users').doc(user.uid).collection('draws').doc(ids[i]).get();
+      if (!snap.exists) continue;
+
+      const d = snap.data();
+      const blob = generateCloudDrawPDFBlob(d);
+      const baseName = buildExportFilename('pdf', getCloudMetaForFilename(d));
+      const filename = makeUniqueZipFilename(baseName, usedNames);
+      zip.file(filename, blob);
+      added++;
+    }
+
+    if (!added) {
+      toast('No se encontraron sorteos válidos para exportar');
+      return;
+    }
+
+    if (buttonEl) buttonEl.textContent = 'Generando ZIP...';
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const today = new Date().toISOString().slice(0, 10);
+    downloadBlob(zipBlob, 'sorteos_seleccionados_' + today + '.zip');
+    toast('ZIP descargado con ' + added + ' PDF(s)');
+  } catch (err) {
+    console.error('Error generando ZIP de PDFs:', err);
+    toast('Error al generar el ZIP de PDFs');
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.textContent = originalText || '⬇️ Descargar ZIP de PDFs';
+    }
+  }
+}
+
 /* ====================== UI State ====================== */
 function getFormat() {
   const r = document.querySelector('input[name="format"]:checked');
@@ -4048,6 +4349,15 @@ document.addEventListener('change', function(e) {
       selectAllBtn.checked = allChecked === allCheckboxes && allCheckboxes > 0;
     }
   }
+});
+
+
+// Descargar ZIP con PDFs individuales de sorteos seleccionados en la nube
+// Usa los mismos datos guardados en Firebase y genera un PDF por cada sorteo seleccionado.
+document.addEventListener('click', async function(e) {
+  const btn = e.target && e.target.closest ? e.target.closest('#downloadSelectedCloudPDFZip') : null;
+  if (!btn) return;
+  await downloadSelectedCloudPDFsZip(btn);
 });
 
 // Eliminar sorteos seleccionados en la nube - USANDO DELEGACIÓN
