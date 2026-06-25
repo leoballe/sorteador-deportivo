@@ -311,7 +311,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v3.6 ZIP PDFs</span>
+  <span class="badge">v3.7 Cabezas por zona</span>
 </div>
         
       </header>
@@ -656,6 +656,55 @@ function parseCSV(text) {
   return {headers, rows, delimiter: best};
 }
 
+
+function parseHeadMarker(rawName, rawThird, rawLine) {
+  let name = String(rawName || '').trim();
+  const third = String(rawThird || '').trim();
+  const fullLine = String(rawLine || '').trim();
+  let head = false;
+  let seedZone = null;
+
+  function readMarker(value) {
+    const v = String(value || '').trim();
+    const fixed = v.match(/^(\d+)\*$/);
+    if (fixed) {
+      return { head: true, seedZone: parseInt(fixed[1], 10) };
+    }
+    if (/^(si|sí|true|1|\*|x|cs|head|seed)$/i.test(v)) {
+      return { head: true, seedZone: null };
+    }
+    return { head: false, seedZone: null };
+  }
+
+  // Permite: "Equipo 1*" o "Equipo*" en la primera columna.
+  const nameFixed = name.match(/^(.*?)[\s\-]*(\d+)\*\s*$/);
+  if (nameFixed) {
+    name = nameFixed[1].trim();
+    head = true;
+    seedZone = parseInt(nameFixed[2], 10);
+  } else {
+    const namePlainHead = name.match(/^(.*?)\s*\*+\s*$/);
+    if (namePlainHead) {
+      name = namePlainHead[1].trim();
+      head = true;
+    }
+  }
+
+  // Permite: "Equipo, Provincia, 1*" o "Equipo, Provincia, *".
+  const thirdMarker = readMarker(third);
+  if (thirdMarker.head) {
+    head = true;
+    seedZone = thirdMarker.seedZone;
+  }
+
+  // Compatibilidad con el uso anterior: cualquier línea terminada en * es cabeza.
+  if (!head && /\*\s*$/.test(fullLine)) {
+    head = true;
+  }
+
+  return { name, head, seedZone };
+}
+
 function importTeamsCSV(text) {
   if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
   const {headers, rows, delimiter} = parseCSV(text);
@@ -682,17 +731,17 @@ function importTeamsCSV(text) {
   for (const row of rows) {
     if (row.length <= nameIdx) continue;
     const raw = (row[nameIdx] || '');
-    const name = raw.replace(/\*+$/, '').trim();
+    const hv = (headIdx !== -1 && row[headIdx]) ? String(row[headIdx]).trim() : '';
+    const parsedHead = parseHeadMarker(raw, hv, row.join(delimiter));
+    const name = parsedHead.name;
     if (!name) continue;
     
     const key = name.toLowerCase();
     if (uniq.has(key)) continue;
     uniq.add(key);
     
-    const province = (provinceIdx !== -1 && row[provinceIdx]) ? row[provinceIdx].replace(/\*+$/, '').trim() : '';
-    const hv = (headIdx !== -1 && row[headIdx]) ? String(row[headIdx]).toLowerCase().trim() : '';
-    const head = /^(si|sí|true|1|\*|x|head|seed|cs)$/i.test(hv) || /\*$/.test(raw);
-    teams.push({name, province, head});
+    const province = (provinceIdx !== -1 && row[provinceIdx]) ? row[provinceIdx].replace(/\s*(?:\d+)?\*+\s*$/, '').trim() : '';
+    teams.push({name, province, head: parsedHead.head, seedZone: parsedHead.seedZone});
   }
   
   return {teams, delimiter, hasHeaders: headers.length > 0};
@@ -937,7 +986,8 @@ document.getElementById('btnShare').addEventListener('click', async () => {
       teams: group.map(team => ({
         name: team.name,
         province: team.province || '',
-        head: team.head || false
+        head: team.head || false,
+        seedZone: team.seedZone || null
       }))
     }));
     drawData.zones = lastResult.groups.length;
@@ -1030,7 +1080,7 @@ function renderLists() {
   activeTeams.forEach((t, idx) => {
     const row = document.createElement('div');
     row.className = 'itemRow';
-    row.innerHTML = `<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+    row.innerHTML = `<input type="checkbox" class="chkActive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ` <span class="pill">${t.seedZone ? 'Cabeza Z' + t.seedZone : 'Cabeza'}</span>` : ''}`;
     aBox.appendChild(row);
   });
 
@@ -1038,7 +1088,7 @@ function renderLists() {
   inactiveTeams.forEach((t, idx) => {
     const row = document.createElement('div');
     row.className = 'itemRow';
-    row.innerHTML = `<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+    row.innerHTML = `<input type="checkbox" class="chkInactive" data-idx="${idx}"> <b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ` <span class="pill">${t.seedZone ? 'Cabeza Z' + t.seedZone : 'Cabeza'}</span>` : ''}`;
     iBox.appendChild(row);
   });
 }
@@ -1060,26 +1110,18 @@ function buildListsFromTextarea() {
     const parts = rawLine.split(delim).map(p => p.trim());
 
     const rawName = parts[0] || '';
-    const name = rawName.replace(/\s*\*+\s*$/, '').trim();
+    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
+    const parsedHead = parseHeadMarker(rawName, rawThird, rawLine);
+    const name = parsedHead.name;
     if (!name) continue;
 
     const key = name.toLowerCase();
     if (uniq.has(key)) continue;
     uniq.add(key);
 
-    const province = (parts[1] || '').replace(/\s*\*+\s*$/, '').trim();
+    const province = (parts[1] || '').replace(/\s*(?:\d+)?\*+\s*$/, '').trim();
 
-    // Cabeza de serie:
-    // - Si viene tercera columna: si/sí/true/1/*/x/cs/head/seed
-    // - O si la línea termina en '*' aunque haya espacios
-    const rawThird = (parts[2] != null) ? String(parts[2]).trim() : '';
-    const rawThirdLow = rawThird.toLowerCase();
-
-    const headByThird = /^(si|sí|true|1|\*|x|cs|head|seed)$/i.test(rawThirdLow);
-    const headBySuffix = /\*\s*$/.test(rawLine); // '*' al final con espacios permitidos
-    const head = headByThird || headBySuffix;
-
-    activeTeams.push({ name, province, head });
+    activeTeams.push({ name, province, head: parsedHead.head, seedZone: parsedHead.seedZone });
   }
 
   document.getElementById('checkLists').classList.remove('hidden');
@@ -1174,7 +1216,8 @@ function getActiveTeamsLive() {
       return {
         name: t.name,
         province: t.province,
-        head: fromText.head
+        head: fromText.head,
+        seedZone: fromText.seedZone
       };
     }
     return t;
@@ -1310,18 +1353,46 @@ if (format === 'custom') {
   capsBase = capacities(n, z);
 }
   const actualZones = (format === 'custom') ? capsBase.length : z;
-const groups = Array.from({length: actualZones}, () => []);
-  const heads = shuffle(teams.filter(t => t.head), rand);
-  const others = shuffle(teams.filter(t => !t.head), rand);
+  const groups = Array.from({length: actualZones}, () => []);
+
+  const fixedHeads = teams.filter(t => Number.isInteger(t.seedZone) && t.seedZone > 0);
+  const usedFixedZones = new Set();
+
+  for (const team of fixedHeads) {
+    const zoneIndex = team.seedZone - 1;
+    if (zoneIndex < 0 || zoneIndex >= actualZones) {
+      return {error: `El equipo "${team.name}" está marcado como ${team.seedZone}*, pero el sorteo tiene ${actualZones} zonas.`};
+    }
+    if ((capsBase[zoneIndex] || 0) <= 0) {
+      return {error: `La Zona ${team.seedZone} no tiene cupo disponible para ubicar a "${team.name}" como cabeza.`};
+    }
+    if (usedFixedZones.has(zoneIndex)) {
+      return {error: `Hay más de un equipo marcado como ${team.seedZone}*. Dejá solo un cabeza fijo para la Zona ${team.seedZone}.`};
+    }
+    usedFixedZones.add(zoneIndex);
+    groups[zoneIndex].push(team);
+  }
+
+  const fixedSet = new Set(fixedHeads);
+  const plainHeads = shuffle(teams.filter(t => t.head && !fixedSet.has(t)), rand);
+  const others = shuffle(teams.filter(t => !t.head && !fixedSet.has(t)), rand);
   
-  if (headsAsFirst && heads.length) {
-    for (let i = 0; i < groups.length && i < heads.length; i++) {
-      groups[i].push(heads[i]);
+  if (headsAsFirst && plainHeads.length) {
+    let nextHead = 0;
+    for (let i = 0; i < groups.length && nextHead < plainHeads.length; i++) {
+      if (groups[i].length < (capsBase[i] || 0)) {
+        groups[i].push(plainHeads[nextHead]);
+        nextHead++;
+      }
+    }
+    // Si hay más cabezas simples que zonas/cupos iniciales, vuelven al bolillero general.
+    for (; nextHead < plainHeads.length; nextHead++) {
+      others.push(plainHeads[nextHead]);
     }
   }
   
   const targetCaps = capsBase.map((cap, i) => Math.max(0, cap - groups[i].length));
-  const pool = headsAsFirst ? others : shuffle(teams, rand);
+  const pool = headsAsFirst ? others : shuffle([...plainHeads, ...others], rand);
 
   const maxAttempts = 500;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -1361,7 +1432,7 @@ function renderGroups(target, result) {
     
     arr.forEach(t => {
       const li = document.createElement('li');
-      li.innerHTML = `<b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ' <span class="pill">Cabeza</span>' : ''}`;
+      li.innerHTML = `<b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ` <span class="pill">${t.seedZone ? 'Cabeza Z' + t.seedZone : 'Cabeza'}</span>` : ''}`;
       ol.appendChild(li);
     });
     
@@ -1442,7 +1513,7 @@ function openResultInNewTab(result) {
   ].filter(Boolean).join('');
   
   const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
+    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? (t.seedZone ? ' (cabeza zona ' + t.seedZone + ')' : ' (cabeza)') : ''}</li>`).join('');
     return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
   const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo');
@@ -2601,7 +2672,8 @@ async function saveDrawToCloud(result, meta) {
       teams: group.map(team => ({
         name: team.name,
         province: team.province || '',
-        head: team.head || false
+        head: team.head || false,
+        seedZone: team.seedZone || null
       }))
     }));
 
@@ -3078,7 +3150,8 @@ shareBtn.addEventListener('click', () => {
               groupObj.teams.map(team => ({
                 name: team.name,
                 province: team.province || '',
-                head: team.head || false
+                head: team.head || false,
+                seedZone: team.seedZone || null
               }))
             );
             
@@ -3102,7 +3175,7 @@ shareBtn.addEventListener('click', () => {
             
             const zonesHTML = groups.map((arr, gi) => {
               const items = arr.map(t =>
-                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' cabeza' : ''}</li>`
+                `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? (t.seedZone ? ' cabeza zona ' + t.seedZone : ' cabeza') : ''}</li>`
               ).join('');
               return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
             }).join('');
@@ -3493,12 +3566,13 @@ function normalizeCloudGroupsForPDF(d) {
     const teams = Array.isArray(group) ? group : (Array.isArray(group && group.teams) ? group.teams : []);
     return teams.map(function(team) {
       if (typeof team === 'string') {
-        return { name: team, province: '', head: false };
+        return { name: team, province: '', head: false, seedZone: null };
       }
       return {
         name: (team && team.name) ? String(team.name) : '',
         province: (team && team.province) ? String(team.province) : '',
-        head: !!(team && team.head)
+        head: !!(team && team.head),
+        seedZone: (team && team.seedZone) ? parseInt(team.seedZone, 10) : null
       };
     }).filter(function(team) {
       return !!team.name;
