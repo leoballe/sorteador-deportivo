@@ -110,6 +110,20 @@
     /* Listas con checks */
     .history{display:grid;gap:8px}
     .history .item{background:#0b1220;border:1px dashed #2b3b55;padding:8px;border-radius:10px;font-size:13px}
+    .cloudFilters{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+      margin:10px 0 12px 0;
+      padding:10px;
+      border:1px dashed #2b3b55;
+      border-radius:12px;
+      background:#0b1220;
+    }
+    .cloudFilters .filterWide{grid-column:span 2}
+    .cloudFilters .filterAction{display:flex;align-items:flex-end}
+    .cloudFilters .filterAction .btn{width:100%}
+    @media (max-width:900px){.cloudFilters .filterWide{grid-column:span 1}}
     .listWrap{display:grid;grid-template-columns:1fr 1fr; gap:12px}
     @media (max-width:900px){.listWrap{grid-template-columns:1fr}}
     .listBox{background:#0b1220;border:1px dashed #2b3b55;border-radius:12px;padding:10px;min-height:120px}
@@ -220,6 +234,11 @@
 [data-theme="light"] .history .item {
   background: #ffffff;
   border: 1px dashed #cbd5e1;
+}
+
+[data-theme="light"] .cloudFilters {
+  background: #ffffff;
+  border-color: #cbd5e1;
 }
 
 [data-theme="light"] .card {
@@ -342,7 +361,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.0 Encabezado PDF</span>
+  <span class="badge">v4.1 Filtros nube</span>
 </div>
         
       </header>
@@ -531,9 +550,57 @@ Newell's, Santa Fe
 
       <div class="card" style="margin-top:12px">
   <h3>Historial de sorteos guardados</h3>
+
+  <div id="cloudFilters" class="cloudFilters">
+    <div>
+      <label>Evento</label>
+      <select id="cloudFilterEvent">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div>
+      <label>Disciplina</label>
+      <select id="cloudFilterDiscipline">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div>
+      <label>Categoría</label>
+      <select id="cloudFilterCategory">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div>
+      <label>Género</label>
+      <select id="cloudFilterGender">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div>
+      <label>Modalidad</label>
+      <select id="cloudFilterModality">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div>
+      <label>Sistema</label>
+      <select id="cloudFilterSystem">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filterWide">
+      <label>Buscar</label>
+      <input type="text" id="cloudFilterSearch" placeholder="Buscar por texto en el historial">
+    </div>
+    <div class="filterAction">
+      <button class="btn tiny ghost" id="btnClearCloudFilters" type="button">Limpiar filtros</button>
+    </div>
+  </div>
+  <div id="cloudFilterStatus" class="tiny" style="margin-bottom:10px"></div>
+
   <div class="controls" style="margin-bottom:12px">
     <label class="pill">
-      <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos
+      <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos visibles
     </label>
     <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">⬇️ Descargar ZIP de PDFs</button>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
@@ -3073,6 +3140,169 @@ async function saveSimpleDrawToCloud(list, meta) {
     toast('No se pudo guardar en la nube');
   }
 }
+
+/* ====================== Filtros del historial en nube ====================== */
+function normalizeCloudFilterValue(value) {
+  let s = String(value == null ? '' : value).trim().toLowerCase();
+  try {
+    s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  } catch (e) {}
+  return s;
+}
+
+function getCloudSystemLabel(d) {
+  if (d && d.type === 'simple') return 'Orden de paso';
+  const fmt = String((d && d.format) ? d.format : '').trim();
+  if (fmt === '8x3') return '8x3';
+  if (fmt === '4x6') return '4x6';
+  if (fmt === 'custom') {
+    const zones = d && d.zones ? String(d.zones) : '';
+    return zones ? 'Definir Zonas (' + zones + ')' : 'Definir Zonas';
+  }
+  return fmt || 'Zonas';
+}
+
+function getCloudFilterSelectIds() {
+  return [
+    'cloudFilterEvent',
+    'cloudFilterDiscipline',
+    'cloudFilterCategory',
+    'cloudFilterGender',
+    'cloudFilterModality',
+    'cloudFilterSystem'
+  ];
+}
+
+function updateSelectOptionsFromMap(select, valuesMap, defaultText) {
+  if (!select) return;
+  const current = select.value || '';
+  const entries = Array.from(valuesMap.entries()).sort(function(a, b) {
+    return String(a[1]).localeCompare(String(b[1]), 'es', { sensitivity: 'base' });
+  });
+  select.innerHTML = '<option value="">' + defaultText + '</option>';
+  entries.forEach(function(entry) {
+    const option = document.createElement('option');
+    option.value = entry[0];
+    option.textContent = entry[1];
+    select.appendChild(option);
+  });
+  if (current && valuesMap.has(current)) {
+    select.value = current;
+  } else {
+    select.value = '';
+  }
+}
+
+function refreshCloudFilterOptions() {
+  const items = Array.from(document.querySelectorAll('#cloudHistoryList .item'));
+  const maps = {
+    cloudFilterEvent: new Map(),
+    cloudFilterDiscipline: new Map(),
+    cloudFilterCategory: new Map(),
+    cloudFilterGender: new Map(),
+    cloudFilterModality: new Map(),
+    cloudFilterSystem: new Map()
+  };
+
+  function add(map, raw) {
+    const label = String(raw == null ? '' : raw).trim();
+    if (!label) return;
+    const key = normalizeCloudFilterValue(label);
+    if (!map.has(key)) map.set(key, label);
+  }
+
+  items.forEach(function(item) {
+    add(maps.cloudFilterEvent, item.dataset.cloudEventLabel || '');
+    add(maps.cloudFilterDiscipline, item.dataset.cloudDisciplineLabel || '');
+    add(maps.cloudFilterCategory, item.dataset.cloudCategoryLabel || '');
+    add(maps.cloudFilterGender, item.dataset.cloudGenderLabel || '');
+    add(maps.cloudFilterModality, item.dataset.cloudModalityLabel || '');
+    add(maps.cloudFilterSystem, item.dataset.cloudSystemLabel || '');
+  });
+
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterEvent'), maps.cloudFilterEvent, 'Todos');
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterDiscipline'), maps.cloudFilterDiscipline, 'Todas');
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterCategory'), maps.cloudFilterCategory, 'Todas');
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterGender'), maps.cloudFilterGender, 'Todos');
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterModality'), maps.cloudFilterModality, 'Todas');
+  updateSelectOptionsFromMap(document.getElementById('cloudFilterSystem'), maps.cloudFilterSystem, 'Todos');
+}
+
+function getVisibleCloudCheckboxes() {
+  return Array.from(document.querySelectorAll('input.cloud-draw-checkbox')).filter(function(cb) {
+    const item = cb.closest ? cb.closest('.item') : null;
+    return item && item.style.display !== 'none';
+  });
+}
+
+function updateSelectAllCloudState() {
+  const selectAll = document.getElementById('selectAllCloudBtn');
+  if (!selectAll) return;
+  const visibleCheckboxes = getVisibleCloudCheckboxes();
+  const checkedVisible = visibleCheckboxes.filter(function(cb) { return cb.checked; });
+  selectAll.checked = visibleCheckboxes.length > 0 && checkedVisible.length === visibleCheckboxes.length;
+}
+
+function applyCloudFilters() {
+  const filters = {
+    event: document.getElementById('cloudFilterEvent')?.value || '',
+    discipline: document.getElementById('cloudFilterDiscipline')?.value || '',
+    category: document.getElementById('cloudFilterCategory')?.value || '',
+    gender: document.getElementById('cloudFilterGender')?.value || '',
+    modality: document.getElementById('cloudFilterModality')?.value || '',
+    system: document.getElementById('cloudFilterSystem')?.value || '',
+    search: normalizeCloudFilterValue(document.getElementById('cloudFilterSearch')?.value || '')
+  };
+
+  const items = Array.from(document.querySelectorAll('#cloudHistoryList .item'));
+  let visible = 0;
+
+  items.forEach(function(item) {
+    let show = true;
+    if (filters.event && item.dataset.cloudEvent !== filters.event) show = false;
+    if (filters.discipline && item.dataset.cloudDiscipline !== filters.discipline) show = false;
+    if (filters.category && item.dataset.cloudCategory !== filters.category) show = false;
+    if (filters.gender && item.dataset.cloudGender !== filters.gender) show = false;
+    if (filters.modality && item.dataset.cloudModality !== filters.modality) show = false;
+    if (filters.system && item.dataset.cloudSystem !== filters.system) show = false;
+    if (filters.search && normalizeCloudFilterValue(item.textContent || '').indexOf(filters.search) === -1) show = false;
+
+    item.style.display = show ? 'flex' : 'none';
+    const cb = item.querySelector ? item.querySelector('input.cloud-draw-checkbox') : null;
+    if (!show && cb) cb.checked = false;
+    if (show) visible++;
+  });
+
+  const status = document.getElementById('cloudFilterStatus');
+  if (status && items.length) {
+    status.textContent = 'Mostrando ' + visible + ' de ' + items.length + ' sorteo(s) guardado(s).';
+  } else if (status) {
+    status.textContent = '';
+  }
+  updateSelectAllCloudState();
+}
+
+function clearCloudFilters() {
+  getCloudFilterSelectIds().forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const search = document.getElementById('cloudFilterSearch');
+  if (search) search.value = '';
+  applyCloudFilters();
+}
+
+function setupCloudFilterControls() {
+  getCloudFilterSelectIds().forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyCloudFilters);
+  });
+  const search = document.getElementById('cloudFilterSearch');
+  if (search) search.addEventListener('input', applyCloudFilters);
+  const clearBtn = document.getElementById('btnClearCloudFilters');
+  if (clearBtn) clearBtn.addEventListener('click', clearCloudFilters);
+}
+
 function subscribeCloudHistory() {
   const user = auth.currentUser;
   const listEl = document.getElementById('cloudHistoryList');
@@ -3090,12 +3320,13 @@ function subscribeCloudHistory() {
   cloudUnsub = db.collection('users').doc(user.uid)
     .collection('draws')
     .orderBy('createdAt', 'desc')
-    .limit(50)
     .onSnapshot(snap => {
       listEl.innerHTML = '';
       
       if (snap.empty) {
         listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>';
+        refreshCloudFilterOptions();
+        applyCloudFilters();
         return;
       }
       
@@ -3104,9 +3335,9 @@ function subscribeCloudHistory() {
         const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString() : '—';
         let title = '';
         if (d.type === 'simple') {
-          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — SORTEO SIMPLE — ${d.teamsCount || '-'} equipos${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}${d.modality ? ' · ' + d.modality : ''}`;
         } else {
-          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}`;
+          title = `${when}${d.eventName ? ' — ' + d.eventName : ''} — ${d.teamsCount || '-'} equipos · ${d.zones || '-'} zonas${d.format ? ' · ' + d.format : ''}${d.discipline ? ' · ' + d.discipline : ''}${d.category ? ' · ' + d.category : ''}${d.gender ? ' · ' + d.gender : ''}${d.modality ? ' · ' + d.modality : ''}`;
         }
         
         const item = document.createElement('div');
@@ -3115,15 +3346,27 @@ item.style.display = 'flex';
 item.style.alignItems = 'center';
 item.style.gap = '10px';
 
+const cloudSystemLabel = getCloudSystemLabel(d);
+item.dataset.cloudEventLabel = d.eventName || '';
+item.dataset.cloudDisciplineLabel = d.discipline || '';
+item.dataset.cloudCategoryLabel = d.category || '';
+item.dataset.cloudGenderLabel = d.gender || '';
+item.dataset.cloudModalityLabel = d.modality || '';
+item.dataset.cloudSystemLabel = cloudSystemLabel;
+item.dataset.cloudEvent = normalizeCloudFilterValue(d.eventName || '');
+item.dataset.cloudDiscipline = normalizeCloudFilterValue(d.discipline || '');
+item.dataset.cloudCategory = normalizeCloudFilterValue(d.category || '');
+item.dataset.cloudGender = normalizeCloudFilterValue(d.gender || '');
+item.dataset.cloudModality = normalizeCloudFilterValue(d.modality || '');
+item.dataset.cloudSystem = normalizeCloudFilterValue(cloudSystemLabel);
+
 const checkbox = document.createElement('input');
 checkbox.type = 'checkbox';
 checkbox.className = 'cloud-draw-checkbox';
 checkbox.dataset.docId = doc.id;
 
 checkbox.addEventListener('change', function() {
-  const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox');
-  const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked');
-  document.getElementById('selectAllCloudBtn').checked = allCheckboxes.length > 0 && allChecked.length === allCheckboxes.length;
+  updateSelectAllCloudState();
 });
 
 const titleSpan = document.createElement('span');
@@ -3910,6 +4153,8 @@ shareBtn.addEventListener('click', () => {
         item.appendChild(btns);
         listEl.appendChild(item);
       });
+      refreshCloudFilterOptions();
+      applyCloudFilters();
     }, err => {
       console.error('Error leyendo historial cloud:', err);
       listEl.innerHTML = '<div class="tiny errorText">Error al cargar historial.</div>';
@@ -4282,6 +4527,7 @@ function updateCapInfo() {
 /* ====================== DOM Ready ====================== */
 document.addEventListener('DOMContentLoaded', function() {
   setupPdfHeaderControls();
+  setupCloudFilterControls();
   loadPdfHeaderImageFromStorage();
 
   // Tabs app
@@ -4826,27 +5072,21 @@ downloadText(csv, buildExportFilename('csv', getCurrentMetaForFilename()));
 */
 
   // Inicializar los selects del tab simple (si existen)
-// Seleccionar todos los sorteos en la nube - CORREGIDO
+// Seleccionar todos los sorteos visibles en la nube
 document.addEventListener('change', function(e) {
-  // "Seleccionar todos" - funciona con delegación
+  // "Seleccionar todos visibles" - funciona con delegación y respeta filtros
   if (e.target && e.target.id === 'selectAllCloudBtn') {
-    const checkboxes = document.querySelectorAll('input.cloud-draw-checkbox');
-    checkboxes.forEach(checkbox => {
+    getVisibleCloudCheckboxes().forEach(function(checkbox) {
       checkbox.checked = e.target.checked;
     });
+    updateSelectAllCloudState();
   }
-  
-  // Actualizar "Seleccionar todos" cuando cambien checkboxes individuales
+
+  // Actualizar "Seleccionar todos visibles" cuando cambien checkboxes individuales
   if (e.target && e.target.classList.contains('cloud-draw-checkbox')) {
-    const allChecked = document.querySelectorAll('input.cloud-draw-checkbox:checked').length;
-    const allCheckboxes = document.querySelectorAll('input.cloud-draw-checkbox').length;
-    const selectAllBtn = document.getElementById('selectAllCloudBtn');
-    if (selectAllBtn) {
-      selectAllBtn.checked = allChecked === allCheckboxes && allCheckboxes > 0;
-    }
+    updateSelectAllCloudState();
   }
 });
-
 
 // Descargar ZIP con PDFs individuales de sorteos seleccionados en la nube
 // Usa los mismos datos guardados en Firebase y genera un PDF por cada sorteo seleccionado.
