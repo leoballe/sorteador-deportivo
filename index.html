@@ -2335,7 +2335,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
           const x=margin+(maxW-drawW)/2;
           try{
             pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
-            y+=drawH+12;
+            y+=drawH+18;
           }catch(e){
             console.warn('No se pudo dibujar el encabezado PDF',e);
           }
@@ -2909,7 +2909,7 @@ function openSimpleResultInNewTab(list) {
           const x=margin+(maxW-drawW)/2;
           try{
             pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
-            y+=drawH+12;
+            y+=drawH+18;
           }catch(e){
             console.warn('No se pudo dibujar el encabezado PDF',e);
           }
@@ -3424,7 +3424,7 @@ shareBtn.addEventListener('click', () => {
           const x=margin+(maxW-drawW)/2;
           try{
             pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
-            y+=drawH+12;
+            y+=drawH+18;
           }catch(e){
             console.warn('No se pudo dibujar el encabezado PDF',e);
           }
@@ -3748,7 +3748,7 @@ shareBtn.addEventListener('click', () => {
           const x=margin+(maxW-drawW)/2;
           try{
             pdf.addImage(pdfHeaderImage.dataUrl,pdfHeaderImageType(pdfHeaderImage.dataUrl),x,y,drawW,drawH);
-            y+=drawH+12;
+            y+=drawH+18;
           }catch(e){
             console.warn('No se pudo dibujar el encabezado PDF',e);
           }
