@@ -982,7 +982,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.5 Interfaz pública ajustada</span>
+  <span class="badge">v4.6 Animación bolillero</span>
 </div>
         
       </header>
@@ -2466,6 +2466,38 @@ function buildPagedZonesHTML(groups, chipsHTML, title, headerImage) {
   return `<div class="pdf-pages">${pages.join('')}</div>`;
 }
 
+function buildDrawAnimationNames(names) {
+  const unique = [];
+  const seen = new Set();
+  (names || []).forEach(value => {
+    const name = String(value || '').trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(name);
+  });
+
+  const colors = ['#facc15','#38bdf8','#22c55e','#fb7185','#a78bfa','#f97316','#2dd4bf','#f472b6','#84cc16','#60a5fa','#e879f9','#fde047'];
+  const ballNames = unique.slice(0, 24);
+  const ballsHTML = ballNames.map((name, i) => {
+    const shortName = name.length > 12 ? name.slice(0, 11) + '…' : name;
+    const angle = Math.round((360 / Math.max(ballNames.length, 1)) * i);
+    const radius = 58 + ((i % 3) * 24);
+    const delay = (i % 8) * 90;
+    const color = colors[i % colors.length];
+    return `<span class="lottery-ball" style="--i:${i};--angle:${angle}deg;--radius:${radius}px;--ball-bg:${color};--delay:${delay}ms">${escapeHtml(shortName)}</span>`;
+  }).join('');
+
+  const flowHTML = unique.map((name, i) => {
+    const color = colors[i % colors.length];
+    const delay = Math.min(2400, i * 85);
+    return `<span class="flow-team" style="--delay:${delay}ms;--accent:${color}">${escapeHtml(name)}</span>`;
+  }).join('');
+
+  return { ballsHTML, flowHTML, count: unique.length };
+}
+
 function openResultInNewTab(result) {
   const w = window.open('about:blank', '_blank');
   if (!w) {
@@ -2495,6 +2527,7 @@ const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` —
 	  return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
   const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo', pdfHeaderImage);
+  const drawAnimation = buildDrawAnimationNames(result.groups.flat().map(t => (t && t.name) ? t.name : String(t || '')));
 
 const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>🎲 Sorteo Mejorado - Juegos Nacionales</title>
@@ -2825,140 +2858,248 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 
     /* Animación previa al resultado del sorteo */
     .draw-loader {
-      min-height: calc(100vh - 40px);
+      position: fixed;
+      inset: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       background:
-        radial-gradient(circle at 50% 42%, rgba(255,255,255,.98) 0%, rgba(236,253,245,.94) 35%, rgba(219,234,254,.92) 68%, rgba(224,231,255,.9) 100%);
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,.95) 0%, rgba(236,253,245,.90) 34%, rgba(219,234,254,.88) 64%, rgba(224,231,255,.92) 100%),
+        linear-gradient(135deg, rgba(148,229,242,.50), rgba(250,204,21,.24), rgba(251,113,133,.22));
       color: #1B315E;
-      border-radius: 18px;
       padding: 34px;
       box-sizing: border-box;
       overflow: hidden;
+      z-index: 50;
+    }
+    .draw-loader:before,
+    .draw-loader:after {
+      content: '';
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(2px);
+      opacity: .42;
+      pointer-events: none;
+    }
+    .draw-loader:before {
+      width: 440px;
+      height: 440px;
+      left: -120px;
+      top: -120px;
+      background: radial-gradient(circle, rgba(56,189,248,.58), transparent 68%);
+    }
+    .draw-loader:after {
+      width: 520px;
+      height: 520px;
+      right: -170px;
+      bottom: -170px;
+      background: radial-gradient(circle, rgba(251,113,133,.42), transparent 70%);
     }
     .loader-title {
-      margin-top: 26px;
-      font-size: clamp(34px, 5vw, 54px);
+      position: relative;
+      z-index: 2;
+      margin-top: 18px;
+      font-size: clamp(34px, 5vw, 58px);
       line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: -.4px;
+      font-weight: 950;
+      letter-spacing: -.8px;
       color: #102A5C;
     }
     .loader-subtitle {
-      margin-top: 12px;
+      position: relative;
+      z-index: 2;
+      margin-top: 10px;
       font-size: clamp(17px, 2vw, 22px);
       color: #334155;
-      font-weight: 700;
+      font-weight: 750;
+    }
+    .lottery-scene {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(300px, 430px) minmax(320px, 560px);
+      gap: 30px;
+      align-items: center;
+      width: min(1120px, 96vw);
     }
     .lottery-machine {
-      width: 330px;
-      height: 360px;
+      width: 430px;
+      height: 430px;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 22px 30px rgba(15, 23, 42, .18));
+      filter: drop-shadow(0 26px 36px rgba(15, 23, 42, .22));
     }
     .lottery-drum {
-      width: 250px;
-      height: 250px;
-      border: 12px solid #102A5C;
+      width: 318px;
+      height: 318px;
+      border: 13px solid #102A5C;
       border-radius: 50%;
       background:
-        radial-gradient(circle at 35% 25%, rgba(255,255,255,.98), rgba(148,229,242,.34) 50%, rgba(37,99,235,.16) 100%);
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,.98), rgba(148,229,242,.34) 45%, rgba(37,99,235,.16) 100%);
       box-shadow:
-        inset 0 0 42px rgba(27,49,94,.22),
-        inset 0 0 0 8px rgba(255,255,255,.42),
-        0 22px 48px rgba(27,49,94,.24);
+        inset 0 0 52px rgba(27,49,94,.22),
+        inset 0 0 0 10px rgba(255,255,255,.45),
+        0 24px 52px rgba(27,49,94,.24);
       position: relative;
-      animation: drumSpin .82s linear infinite;
+      animation: drumSpin 1.65s linear infinite;
+      overflow: hidden;
     }
     .lottery-drum:before,
     .lottery-drum:after {
       content: '';
       position: absolute;
+      left: 50%;
+      top: 50%;
       background: linear-gradient(90deg, #94E5F2, #22c55e, #facc15, #fb7185);
-      opacity: .95;
-      box-shadow: 0 0 12px rgba(148,229,242,.55);
-    }
-    .lottery-drum:before {
-      width: 214px;
-      height: 7px;
-      left: 18px;
-      top: 121px;
+      opacity: .88;
+      box-shadow: 0 0 15px rgba(148,229,242,.55);
+      transform: translate(-50%,-50%);
       border-radius: 999px;
     }
-    .lottery-drum:after {
-      width: 7px;
-      height: 214px;
-      left: 121px;
-      top: 18px;
-      border-radius: 999px;
-    }
+    .lottery-drum:before { width: 272px; height: 8px; }
+    .lottery-drum:after { width: 8px; height: 272px; }
     .lottery-ball {
-      width: 46px;
-      height: 46px;
+      --angle: 0deg;
+      --radius: 82px;
+      --ball-bg: #facc15;
+      --delay: 0ms;
+      width: 58px;
+      height: 58px;
       border-radius: 999px;
       color: #0f172a;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      font-weight: 1000;
+      text-align: center;
+      padding: 5px;
+      font-size: 10.5px;
+      line-height: 1.05;
+      font-weight: 950;
       position: absolute;
-      z-index: 2;
+      left: calc(50% - 29px);
+      top: calc(50% - 29px);
+      z-index: 3;
       border: 4px solid rgba(255,255,255,.95);
-      box-shadow: 0 10px 16px rgba(15,23,42,.20), inset 0 -5px 10px rgba(15,23,42,.12);
+      background: var(--ball-bg);
+      box-shadow: 0 10px 16px rgba(15,23,42,.22), inset 0 -5px 10px rgba(15,23,42,.14);
+      transform: rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle)));
+      animation: ballOrbit 3s ease-in-out infinite;
+      animation-delay: var(--delay);
     }
-    .lottery-ball.b1 { left: 42px; top: 62px; background:#facc15; }
-    .lottery-ball.b2 { right: 45px; top: 54px; background:#38bdf8; }
-    .lottery-ball.b3 { left: 92px; bottom: 38px; background:#22c55e; }
-    .lottery-ball.b4 { right: 65px; bottom: 66px; background:#fb7185; }
-    .lottery-ball.b5 { left: 55px; bottom: 93px; background:#a78bfa; }
     .lottery-stand {
       position: absolute;
-      width: 190px;
-      height: 74px;
-      border-left: 12px solid #102A5C;
-      border-right: 12px solid #102A5C;
-      border-bottom: 12px solid #102A5C;
-      border-radius: 0 0 24px 24px;
-      left: 70px;
+      width: 230px;
+      height: 94px;
+      border-left: 14px solid #102A5C;
+      border-right: 14px solid #102A5C;
+      border-bottom: 14px solid #102A5C;
+      border-radius: 0 0 28px 28px;
+      left: 100px;
       bottom: 0;
     }
     .lottery-handle {
       position: absolute;
-      width: 76px;
-      height: 12px;
+      width: 100px;
+      height: 14px;
       background: linear-gradient(90deg, #102A5C, #2563eb);
       border-radius: 999px;
-      right: 0;
-      top: 151px;
+      right: 12px;
+      top: 203px;
       transform-origin: left center;
-      animation: handleSpin .82s linear infinite;
-      box-shadow: 0 0 0 6px rgba(148,229,242,.18);
+      animation: handleSpin 1.65s linear infinite;
+      box-shadow: 0 0 0 7px rgba(148,229,242,.18);
     }
     .lottery-handle:after{
       content:'';
-      width:28px;
-      height:28px;
+      width:34px;
+      height:34px;
       border-radius:999px;
       background:#facc15;
-      border:5px solid #102A5C;
+      border:6px solid #102A5C;
       position:absolute;
-      right:-18px;
-      top:-8px;
+      right:-22px;
+      top:-10px;
     }
-    .loader-out { animation: loaderFade .3s ease-in forwards; }
-    .hidden-result { display: none; }
-    .result-in { animation: resultFade .45s ease-out both; }
+    .formation-panel {
+      min-height: 310px;
+      border: 1px solid rgba(27,49,94,.14);
+      border-radius: 26px;
+      background: rgba(255,255,255,.74);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 54px rgba(15,23,42,.14);
+      padding: 22px;
+      overflow: hidden;
+      text-align: left;
+    }
+    .formation-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #102A5C;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .name-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+      max-height: 250px;
+      overflow: hidden;
+    }
+    .flow-team {
+      --delay: 0ms;
+      --accent: #38bdf8;
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 6px 11px;
+      background: #ffffff;
+      border: 1px solid rgba(15,23,42,.10);
+      border-left: 6px solid var(--accent);
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(15,23,42,.10);
+      opacity: 0;
+      transform: translateX(-44px) translateY(-10px) scale(.82);
+      animation: teamArrive .62s cubic-bezier(.19,1,.22,1) forwards;
+      animation-delay: var(--delay);
+    }
+    .result-stage {
+      opacity: .20;
+      filter: blur(10px) saturate(.72);
+      transform: scale(.985);
+      transition: opacity .9s ease, filter .9s ease, transform .9s ease;
+    }
+    .result-stage.result-ready {
+      opacity: 1;
+      filter: none;
+      transform: none;
+    }
+    .loader-out { animation: loaderFade .65s ease-in forwards; }
+    .result-in { animation: resultFade .65s ease-out both; }
     @keyframes drumSpin {
       from { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(180deg) scale(1.025); }
+      50% { transform: rotate(180deg) scale(1.015); }
       to { transform: rotate(360deg) scale(1); }
+    }
+    @keyframes ballOrbit {
+      0% { transform: rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle))) scale(.92); }
+      45% { transform: rotate(calc(var(--angle) + 145deg)) translateX(calc(var(--radius) - 18px)) rotate(calc(-1 * (var(--angle) + 145deg))) scale(1.05); }
+      100% { transform: rotate(calc(var(--angle) + 360deg)) translateX(var(--radius)) rotate(calc(-1 * (var(--angle) + 360deg))) scale(.92); }
+    }
+    @keyframes teamArrive {
+      0% { opacity: 0; transform: translateX(-44px) translateY(-10px) scale(.82); }
+      72% { opacity: 1; transform: translateX(4px) translateY(0) scale(1.03); }
+      100% { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
     }
     @keyframes handleSpin {
       from { transform: rotate(0deg); }
@@ -2966,40 +3107,44 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     }
     @keyframes loaderFade {
       from { opacity: 1; transform: scale(1); }
-      to { opacity: 0; transform: scale(.98); }
+      to { opacity: 0; transform: scale(.99); }
     }
     @keyframes resultFade {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: .55; filter: blur(5px); }
+      to { opacity: 1; filter: none; }
     }
-    @media (max-width: 560px){
-      .lottery-machine{ width:260px; height:290px; transform:scale(.82); }
-      .loader-title{ font-size:32px; }
+    @media (max-width: 850px){
+      .lottery-scene{ grid-template-columns:1fr; gap:16px; width:min(560px,96vw); }
+      .lottery-machine{ width:360px; height:360px; margin:0 auto; transform:scale(.86); }
+      .formation-panel{ min-height:220px; }
+      .loader-title{ font-size:34px; }
     }
     @media print {
       .draw-loader { display: none !important; }
-      .hidden-result { display: block !important; }
+      .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
       .result-in { animation: none !important; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   </head><body>
     <div id="drawLoader" class="draw-loader">
-      <div class="lottery-machine" aria-hidden="true">
-        <div class="lottery-stand"></div>
-        <div class="lottery-handle"></div>
-        <div class="lottery-drum">
-          <span class="lottery-ball b1">1</span>
-          <span class="lottery-ball b2">2</span>
-          <span class="lottery-ball b3">3</span>
-          <span class="lottery-ball b4">4</span>
-          <span class="lottery-ball b5">5</span>
+      <div class="lottery-scene">
+        <div class="lottery-machine" aria-hidden="true">
+          <div class="lottery-stand"></div>
+          <div class="lottery-handle"></div>
+          <div class="lottery-drum">
+            ${drawAnimation.ballsHTML}
+          </div>
+        </div>
+        <div class="formation-panel">
+          <div class="formation-title">🎲 El resultado se está formando</div>
+          <div class="name-flow">${drawAnimation.flowHTML}</div>
         </div>
       </div>
       <div class="loader-title">Realizando sorteo...</div>
-      <div class="loader-subtitle">El bolillero virtual está girando</div>
+      <div class="loader-subtitle">Las bolillas llevan los equipos hacia el resultado final</div>
     </div>
-    <div class="container hidden-result" id="resultContainer">
+    <div class="container result-stage" id="resultContainer">
       ${pagedZonesHTML}
       <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
     </div>
@@ -3007,15 +3152,15 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       setTimeout(function(){
         var loader = document.getElementById('drawLoader');
         var result = document.getElementById('resultContainer');
-        if (loader) {
-          loader.classList.add('loader-out');
-          setTimeout(function(){ loader.style.display = 'none'; }, 300);
-        }
         if (result) {
-          result.classList.remove('hidden-result');
+          result.classList.add('result-ready');
           result.classList.add('result-in');
         }
-      }, 2000);
+        if (loader) {
+          loader.classList.add('loader-out');
+          setTimeout(function(){ loader.style.display = 'none'; }, 650);
+        }
+      }, 3000);
 
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
@@ -3214,6 +3359,7 @@ function openSimpleResultInNewTab(list) {
   const listHTML = list.map((name, index) => 
     `<div style="margin-bottom: 8px;">${index + 1}. <b>${escapeHtml(name)}</b></div>`
   ).join('');
+  const drawAnimation = buildDrawAnimationNames(list);
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Orden de Paso</title>
@@ -3423,140 +3569,248 @@ function openSimpleResultInNewTab(list) {
 
     /* Animación previa al resultado del sorteo */
     .draw-loader {
-      min-height: calc(100vh - 40px);
+      position: fixed;
+      inset: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       background:
-        radial-gradient(circle at 50% 42%, rgba(255,255,255,.98) 0%, rgba(236,253,245,.94) 35%, rgba(219,234,254,.92) 68%, rgba(224,231,255,.9) 100%);
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,.95) 0%, rgba(236,253,245,.90) 34%, rgba(219,234,254,.88) 64%, rgba(224,231,255,.92) 100%),
+        linear-gradient(135deg, rgba(148,229,242,.50), rgba(250,204,21,.24), rgba(251,113,133,.22));
       color: #1B315E;
-      border-radius: 18px;
       padding: 34px;
       box-sizing: border-box;
       overflow: hidden;
+      z-index: 50;
+    }
+    .draw-loader:before,
+    .draw-loader:after {
+      content: '';
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(2px);
+      opacity: .42;
+      pointer-events: none;
+    }
+    .draw-loader:before {
+      width: 440px;
+      height: 440px;
+      left: -120px;
+      top: -120px;
+      background: radial-gradient(circle, rgba(56,189,248,.58), transparent 68%);
+    }
+    .draw-loader:after {
+      width: 520px;
+      height: 520px;
+      right: -170px;
+      bottom: -170px;
+      background: radial-gradient(circle, rgba(251,113,133,.42), transparent 70%);
     }
     .loader-title {
-      margin-top: 26px;
-      font-size: clamp(34px, 5vw, 54px);
+      position: relative;
+      z-index: 2;
+      margin-top: 18px;
+      font-size: clamp(34px, 5vw, 58px);
       line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: -.4px;
+      font-weight: 950;
+      letter-spacing: -.8px;
       color: #102A5C;
     }
     .loader-subtitle {
-      margin-top: 12px;
+      position: relative;
+      z-index: 2;
+      margin-top: 10px;
       font-size: clamp(17px, 2vw, 22px);
       color: #334155;
-      font-weight: 700;
+      font-weight: 750;
+    }
+    .lottery-scene {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(300px, 430px) minmax(320px, 560px);
+      gap: 30px;
+      align-items: center;
+      width: min(1120px, 96vw);
     }
     .lottery-machine {
-      width: 330px;
-      height: 360px;
+      width: 430px;
+      height: 430px;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 22px 30px rgba(15, 23, 42, .18));
+      filter: drop-shadow(0 26px 36px rgba(15, 23, 42, .22));
     }
     .lottery-drum {
-      width: 250px;
-      height: 250px;
-      border: 12px solid #102A5C;
+      width: 318px;
+      height: 318px;
+      border: 13px solid #102A5C;
       border-radius: 50%;
       background:
-        radial-gradient(circle at 35% 25%, rgba(255,255,255,.98), rgba(148,229,242,.34) 50%, rgba(37,99,235,.16) 100%);
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,.98), rgba(148,229,242,.34) 45%, rgba(37,99,235,.16) 100%);
       box-shadow:
-        inset 0 0 42px rgba(27,49,94,.22),
-        inset 0 0 0 8px rgba(255,255,255,.42),
-        0 22px 48px rgba(27,49,94,.24);
+        inset 0 0 52px rgba(27,49,94,.22),
+        inset 0 0 0 10px rgba(255,255,255,.45),
+        0 24px 52px rgba(27,49,94,.24);
       position: relative;
-      animation: drumSpin .82s linear infinite;
+      animation: drumSpin 1.65s linear infinite;
+      overflow: hidden;
     }
     .lottery-drum:before,
     .lottery-drum:after {
       content: '';
       position: absolute;
+      left: 50%;
+      top: 50%;
       background: linear-gradient(90deg, #94E5F2, #22c55e, #facc15, #fb7185);
-      opacity: .95;
-      box-shadow: 0 0 12px rgba(148,229,242,.55);
-    }
-    .lottery-drum:before {
-      width: 214px;
-      height: 7px;
-      left: 18px;
-      top: 121px;
+      opacity: .88;
+      box-shadow: 0 0 15px rgba(148,229,242,.55);
+      transform: translate(-50%,-50%);
       border-radius: 999px;
     }
-    .lottery-drum:after {
-      width: 7px;
-      height: 214px;
-      left: 121px;
-      top: 18px;
-      border-radius: 999px;
-    }
+    .lottery-drum:before { width: 272px; height: 8px; }
+    .lottery-drum:after { width: 8px; height: 272px; }
     .lottery-ball {
-      width: 46px;
-      height: 46px;
+      --angle: 0deg;
+      --radius: 82px;
+      --ball-bg: #facc15;
+      --delay: 0ms;
+      width: 58px;
+      height: 58px;
       border-radius: 999px;
       color: #0f172a;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      font-weight: 1000;
+      text-align: center;
+      padding: 5px;
+      font-size: 10.5px;
+      line-height: 1.05;
+      font-weight: 950;
       position: absolute;
-      z-index: 2;
+      left: calc(50% - 29px);
+      top: calc(50% - 29px);
+      z-index: 3;
       border: 4px solid rgba(255,255,255,.95);
-      box-shadow: 0 10px 16px rgba(15,23,42,.20), inset 0 -5px 10px rgba(15,23,42,.12);
+      background: var(--ball-bg);
+      box-shadow: 0 10px 16px rgba(15,23,42,.22), inset 0 -5px 10px rgba(15,23,42,.14);
+      transform: rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle)));
+      animation: ballOrbit 3s ease-in-out infinite;
+      animation-delay: var(--delay);
     }
-    .lottery-ball.b1 { left: 42px; top: 62px; background:#facc15; }
-    .lottery-ball.b2 { right: 45px; top: 54px; background:#38bdf8; }
-    .lottery-ball.b3 { left: 92px; bottom: 38px; background:#22c55e; }
-    .lottery-ball.b4 { right: 65px; bottom: 66px; background:#fb7185; }
-    .lottery-ball.b5 { left: 55px; bottom: 93px; background:#a78bfa; }
     .lottery-stand {
       position: absolute;
-      width: 190px;
-      height: 74px;
-      border-left: 12px solid #102A5C;
-      border-right: 12px solid #102A5C;
-      border-bottom: 12px solid #102A5C;
-      border-radius: 0 0 24px 24px;
-      left: 70px;
+      width: 230px;
+      height: 94px;
+      border-left: 14px solid #102A5C;
+      border-right: 14px solid #102A5C;
+      border-bottom: 14px solid #102A5C;
+      border-radius: 0 0 28px 28px;
+      left: 100px;
       bottom: 0;
     }
     .lottery-handle {
       position: absolute;
-      width: 76px;
-      height: 12px;
+      width: 100px;
+      height: 14px;
       background: linear-gradient(90deg, #102A5C, #2563eb);
       border-radius: 999px;
-      right: 0;
-      top: 151px;
+      right: 12px;
+      top: 203px;
       transform-origin: left center;
-      animation: handleSpin .82s linear infinite;
-      box-shadow: 0 0 0 6px rgba(148,229,242,.18);
+      animation: handleSpin 1.65s linear infinite;
+      box-shadow: 0 0 0 7px rgba(148,229,242,.18);
     }
     .lottery-handle:after{
       content:'';
-      width:28px;
-      height:28px;
+      width:34px;
+      height:34px;
       border-radius:999px;
       background:#facc15;
-      border:5px solid #102A5C;
+      border:6px solid #102A5C;
       position:absolute;
-      right:-18px;
-      top:-8px;
+      right:-22px;
+      top:-10px;
     }
-    .loader-out { animation: loaderFade .3s ease-in forwards; }
-    .hidden-result { display: none; }
-    .result-in { animation: resultFade .45s ease-out both; }
+    .formation-panel {
+      min-height: 310px;
+      border: 1px solid rgba(27,49,94,.14);
+      border-radius: 26px;
+      background: rgba(255,255,255,.74);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 54px rgba(15,23,42,.14);
+      padding: 22px;
+      overflow: hidden;
+      text-align: left;
+    }
+    .formation-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #102A5C;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .name-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+      max-height: 250px;
+      overflow: hidden;
+    }
+    .flow-team {
+      --delay: 0ms;
+      --accent: #38bdf8;
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 6px 11px;
+      background: #ffffff;
+      border: 1px solid rgba(15,23,42,.10);
+      border-left: 6px solid var(--accent);
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(15,23,42,.10);
+      opacity: 0;
+      transform: translateX(-44px) translateY(-10px) scale(.82);
+      animation: teamArrive .62s cubic-bezier(.19,1,.22,1) forwards;
+      animation-delay: var(--delay);
+    }
+    .result-stage {
+      opacity: .20;
+      filter: blur(10px) saturate(.72);
+      transform: scale(.985);
+      transition: opacity .9s ease, filter .9s ease, transform .9s ease;
+    }
+    .result-stage.result-ready {
+      opacity: 1;
+      filter: none;
+      transform: none;
+    }
+    .loader-out { animation: loaderFade .65s ease-in forwards; }
+    .result-in { animation: resultFade .65s ease-out both; }
     @keyframes drumSpin {
       from { transform: rotate(0deg) scale(1); }
-      50% { transform: rotate(180deg) scale(1.025); }
+      50% { transform: rotate(180deg) scale(1.015); }
       to { transform: rotate(360deg) scale(1); }
+    }
+    @keyframes ballOrbit {
+      0% { transform: rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle))) scale(.92); }
+      45% { transform: rotate(calc(var(--angle) + 145deg)) translateX(calc(var(--radius) - 18px)) rotate(calc(-1 * (var(--angle) + 145deg))) scale(1.05); }
+      100% { transform: rotate(calc(var(--angle) + 360deg)) translateX(var(--radius)) rotate(calc(-1 * (var(--angle) + 360deg))) scale(.92); }
+    }
+    @keyframes teamArrive {
+      0% { opacity: 0; transform: translateX(-44px) translateY(-10px) scale(.82); }
+      72% { opacity: 1; transform: translateX(4px) translateY(0) scale(1.03); }
+      100% { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
     }
     @keyframes handleSpin {
       from { transform: rotate(0deg); }
@@ -3564,40 +3818,44 @@ function openSimpleResultInNewTab(list) {
     }
     @keyframes loaderFade {
       from { opacity: 1; transform: scale(1); }
-      to { opacity: 0; transform: scale(.98); }
+      to { opacity: 0; transform: scale(.99); }
     }
     @keyframes resultFade {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: .55; filter: blur(5px); }
+      to { opacity: 1; filter: none; }
     }
-    @media (max-width: 560px){
-      .lottery-machine{ width:260px; height:290px; transform:scale(.82); }
-      .loader-title{ font-size:32px; }
+    @media (max-width: 850px){
+      .lottery-scene{ grid-template-columns:1fr; gap:16px; width:min(560px,96vw); }
+      .lottery-machine{ width:360px; height:360px; margin:0 auto; transform:scale(.86); }
+      .formation-panel{ min-height:220px; }
+      .loader-title{ font-size:34px; }
     }
     @media print {
       .draw-loader { display: none !important; }
-      .hidden-result { display: block !important; }
+      .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
       .result-in { animation: none !important; }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
   </head><body>
     <div id="drawLoader" class="draw-loader">
-      <div class="lottery-machine" aria-hidden="true">
-        <div class="lottery-stand"></div>
-        <div class="lottery-handle"></div>
-        <div class="lottery-drum">
-          <span class="lottery-ball b1">1</span>
-          <span class="lottery-ball b2">2</span>
-          <span class="lottery-ball b3">3</span>
-          <span class="lottery-ball b4">4</span>
-          <span class="lottery-ball b5">5</span>
+      <div class="lottery-scene">
+        <div class="lottery-machine" aria-hidden="true">
+          <div class="lottery-stand"></div>
+          <div class="lottery-handle"></div>
+          <div class="lottery-drum">
+            ${drawAnimation.ballsHTML}
+          </div>
+        </div>
+        <div class="formation-panel">
+          <div class="formation-title">🎲 El resultado se está formando</div>
+          <div class="name-flow">${drawAnimation.flowHTML}</div>
         </div>
       </div>
       <div class="loader-title">Realizando sorteo...</div>
-      <div class="loader-subtitle">El bolillero virtual está girando</div>
+      <div class="loader-subtitle">Las bolillas llevan los equipos hacia el resultado final</div>
     </div>
-    <div class="container hidden-result" id="resultContainer">
+    <div class="container result-stage" id="resultContainer">
       ${headerHTML}
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
@@ -3608,15 +3866,15 @@ function openSimpleResultInNewTab(list) {
       setTimeout(function(){
         var loader = document.getElementById('drawLoader');
         var result = document.getElementById('resultContainer');
-        if (loader) {
-          loader.classList.add('loader-out');
-          setTimeout(function(){ loader.style.display = 'none'; }, 300);
-        }
         if (result) {
-          result.classList.remove('hidden-result');
+          result.classList.add('result-ready');
           result.classList.add('result-in');
         }
-      }, 2000);
+        if (loader) {
+          loader.classList.add('loader-out');
+          setTimeout(function(){ loader.style.display = 'none'; }, 650);
+        }
+      }, 3000);
 
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
