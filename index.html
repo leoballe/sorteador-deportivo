@@ -4386,7 +4386,7 @@ function generateCloudDrawPDFBlob(d) {
     const x = margin + ((maxW - drawW) / 2);
     try {
       pdf.addImage(pdfHeaderImage.dataUrl, pdfHeaderImageType(pdfHeaderImage.dataUrl), x, y, drawW, drawH);
-      y += drawH + 12;
+      y += drawH + 20;
     } catch (e) {
       console.warn('No se pudo dibujar el encabezado PDF', e);
     }
