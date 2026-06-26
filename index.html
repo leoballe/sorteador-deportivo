@@ -293,6 +293,104 @@
     [data-theme="light"] .pdfHeaderPreviewImg{
       border-color:#cbd5e1;
     }
+
+
+    /* ====================== Controles uniformes ====================== */
+    :root{
+      --ui-control-height: 38px;
+      --ui-control-padding-x: 14px;
+      --ui-control-radius: 12px;
+    }
+
+    .btn,
+    button.btn,
+    label.btn,
+    a.btn{
+      min-height: var(--ui-control-height);
+      height: var(--ui-control-height);
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: var(--ui-control-padding-x);
+      padding-right: var(--ui-control-padding-x);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1;
+      white-space: nowrap;
+      vertical-align: middle;
+      border-radius: var(--ui-control-radius);
+    }
+
+    .btn.tiny,
+    button.btn.tiny,
+    label.btn.tiny,
+    a.btn.tiny{
+      min-height: var(--ui-control-height);
+      height: var(--ui-control-height);
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 12px;
+      padding-right: 12px;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .pill{
+      min-height: var(--ui-control-height);
+      height: var(--ui-control-height);
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 12px;
+      padding-right: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      line-height: 1;
+      white-space: nowrap;
+      vertical-align: middle;
+      border-radius: 999px;
+    }
+
+    .pill input[type="checkbox"],
+    .pill input[type="radio"]{
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    input[type=text],
+    input[type=number],
+    input[type=email],
+    input[type=password],
+    select{
+      min-height: var(--ui-control-height);
+      height: var(--ui-control-height);
+      padding-top: 0;
+      padding-bottom: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .controls{
+      align-items: center;
+    }
+
+    .controls > label.btn,
+    .controls > .btn,
+    .filterAction .btn{
+      margin-bottom: 0;
+    }
+
+    .authTab{
+      min-height: var(--ui-control-height);
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
 </style>
 </head>
 <body>
@@ -361,7 +459,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.1 Filtros nube</span>
+  <span class="badge">v4.2 Controles uniformes</span>
 </div>
         
       </header>
