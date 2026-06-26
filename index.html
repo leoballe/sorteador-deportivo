@@ -1721,8 +1721,8 @@ function renderGroups(target, result) {
     
     arr.forEach(t => {
       const li = document.createElement('li');
-      li.innerHTML = `<b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ` <span class="pill">${t.seedZone ? 'Cabeza Z' + t.seedZone : 'Cabeza'}</span>` : ''}`;
-      ol.appendChild(li);
+li.innerHTML = `<b>${escapeHtml(t.name)}</b>${t.province ? ` <span class="muted">— ${escapeHtml(t.province)}</span>` : ''}${t.head ? ` <span class="pill">Cabeza</span>` : ''}`;
+		ol.appendChild(li);
     });
     
     card.appendChild(ol);
@@ -1804,8 +1804,8 @@ function openResultInNewTab(result) {
   ].filter(Boolean).join('');
   
   const zonesHTML = result.groups.map((arr, gi) => {
-    const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? (t.seedZone ? ' (cabeza zona ' + t.seedZone + ')' : ' (cabeza)') : ''}</li>`).join('');
-    return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
+const items = arr.map(t => `<li><b>${escapeHtml(t.name)}</b>${t.province ? ` — ${escapeHtml(t.province)}` : ''}${t.head ? ' (cabeza)' : ''}</li>`).join('');
+	  return `<div class="zone"><h4>Zona ${gi + 1}</h4><ol>${items}</ol></div>`;
   }).join('');
   const pagedZonesHTML = buildPagedZonesHTML(result.groups, chipsHTML, '🎲 Resultado del Sorteo', pdfHeaderImage);
 
