@@ -459,7 +459,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.2 Controles uniformes</span>
+  <span class="badge">v4.3 ZIP header gap corregido</span>
 </div>
         
       </header>
@@ -4386,7 +4386,7 @@ function generateCloudDrawPDFBlob(d) {
     const x = margin + ((maxW - drawW) / 2);
     try {
       pdf.addImage(pdfHeaderImage.dataUrl, pdfHeaderImageType(pdfHeaderImage.dataUrl), x, y, drawW, drawH);
-      y += drawH + 20;
+      y += drawH + 28;
     } catch (e) {
       console.warn('No se pudo dibujar el encabezado PDF', e);
     }
