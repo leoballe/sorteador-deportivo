@@ -1473,7 +1473,7 @@ function savePdfHeaderImageToStorage() {
   }
 }
 
-function loadPdfHeaderImageFromStorage() {
+function ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6() {
   try {
     const raw = localStorage.getItem(PDF_HEADER_STORAGE_KEY);
     currentPdfHeaderImage = raw ? JSON.parse(raw) : null;
@@ -1535,7 +1535,7 @@ function parseImageDpiFromBuffer(file, buffer) {
   return null;
 }
 
-function loadImageDimensionsFromObjectUrl(url) {
+function ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
@@ -1578,7 +1578,7 @@ async function handlePdfHeaderFileChange(e) {
   const objectUrl = URL.createObjectURL(file);
   let dims;
   try {
-    dims = await loadImageDimensionsFromObjectUrl(objectUrl);
+    dims = await ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6(objectUrl);
   } catch (err) {
     URL.revokeObjectURL(objectUrl);
     toast('No se pudo validar la imagen');
@@ -1694,7 +1694,10 @@ function buildExportFilename(ext, meta) {
     safeFilePart(meta?.system || ''),
     safeFilePart(date)
   ].filter(Boolean);
-  const base = parts.length ? parts.join('_') : `sorteo_${safeFilePart(date)}`;
+
+  // Los espacios dentro de cada parámetro quedan como guion bajo
+  // y los parámetros entre sí se separan con guion medio.
+  const base = parts.length ? parts.join('-') : `sorteo-${safeFilePart(date)}`;
   return `${base}.${ext}`;
 }
 
@@ -5611,7 +5614,7 @@ function updateCapInfo() {
 document.addEventListener('DOMContentLoaded', function() {
   setupPdfHeaderControls();
   setupCloudFilterControls();
-  loadPdfHeaderImageFromStorage();
+  ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6();
 
   // Tabs app
   document.querySelectorAll('.tab').forEach(btn => {
