@@ -982,7 +982,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">🌙 Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.6</span>
+  <span class="badge">v4.7 Animación bolillero</span>
 </div>
         
       </header>
@@ -1044,7 +1044,10 @@ Newell's, Santa Fe
   </div>
   <div style="min-width:190px">
     <label>Encabezado para PDF</label>
-    <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;width:100%">🖼️ Subir JPG/PNG</label>
+    <div class="controls" style="gap:8px;flex-wrap:nowrap">
+      <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;flex:1">🖼️ Subir JPG/PNG</label>
+      <button class="btn primary" id="btnGeneratePdfHeader" type="button" style="flex:1">✨ Generar</button>
+    </div>
     <input id="pdfHeaderFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden" />
   </div>
 </div>
@@ -1275,6 +1278,155 @@ function getEventName() {
 /* ====================== Encabezado personalizado para PDF ====================== */
 const PDF_HEADER_STORAGE_KEY = 'sorteador_pdf_header_image_v1';
 let currentPdfHeaderImage = null;
+const GENERATED_PDF_HEADER_WIDTH = 1800;
+const GENERATED_PDF_HEADER_HEIGHT = 150;
+const GENERATED_PDF_HEADER_DPI = 160;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function splitHeaderTextBalanced(text) {
+  const clean = String(text || '').trim().replace(/\s+/g, ' ');
+  const words = clean.split(' ').filter(Boolean);
+  if (words.length <= 2) return [clean];
+  let best = [clean];
+  let bestScore = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const line1 = words.slice(0, i).join(' ');
+    const line2 = words.slice(i).join(' ');
+    const score = Math.abs(line1.length - line2.length);
+    if (score < bestScore) {
+      bestScore = score;
+      best = [line1, line2];
+    }
+  }
+  return best;
+}
+
+function fitGeneratedHeaderText(ctx, text, maxWidth, maxHeight) {
+  const oneLine = [String(text || '').trim().replace(/\s+/g, ' ')];
+  const twoLines = splitHeaderTextBalanced(text);
+  const candidates = [oneLine];
+  if (twoLines.length > 1) candidates.push(twoLines);
+
+  for (const lines of candidates) {
+    for (let size = 84; size >= 28; size -= 2) {
+      ctx.font = `800 ${size}px Inter, Segoe UI, Arial, sans-serif`;
+      const widths = lines.map(line => ctx.measureText(line).width);
+      const widest = Math.max(...widths, 0);
+      const lineHeight = Math.round(size * 1.05);
+      const blockHeight = lineHeight * lines.length;
+      if (widest <= maxWidth && blockHeight <= maxHeight) {
+        return { lines, size, lineHeight };
+      }
+    }
+  }
+  return { lines: twoLines.length > 1 ? twoLines : oneLine, size: 28, lineHeight: 30 };
+}
+
+function buildGeneratedPdfHeaderDataUrl(eventName) {
+  const canvas = document.createElement('canvas');
+  canvas.width = GENERATED_PDF_HEADER_WIDTH;
+  canvas.height = GENERATED_PDF_HEADER_HEIGHT;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('No se pudo crear el lienzo');
+
+  const hueA = randomInt(0, 360);
+  const hueB = (hueA + randomInt(35, 120)) % 360;
+  const hueC = (hueB + randomInt(35, 120)) % 360;
+
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, `hsl(${hueA} 78% 58%)`);
+  gradient.addColorStop(0.5, `hsl(${hueB} 72% 50%)`);
+  gradient.addColorStop(1, `hsl(${hueC} 78% 44%)`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 9; i++) {
+    const x = randomInt(-120, canvas.width + 120);
+    const y = randomInt(-30, canvas.height + 30);
+    const r = randomInt(70, 220);
+    const alpha = 0.08 + Math.random() * 0.16;
+    ctx.beginPath();
+    ctx.fillStyle = `hsla(${randomInt(0,360)} 90% 95% / ${alpha.toFixed(3)})`;
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height * 0.78);
+  ctx.bezierCurveTo(canvas.width * 0.22, canvas.height * 0.55, canvas.width * 0.42, canvas.height * 0.98, canvas.width * 0.68, canvas.height * 0.74);
+  ctx.bezierCurveTo(canvas.width * 0.84, canvas.height * 0.58, canvas.width * 0.95, canvas.height * 0.88, canvas.width, canvas.height * 0.66);
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.lineTo(0, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+
+  const paddingX = 72;
+  const paddingY = 24;
+  const textLayout = fitGeneratedHeaderText(ctx, eventName, canvas.width - paddingX * 2, canvas.height - paddingY * 2);
+  const totalTextHeight = textLayout.lineHeight * textLayout.lines.length;
+  let y = (canvas.height - totalTextHeight) / 2 + textLayout.size * 0.82;
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `800 ${textLayout.size}px Inter, Segoe UI, Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0,0,0,0.28)';
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 5;
+  ctx.fillStyle = '#ffffff';
+
+  textLayout.lines.forEach((line, idx) => {
+    ctx.fillText(line, canvas.width / 2, y + (idx * textLayout.lineHeight));
+  });
+
+  return canvas.toDataURL('image/png');
+}
+
+function generateAutomaticPdfHeaderImage() {
+  const eventName = getEventName();
+  if (!eventName) {
+    toast('Primero escribí el nombre del evento');
+    const input = document.getElementById('eventNameInput');
+    if (input) input.focus();
+    return;
+  }
+
+  if (getCurrentPdfHeaderImage() && !confirm('Ya hay un encabezado cargado. ¿Querés reemplazarlo por uno generado automáticamente?')) {
+    return;
+  }
+
+  try {
+    const dataUrl = buildGeneratedPdfHeaderDataUrl(eventName);
+    currentPdfHeaderImage = {
+      dataUrl,
+      name: 'Encabezado automático',
+      type: 'image/png',
+      width: GENERATED_PDF_HEADER_WIDTH,
+      height: GENERATED_PDF_HEADER_HEIGHT,
+      dpi: GENERATED_PDF_HEADER_DPI,
+      generated: true,
+      eventName: eventName,
+      savedAt: new Date().toISOString()
+    };
+    savePdfHeaderImageToStorage();
+    renderPdfHeaderPreview();
+    toast('Encabezado automático generado ✓');
+  } catch (err) {
+    console.error(err);
+    toast('No se pudo generar el encabezado automático');
+  }
+}
 
 function getCurrentPdfHeaderImage() {
   return currentPdfHeaderImage && currentPdfHeaderImage.dataUrl ? currentPdfHeaderImage : null;
@@ -1303,7 +1455,8 @@ function renderPdfHeaderPreview() {
   nameEl.textContent = header.name || 'Encabezado cargado';
   const sizeText = header.width && header.height ? `${header.width} × ${header.height}px` : '';
   const dpiText = header.dpi ? ` · ${Math.round(header.dpi)} dpi` : ' · DPI no informado';
-  detailsEl.textContent = `${sizeText}${dpiText}`;
+  const sourceText = header.generated ? ' · Generado automáticamente' : '';
+  detailsEl.textContent = `${sizeText}${dpiText}${sourceText}`;
   box.classList.remove('hidden');
 }
 
@@ -1489,8 +1642,10 @@ function removePdfHeaderImage() {
 function setupPdfHeaderControls() {
   const input = document.getElementById('pdfHeaderFile');
   const removeBtn = document.getElementById('btnRemovePdfHeader');
+  const generateBtn = document.getElementById('btnGeneratePdfHeader');
   if (input) input.addEventListener('change', handlePdfHeaderFileChange);
   if (removeBtn) removeBtn.addEventListener('click', removePdfHeaderImage);
+  if (generateBtn) generateBtn.addEventListener('click', generateAutomaticPdfHeaderImage);
 }
 
 function downloadText(text, filename) {
