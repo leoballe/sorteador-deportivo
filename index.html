@@ -1372,17 +1372,15 @@
   </style>
 
 
-  <style id="gw-font-and-buttons-pass-2">
+  <style id="gw-font-buttons-unified-fix">
     :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
+      --gw-font-size:12px;
+      --gw-control-h:36px;
+      --gw-radius:9px;
+      --gw-pad-x:12px;
     }
 
-    /* Escala tipográfica general un poco más chica */
+    /* Tipografía general: dos puntos menos, conservando pesos existentes */
     body,
     #authSection,
     #appSection,
@@ -1412,107 +1410,124 @@
     #appSection .zone,
     #authSection .badge,
     #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
+      font-size:var(--gw-font-size) !important;
     }
 
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
+    /* Mantener sólo la jerarquía del título principal */
+    #appSection header h1{font-size:26px !important;}
     #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
+    #authSection .card h3{font-size:12px !important;}
 
-    /* Botones y acciones: misma altura, radio y ritmo visual */
+    /* Todos los botones comparten la misma geometría */
     .btn,
     button.btn,
     label.btn,
     a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
+      min-height:var(--gw-control-h) !important;
+      height:var(--gw-control-h) !important;
+      padding:0 var(--gw-pad-x) !important;
+      border-radius:var(--gw-radius) !important;
       font-size:12px !important;
-      font-weight:700 !important;
+      line-height:1 !important;
       display:inline-flex !important;
       align-items:center !important;
       justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
+      gap:5px !important;
       vertical-align:middle !important;
+      white-space:nowrap !important;
       box-sizing:border-box !important;
     }
 
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
+    /* "tiny" cambia contenido, no la geometría del botón */
     .btn.tiny,
     button.btn.tiny,
     label.btn.tiny,
     a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
+      min-height:var(--gw-control-h) !important;
+      height:var(--gw-control-h) !important;
+      padding:0 var(--gw-pad-x) !important;
       font-size:12px !important;
-      min-width:auto !important;
     }
 
-    /* Mantener inputs y selects consistentes con la nueva escala */
+    /* Anchos comparables por bloque, sin forzar botones larguísimos */
+    #btnGeneratePdfHeader,
+    #btnRemovePdfHeader,
+    #btnAddDiscipline,
+    #btnAddCategory,
+    #btnAddModality,
+    #btnDrawGroups,
+    #btnExample,
+    #btnClear,
+    #btnBuildList,
+    #btnClearCloudFilters{
+      min-width:112px !important;
+    }
+
+    label[for="pdfHeaderFile"],
+    label[for="csvFile"],
+    label[for="csvDisciplines"],
+    label[for="csvCategories"],
+    label[for="csvModalities"]{
+      min-width:150px !important;
+    }
+
+    .userBox .btn{min-width:96px !important;}
+
+    /* Inputs y selects alineados con la misma escala */
     input[type=text],
     input[type=number],
     input[type=email],
     input[type=password],
     select{
-      min-height:36px !important;
-      height:36px !important;
+      min-height:var(--gw-control-h) !important;
+      height:var(--gw-control-h) !important;
       font-size:12px !important;
+      border-radius:var(--gw-radius) !important;
     }
     textarea{
       font-size:12px !important;
       line-height:1.4 !important;
     }
 
-    /* Opciones tipo píldora */
+    /* Radios/checks conservan forma de píldora pero comparten escala */
     .pill{
       min-height:32px !important;
       padding:0 10px !important;
-      border-radius:999px !important;
       font-size:12px !important;
       display:inline-flex !important;
       align-items:center !important;
-      gap:6px !important;
+      gap:5px !important;
     }
 
     .badge{
       min-height:36px !important;
       height:36px !important;
-      padding:0 12px !important;
+      padding:0 11px !important;
     }
 
+    /* Importantísimo: un botón oculto debe seguir oculto */
+    .btn.hidden,
+    button.btn.hidden,
+    label.btn.hidden,
+    a.btn.hidden{display:none !important;}
+
     @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
+      #btnGeneratePdfHeader,
+      #btnRemovePdfHeader,
+      #btnAddDiscipline,
+      #btnAddCategory,
+      #btnAddModality,
+      #btnDrawGroups,
+      #btnExample,
+      #btnClear,
+      #btnBuildList,
+      #btnClearCloudFilters,
+      label[for="pdfHeaderFile"],
+      label[for="csvFile"],
+      label[for="csvDisciplines"],
+      label[for="csvCategories"],
+      label[for="csvModalities"],
+      .userBox .btn{
         min-width:unset !important;
       }
     }
@@ -3887,154 +3902,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head><body>
+  </head><body>
     <div id="drawLoader" class="draw-loader">
       <div class="lottery-scene">
         <div class="lottery-machine" aria-hidden="true">
@@ -4745,154 +4613,7 @@ function openSimpleResultInNewTab(list) {
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-  
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head><body>
+  </head><body>
     <div id="drawLoader" class="draw-loader">
       <div class="lottery-scene">
         <div class="lottery-machine" aria-hidden="true">
@@ -5613,154 +5334,7 @@ shareBtn.addEventListener('click', () => {
     }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-                      
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head><body>
+                      </head><body>
               <div class="container">
                 ${headerHTML}
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
@@ -6085,154 +5659,7 @@ shareBtn.addEventListener('click', () => {
     }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"><\/script>
-                      
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head><body>
+                      </head><body>
               <div class="container">
                 ${pagedZonesHTML}
                 <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
@@ -7013,154 +6440,7 @@ openSimpleResultInNewTab(list);
         .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
         .chip{background:#fff;border:1px solid #374151;padding:6px 12px;border-radius:20px;font-size:14px}
       </style>
-      
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head><body>
+      </head><body>
         <div class="container">
           <h1>🎲 Orden de Paso</h1>
           <div class="chips">${chipsHTML}</div>
@@ -7768,154 +7048,7 @@ function generateSimpleSharedHTML(data) {
         page-break-inside: avoid !important;
       }
     }
-  </style>
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head>
+  </style></head>
   <body>
     <div class="container">
       <h1>🎲 Sorteo Compartido</h1>
@@ -8048,154 +7181,7 @@ function generateZonesSharedHTML(data) {
         page-break-inside: avoid !important;
       }
     }
-  </style>
-  <style id="gw-font-and-buttons-pass-2">
-    :root{
-      --gw-ui-font-size:12px;
-      --gw-ui-btn-height:36px;
-      --gw-ui-btn-radius:10px;
-      --gw-ui-btn-pad-x:12px;
-      --gw-ui-btn-minw:124px;
-      --gw-ui-btn-minw-header:98px;
-    }
-
-    /* Escala tipográfica general un poco más chica */
-    body,
-    #authSection,
-    #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-ui-font-size) !important;
-    }
-
-    #appSection h1,
-    #authSection h1{
-      font-size:30px !important;
-    }
-
-    #appSection .card h3,
-    #authSection .card h3{
-      font-size:12px !important;
-      letter-spacing:.01em !important;
-    }
-
-    /* Botones y acciones: misma altura, radio y ritmo visual */
-    .btn,
-    button.btn,
-    label.btn,
-    a.btn{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      border-radius:var(--gw-ui-btn-radius) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      font-weight:700 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:6px !important;
-      line-height:1 !important;
-      white-space:nowrap !important;
-      vertical-align:middle !important;
-      box-sizing:border-box !important;
-    }
-
-    /* Igualar ancho visual de botones de trabajo sin rigidizar toda la app */
-    .controls > .btn,
-    .controls > label.btn,
-    .pdfHeaderPreviewBox > .btn,
-    .formGroup + .btn,
-    #loginForm > .btn,
-    #registerForm > .btn{
-      min-width:var(--gw-ui-btn-minw) !important;
-    }
-
-    .userBox > .btn,
-    .userBox > label.btn{
-      min-width:var(--gw-ui-btn-minw-header) !important;
-    }
-
-    .btn.tiny,
-    button.btn.tiny,
-    label.btn.tiny,
-    a.btn.tiny{
-      min-height:var(--gw-ui-btn-height) !important;
-      height:var(--gw-ui-btn-height) !important;
-      padding:0 var(--gw-ui-btn-pad-x) !important;
-      font-size:12px !important;
-      min-width:auto !important;
-    }
-
-    /* Mantener inputs y selects consistentes con la nueva escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:36px !important;
-      height:36px !important;
-      font-size:12px !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Opciones tipo píldora */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      border-radius:999px !important;
-      font-size:12px !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      gap:6px !important;
-    }
-
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 12px !important;
-    }
-
-    @media (max-width:640px){
-      .controls > .btn,
-      .controls > label.btn,
-      .pdfHeaderPreviewBox > .btn,
-      .userBox > .btn,
-      .userBox > label.btn,
-      #loginForm > .btn,
-      #registerForm > .btn{
-        min-width:unset !important;
-      }
-    }
-  </style>
-
-</head>
+  </style></head>
   <body>
     <div class="container">
       <h1>🎲 Sorteo Compartido</h1>
