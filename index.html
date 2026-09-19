@@ -1362,6 +1362,7 @@ input::placeholder,textarea::placeholder{color:#9aa5b2 !important;opacity:1}
   textarea{min-height:210px !important}
 }
 
+
 </style>
 </head>
 <body>
@@ -1415,7 +1416,7 @@ input::placeholder,textarea::placeholder{color:#9aa5b2 !important;opacity:1}
       </section>
 
   <!-- ============ Aplicación (se muestra tras login) ============ -->
-  <section id="appSection" class="hidden"> <!-- visible sólo tras autenticación -->
+  <section id="appSection" class="hidden"> <!--borrar style="display: block !important;"-->
      <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
   <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
@@ -7029,19 +7030,13 @@ auth.onAuthStateChanged((user) => {
   const userInfo = document.getElementById('userInfo');
   
   if (user) {
-    // Estado autenticado: ocultar login y mostrar aplicación de forma explícita.
     authSection.classList.add('hidden');
-    authSection.style.display = 'none';
     appSection.classList.remove('hidden');
-    appSection.style.display = 'block';
     userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
     subscribeCloudHistory();
   } else {
-    // Estado sin sesión: mostrar únicamente el login.
     appSection.classList.add('hidden');
-    appSection.style.display = 'none';
     authSection.classList.remove('hidden');
-    authSection.style.display = 'block';
     userInfo.textContent = '';
     if (cloudUnsub) {
       cloudUnsub();
