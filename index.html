@@ -69,7 +69,7 @@
     color: #94E5F2;
     font-weight: bold;
 }
-    .hidden{display:none !important}
+    .hidden{display:none}
 
     /* Paneles y tarjetas */
     .panel{background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
@@ -955,7 +955,7 @@ body{
 body::before{display:none !important}
 
 /* Visibilidad de autenticación: nunca mostrar login y aplicación a la vez. */
-#authSection.hidden,#appSection.hidden{display:none !important}
+#authSection.hidden,#appSection.hidden{display:none}
 
 /* Marca de la app: el encabezado principal ya identifica el producto. */
 #appSection > .authBrand{display:none !important}
@@ -7029,13 +7029,19 @@ auth.onAuthStateChanged((user) => {
   const userInfo = document.getElementById('userInfo');
   
   if (user) {
+    // Estado autenticado: ocultar login y mostrar aplicación de forma explícita.
     authSection.classList.add('hidden');
+    authSection.style.display = 'none';
     appSection.classList.remove('hidden');
+    appSection.style.display = 'block';
     userInfo.textContent = user.displayName ? user.displayName : (user.email || 'Usuario');
     subscribeCloudHistory();
   } else {
+    // Estado sin sesión: mostrar únicamente el login.
     appSection.classList.add('hidden');
+    appSection.style.display = 'none';
     authSection.classList.remove('hidden');
+    authSection.style.display = 'block';
     userInfo.textContent = '';
     if (cloudUnsub) {
       cloudUnsub();
