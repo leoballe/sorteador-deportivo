@@ -914,6 +914,39 @@
       border-color:#24485c;
       color:#eaf8fb;
     }
+
+
+    /* ================================================================
+       PRUEBA DE NORMALIZACION TIPOGRAFICA
+       - Una sola familia tipografica
+       - Un unico tamano para toda la interfaz
+       - No modifica font-weight: conserva negritas existentes
+       - No afecta estilos de PDFs / ventanas generadas por JavaScript
+       ================================================================ */
+    #authSection,
+    #appSection,
+    #authSection *,
+    #appSection * {
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 14px !important;
+    }
+
+    #authSection input,
+    #authSection textarea,
+    #authSection select,
+    #authSection button,
+    #appSection input,
+    #appSection textarea,
+    #appSection select,
+    #appSection button {
+      font: inherit;
+    }
+
+    #authSection ::placeholder,
+    #appSection ::placeholder {
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 14px !important;
+    }
 </style>
 
 
@@ -2692,7 +2725,7 @@ function moveSelectedToInactive() {
   updateCapInfo();
 }
 
-function restoreSelectedFromInactive() {
+function 9q2Vy1qVTYmbVYdxYXUbAMz3jnk4Rp41c1e19z8EnsTy() {
   const idxs = getChecked('.chkInactive');
   const moved = idxs.map(i => inactiveTeams[i]);
   idxs.forEach(i => inactiveTeams.splice(i, 1));
@@ -4702,7 +4735,7 @@ function updateSelectOptionsFromMap(select, valuesMap, defaultText) {
   }
 }
 
-function refreshCloudFilterOptions() {
+function 9q2Vy1qVTYmbVYdxYXUbAMz3jnk4Rp41c1e19z8EnsTy() {
   const items = Array.from(document.querySelectorAll('#cloudHistoryList .item'));
   const maps = {
     cloudFilterEvent: new Map(),
@@ -4834,7 +4867,7 @@ function subscribeCloudHistory() {
       
       if (snap.empty) {
         listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>';
-        refreshCloudFilterOptions();
+        9q2Vy1qVTYmbVYdxYXUbAMz3jnk4Rp41c1e19z8EnsTy();
         applyCloudFilters();
         return;
       }
@@ -5662,7 +5695,7 @@ shareBtn.addEventListener('click', () => {
         item.appendChild(btns);
         listEl.appendChild(item);
       });
-      refreshCloudFilterOptions();
+      9q2Vy1qVTYmbVYdxYXUbAMz3jnk4Rp41c1e19z8EnsTy();
       applyCloudFilters();
     }, err => {
       console.error('Error leyendo historial cloud:', err);
@@ -6129,7 +6162,7 @@ document.querySelectorAll('input[name="format"]').forEach(r => {
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
-  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
+  document.getElementById('btnRestoreSelected').addEventListener('click', 9q2Vy1qVTYmbVYdxYXUbAMz3jnk4Rp41c1e19z8EnsTy);
 document.getElementById('selectAllActive').addEventListener('change', function() {
   const checkboxes = document.querySelectorAll('.chkActive');
   checkboxes.forEach(checkbox => {
