@@ -1372,163 +1372,148 @@
   </style>
 
 
-  <style id="gw-font-buttons-unified-fix">
+  <style id="ui-final-normalization-10pt">
     :root{
-      --gw-font-size:12px;
-      --gw-control-h:36px;
-      --gw-radius:9px;
-      --gw-pad-x:12px;
+      --final-font-size:10pt;
+      --final-control-height:32px;
+      --final-radius:6px;
+      --final-button-min-width:108px;
+      --final-pad-x:11px;
     }
 
-    /* Tipografía general: dos puntos menos, conservando pesos existentes */
-    body,
+    /* Regla crítica de visibilidad. Firebase quita/agrega esta clase. */
+    .hidden{display:none !important;}
+
+    /* Una sola escala tipográfica para toda la interfaz visible. */
     #authSection,
     #appSection,
-    #authSection label,
-    #appSection label,
-    #authSection input,
-    #appSection input,
-    #authSection select,
-    #appSection select,
-    #authSection textarea,
-    #appSection textarea,
-    #authSection button,
-    #appSection button,
-    #authSection .pill,
-    #appSection .pill,
-    #authSection .tag,
-    #appSection .tag,
-    #authSection .tiny,
-    #appSection .tiny,
-    #authSection .muted,
-    #appSection .muted,
-    #authSection .itemRow,
-    #appSection .itemRow,
-    #authSection .history .item,
-    #appSection .history .item,
-    #authSection .zone,
-    #appSection .zone,
-    #authSection .badge,
-    #appSection .badge{
-      font-size:var(--gw-font-size) !important;
+    #authSection *,
+    #appSection *{
+      font-family:Arial, Helvetica, sans-serif !important;
+      font-size:var(--final-font-size) !important;
     }
 
-    /* Mantener sólo la jerarquía del título principal */
-    #appSection header h1{font-size:26px !important;}
-    #appSection .card h3,
-    #authSection .card h3{font-size:12px !important;}
+    #authSection ::placeholder,
+    #appSection ::placeholder{
+      font-family:Arial, Helvetica, sans-serif !important;
+      font-size:var(--final-font-size) !important;
+    }
 
-    /* Todos los botones comparten la misma geometría */
+    /* Mantener jerarquía sólo por peso, no por tamaño. */
+    #authSection h1,
+    #appSection h1,
+    #authSection h2,
+    #appSection h2,
+    #authSection h3,
+    #appSection h3,
+    #authSection h4,
+    #appSection h4,
+    #authSection .tiny,
+    #appSection .tiny,
+    #authSection .badge,
+    #appSection .badge,
+    #authSection .tag,
+    #appSection .tag{
+      font-size:var(--final-font-size) !important;
+    }
+
+    /* Botones: misma geometría, sin depender de tiny/primary/ghost/warn. */
     .btn,
     button.btn,
     label.btn,
-    a.btn{
-      min-height:var(--gw-control-h) !important;
-      height:var(--gw-control-h) !important;
-      padding:0 var(--gw-pad-x) !important;
-      border-radius:var(--gw-radius) !important;
-      font-size:12px !important;
-      line-height:1 !important;
-      display:inline-flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:5px !important;
-      vertical-align:middle !important;
-      white-space:nowrap !important;
-      box-sizing:border-box !important;
-    }
-
-    /* "tiny" cambia contenido, no la geometría del botón */
+    a.btn,
     .btn.tiny,
     button.btn.tiny,
     label.btn.tiny,
     a.btn.tiny{
-      min-height:var(--gw-control-h) !important;
-      height:var(--gw-control-h) !important;
-      padding:0 var(--gw-pad-x) !important;
-      font-size:12px !important;
-    }
-
-    /* Anchos comparables por bloque, sin forzar botones larguísimos */
-    #btnGeneratePdfHeader,
-    #btnRemovePdfHeader,
-    #btnAddDiscipline,
-    #btnAddCategory,
-    #btnAddModality,
-    #btnDrawGroups,
-    #btnExample,
-    #btnClear,
-    #btnBuildList,
-    #btnClearCloudFilters{
-      min-width:112px !important;
-    }
-
-    label[for="pdfHeaderFile"],
-    label[for="csvFile"],
-    label[for="csvDisciplines"],
-    label[for="csvCategories"],
-    label[for="csvModalities"]{
-      min-width:150px !important;
-    }
-
-    .userBox .btn{min-width:96px !important;}
-
-    /* Inputs y selects alineados con la misma escala */
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    select{
-      min-height:var(--gw-control-h) !important;
-      height:var(--gw-control-h) !important;
-      font-size:12px !important;
-      border-radius:var(--gw-radius) !important;
-    }
-    textarea{
-      font-size:12px !important;
-      line-height:1.4 !important;
-    }
-
-    /* Radios/checks conservan forma de píldora pero comparten escala */
-    .pill{
-      min-height:32px !important;
-      padding:0 10px !important;
-      font-size:12px !important;
+      min-height:var(--final-control-height) !important;
+      height:var(--final-control-height) !important;
+      min-width:var(--final-button-min-width) !important;
+      padding:0 var(--final-pad-x) !important;
+      border-radius:var(--final-radius) !important;
+      font-size:var(--final-font-size) !important;
+      line-height:1 !important;
       display:inline-flex !important;
       align-items:center !important;
-      gap:5px !important;
+      justify-content:center !important;
+      gap:0 !important;
+      white-space:nowrap !important;
+      box-sizing:border-box !important;
+      vertical-align:middle !important;
+      box-shadow:none !important;
+      transform:none !important;
     }
 
-    .badge{
-      min-height:36px !important;
-      height:36px !important;
-      padding:0 11px !important;
-    }
-
-    /* Importantísimo: un botón oculto debe seguir oculto */
     .btn.hidden,
     button.btn.hidden,
     label.btn.hidden,
     a.btn.hidden{display:none !important;}
 
+    .btn:hover,
+    button.btn:hover,
+    label.btn:hover,
+    a.btn:hover{
+      transform:none !important;
+      box-shadow:none !important;
+    }
+
+    /* Cabecera: misma lógica de botón, ancho algo menor para no desperdiciar espacio. */
+    .userBox .btn{
+      min-width:92px !important;
+    }
+
+    /* Inputs y selects en la misma escala vertical. */
+    input[type=text],
+    input[type=number],
+    input[type=email],
+    input[type=password],
+    select{
+      min-height:var(--final-control-height) !important;
+      height:var(--final-control-height) !important;
+      font-size:var(--final-font-size) !important;
+      border-radius:var(--final-radius) !important;
+    }
+
+    textarea{
+      font-size:var(--final-font-size) !important;
+      line-height:1.35 !important;
+      border-radius:var(--final-radius) !important;
+    }
+
+    /* Radios/checkboxes tipo píldora: escala pareja pero compacta. */
+    .pill{
+      min-height:28px !important;
+      height:28px !important;
+      padding:0 9px !important;
+      border-radius:999px !important;
+      font-size:var(--final-font-size) !important;
+      line-height:1 !important;
+    }
+
+    .badge{
+      min-height:28px !important;
+      height:28px !important;
+      padding:0 9px !important;
+      border-radius:999px !important;
+    }
+
+    /* Evitar que el responsive vuelva a cambiar tamaños tipográficos. */
     @media (max-width:640px){
-      #btnGeneratePdfHeader,
-      #btnRemovePdfHeader,
-      #btnAddDiscipline,
-      #btnAddCategory,
-      #btnAddModality,
-      #btnDrawGroups,
-      #btnExample,
-      #btnClear,
-      #btnBuildList,
-      #btnClearCloudFilters,
-      label[for="pdfHeaderFile"],
-      label[for="csvFile"],
-      label[for="csvDisciplines"],
-      label[for="csvCategories"],
-      label[for="csvModalities"],
-      .userBox .btn{
-        min-width:unset !important;
+      #authSection,
+      #appSection,
+      #authSection *,
+      #appSection *,
+      .btn,
+      button.btn,
+      label.btn,
+      a.btn{
+        font-size:var(--final-font-size) !important;
+      }
+      .btn,
+      button.btn,
+      label.btn,
+      a.btn{
+        min-width:auto !important;
       }
     }
   </style>
@@ -1585,7 +1570,7 @@
       </section>
 
   <!-- ============ Aplicación (se muestra tras login) ============ -->
-  <section id="appSection" > <!--borrar style="display: block !important;"-->
+  <section id="appSection" class="hidden"> <!--borrar style="display: block !important;"-->
      <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
   <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
@@ -1598,7 +1583,7 @@
         </div>
         <div class="userBox">
   <span class="pill" id="userInfo" title="Usuario"></span>
-  <button id="themeToggle" class="btn ghost">🌙 Tema</button>
+  <button id="themeToggle" class="btn ghost">Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
   <span class="badge">v4.7 </span>
 </div>
@@ -1619,7 +1604,7 @@ Boca Juniors, CABA
 Newell's, Santa Fe
 ..."></textarea>
               <div class="controls" style="margin-top:8px">
-                <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
+                <label for="csvFile" class="btn ghost">Importar CSV de equipos</label>
                 <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
                 <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
                 <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
@@ -1635,7 +1620,7 @@ Newell's, Santa Fe
   <label class="pill">
     <input type="checkbox" id="selectAllActive"> Seleccionar todos
   </label>
-  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados</button>
 </div>
                   <div id="activeList"></div>
                 </div>
@@ -1646,7 +1631,7 @@ Newell's, Santa Fe
                    <label class="pill">
   <input type="checkbox" id="selectAllInactive"> Seleccionar todos
 </label>
-                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">Restaurar seleccionados</button>
                   </div>
                   <div id="inactiveList" class="hidden"></div>
                 </div>
@@ -1663,8 +1648,8 @@ Newell's, Santa Fe
   <div style="min-width:190px">
     <label>Encabezado para PDF</label>
     <div class="controls" style="gap:8px;flex-wrap:nowrap">
-      <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;flex:1">🖼️ Subir JPG/PNG</label>
-      <button class="btn primary" id="btnGeneratePdfHeader" type="button" style="flex:1">✨ Generar</button>
+      <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;flex:1">Subir JPG/PNG</label>
+      <button class="btn primary" id="btnGeneratePdfHeader" type="button" style="flex:1">Generar</button>
     </div>
     <input id="pdfHeaderFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden" />
   </div>
@@ -1698,7 +1683,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar disciplinas + Selector de disciplinas -->
 <div class="controls">
-  <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+  <label for="csvDisciplines" class="btn ghost">Importar CSV de disciplinas</label>
   <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Disciplina</label>
@@ -1717,7 +1702,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar categorías + Selector de categorías -->
 <div class="controls">
-  <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+  <label for="csvCategories" class="btn ghost">Importar CSV de categorías</label>
   <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Categoría</label>
@@ -1737,7 +1722,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar modalidades + Selector de modalidades -->
 <div class="controls">
-  <label for="csvModalities" class="btn ghost">📄 Importar CSV de modalidades</label>
+  <label for="csvModalities" class="btn ghost">Importar CSV de modalidades</label>
   <input id="csvModalities" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Modalidad</label>
@@ -1775,9 +1760,9 @@ Newell's, Santa Fe
 
               <div class="controls" style="margin-top:10px">
                 <button class="btn primary" id="btnDrawGroups" type="button">Sortear</button>
-				<button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
-				  <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button>
-                <button class="btn hidden" id="btnShare" type="button">🔗 Compartir</button>
+				<button class="btn hidden" id="btnExportCSV" type="button">Exportar CSV</button>
+				  <button class="btn hidden" id="btnCopy" type="button">Copiar</button>
+                <button class="btn hidden" id="btnShare" type="button">Compartir</button>
               </div>
               <div id="status" class="tiny" style="margin-top:8px"></div>
             </div>
@@ -1843,7 +1828,7 @@ Newell's, Santa Fe
     <label class="pill">
       <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos visibles
     </label>
-    <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">⬇️ Descargar ZIP de PDFs</button>
+    <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">Descargar ZIP de PDFs</button>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
 <div id="cloudHistoryList" class="history"></div>
@@ -3922,7 +3907,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     </div>
     <div class="container result-stage" id="resultContainer">
       ${pagedZonesHTML}
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
+      <button class="btn primary" onclick="exportPDF()">Exportar PDF directo</button>
     </div>
     <script>
       setTimeout(function(){
@@ -4636,7 +4621,7 @@ function openSimpleResultInNewTab(list) {
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
       <div>${listHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+      <button class="btn primary" onclick="exportPDF()">Exportar PDF sin cortes</button>
     </div>
     <script>
       setTimeout(function(){
@@ -5340,7 +5325,7 @@ shareBtn.addEventListener('click', () => {
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
                 <div class="chips">${chipsHTML}</div>
                 <div>${listHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+                <button class="btn primary" onclick="exportPDF()">Exportar PDF sin cortes</button>
               </div>
               <script>
                 function exportPDF(){
@@ -5662,7 +5647,7 @@ shareBtn.addEventListener('click', () => {
                       </head><body>
               <div class="container">
                 ${pagedZonesHTML}
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
+                <button class="btn primary" onclick="exportPDF()">Exportar PDF directo</button>
               </div>
               <script>
                 function exportPDF(){
@@ -7234,7 +7219,7 @@ updateThemeButton();
 
 function updateThemeButton() {
   const current = document.documentElement.getAttribute('data-theme');
-  themeToggle.textContent = current === 'light' ? '🌙 Tema Oscuro' : '☀️ Tema Claro';
+  themeToggle.textContent = current === 'light' ? 'Tema oscuro' : 'Tema claro';
   
   // Cambiar logos
   const logos = document.querySelectorAll('.logo');
