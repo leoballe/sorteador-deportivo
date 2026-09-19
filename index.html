@@ -915,6 +915,582 @@
       color:#eaf8fb;
     }
 </style>
+
+
+  <!-- ====================== REDISEÑO VISUAL CSS-ONLY ====================== -->
+  <style id="ui-redesign-css-only">
+    :root{
+      --ui-bg:#f4f6f8;
+      --ui-surface:#ffffff;
+      --ui-surface-2:#f8fafc;
+      --ui-text:#182230;
+      --ui-muted:#667085;
+      --ui-line:#dfe4ea;
+      --ui-line-strong:#cfd6de;
+      --ui-primary:#243b64;
+      --ui-primary-hover:#1d3154;
+      --ui-accent:#8fdce8;
+      --ui-accent-soft:#eaf8fb;
+      --ui-danger:#a93232;
+      --ui-danger-hover:#8f2929;
+      --ui-radius:10px;
+      --ui-radius-sm:8px;
+      --ui-control-h:36px;
+      --ui-shadow:0 1px 2px rgba(16,24,40,.05),0 4px 12px rgba(16,24,40,.04);
+      --ui-shadow-soft:0 1px 2px rgba(16,24,40,.04);
+    }
+
+    [data-theme="dark"]{
+      --ui-bg:#11151b;
+      --ui-surface:#171c23;
+      --ui-surface-2:#1c222b;
+      --ui-text:#eef2f6;
+      --ui-muted:#a7b0bd;
+      --ui-line:#2d3540;
+      --ui-line-strong:#3a4452;
+      --ui-primary:#a8dfe8;
+      --ui-primary-hover:#bfeaf1;
+      --ui-accent:#7fd1de;
+      --ui-accent-soft:#18343a;
+      --ui-danger:#d46a6a;
+      --ui-danger-hover:#e07b7b;
+      --ui-shadow:0 1px 2px rgba(0,0,0,.25),0 6px 18px rgba(0,0,0,.18);
+      --ui-shadow-soft:0 1px 2px rgba(0,0,0,.22);
+    }
+
+    html,body{
+      background:var(--ui-bg) !important;
+      color:var(--ui-text) !important;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif !important;
+      letter-spacing:0 !important;
+    }
+
+    body{background-image:none !important}
+    body::before{display:none !important}
+
+    .container{
+      max-width:1180px !important;
+      padding:18px 20px 28px !important;
+    }
+
+    /* Marca superior: discreta */
+    #appSection > .authBrand{
+      margin:0 !important;
+      padding:12px 0 2px !important;
+    }
+    #appSection > .authBrand .logo{
+      height:52px !important;
+      padding-top:0 !important;
+      filter:none !important;
+    }
+
+    header{
+      background:var(--ui-surface) !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:var(--ui-radius) !important;
+      padding:14px 16px !important;
+      margin-bottom:14px !important;
+      box-shadow:var(--ui-shadow-soft) !important;
+      overflow:visible !important;
+    }
+    header::after{display:none !important}
+    header h1{
+      color:var(--ui-text) !important;
+      font-size:22px !important;
+      line-height:1.15 !important;
+      font-weight:700 !important;
+      letter-spacing:-.015em !important;
+    }
+    header .tiny{
+      margin-top:3px !important;
+      color:var(--ui-muted) !important;
+      font-size:11px !important;
+      line-height:1.2 !important;
+      font-weight:600 !important;
+      letter-spacing:.08em !important;
+      text-transform:uppercase !important;
+    }
+    .userBox{gap:7px !important}
+
+    .badge{
+      height:30px !important;
+      min-height:30px !important;
+      padding:0 9px !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:999px !important;
+      background:var(--ui-surface-2) !important;
+      color:var(--ui-muted) !important;
+      box-shadow:none !important;
+      font-size:11px !important;
+      font-weight:700 !important;
+    }
+
+    .panel{
+      background:transparent !important;
+      border:0 !important;
+      border-radius:0 !important;
+      padding:0 !important;
+      box-shadow:none !important;
+      backdrop-filter:none !important;
+    }
+
+    .row{
+      grid-template-columns:minmax(0,1fr) minmax(360px,.86fr) !important;
+      gap:14px !important;
+    }
+
+    .card{
+      background:var(--ui-surface) !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:var(--ui-radius) !important;
+      padding:16px !important;
+      box-shadow:var(--ui-shadow-soft) !important;
+    }
+    .card + .card{margin-top:12px !important}
+    .card h3{
+      color:var(--ui-text) !important;
+      font-size:15px !important;
+      line-height:1.25 !important;
+      font-weight:700 !important;
+      letter-spacing:0 !important;
+      margin:0 0 12px !important;
+      gap:0 !important;
+    }
+    .card h3::before{display:none !important}
+
+    label{
+      color:var(--ui-muted) !important;
+      font-size:12px !important;
+      line-height:1.35 !important;
+      font-weight:600 !important;
+      letter-spacing:0 !important;
+      margin-bottom:5px !important;
+    }
+
+    input[type=text],input[type=number],input[type=email],input[type=password],select{
+      min-height:var(--ui-control-h) !important;
+      height:var(--ui-control-h) !important;
+      background:var(--ui-surface) !important;
+      color:var(--ui-text) !important;
+      border:1px solid var(--ui-line-strong) !important;
+      border-radius:var(--ui-radius-sm) !important;
+      padding:0 10px !important;
+      font-size:13px !important;
+      line-height:1 !important;
+      box-shadow:none !important;
+    }
+    textarea{
+      min-height:210px !important;
+      background:var(--ui-surface) !important;
+      color:var(--ui-text) !important;
+      border:1px solid var(--ui-line-strong) !important;
+      border-radius:var(--ui-radius-sm) !important;
+      padding:10px 11px !important;
+      font-size:13px !important;
+      line-height:1.45 !important;
+      box-shadow:none !important;
+    }
+    input:focus,textarea:focus,select:focus{
+      outline:none !important;
+      border-color:var(--ui-primary) !important;
+      box-shadow:0 0 0 3px color-mix(in srgb,var(--ui-primary) 12%,transparent) !important;
+      background:var(--ui-surface) !important;
+    }
+
+    .controls{
+      gap:7px !important;
+      margin-top:6px !important;
+    }
+
+    .btn,button.btn,label.btn,a.btn{
+      min-height:var(--ui-control-h) !important;
+      height:var(--ui-control-h) !important;
+      padding:0 11px !important;
+      border:1px solid var(--ui-line-strong) !important;
+      border-radius:var(--ui-radius-sm) !important;
+      background:var(--ui-surface) !important;
+      color:var(--ui-text) !important;
+      font-size:12.5px !important;
+      line-height:1 !important;
+      font-weight:650 !important;
+      box-shadow:none !important;
+      transform:none !important;
+      gap:5px !important;
+      transition:background .15s ease,border-color .15s ease,color .15s ease !important;
+    }
+    .btn:hover,button.btn:hover,label.btn:hover,a.btn:hover{
+      transform:none !important;
+      background:var(--ui-surface-2) !important;
+      border-color:var(--ui-primary) !important;
+      box-shadow:none !important;
+    }
+    .btn.primary{
+      background:var(--ui-primary) !important;
+      border-color:var(--ui-primary) !important;
+      color:#fff !important;
+      box-shadow:none !important;
+    }
+    [data-theme="dark"] .btn.primary{
+      color:#132027 !important;
+    }
+    .btn.primary:hover{
+      background:var(--ui-primary-hover) !important;
+      border-color:var(--ui-primary-hover) !important;
+    }
+    .btn.ghost{
+      background:transparent !important;
+      border-color:var(--ui-line-strong) !important;
+      color:var(--ui-text) !important;
+    }
+    .btn.warn{
+      background:var(--ui-danger) !important;
+      border-color:var(--ui-danger) !important;
+      color:#fff !important;
+      box-shadow:none !important;
+    }
+    .btn.warn:hover{
+      background:var(--ui-danger-hover) !important;
+      border-color:var(--ui-danger-hover) !important;
+    }
+    .btn.tiny,button.btn.tiny,label.btn.tiny,a.btn.tiny{
+      min-height:32px !important;
+      height:32px !important;
+      padding:0 9px !important;
+      font-size:11.5px !important;
+    }
+
+    .pill{
+      min-height:30px !important;
+      height:auto !important;
+      padding:4px 8px !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:999px !important;
+      background:var(--ui-surface-2) !important;
+      color:var(--ui-text) !important;
+      font-size:11.5px !important;
+      line-height:1.15 !important;
+      font-weight:600 !important;
+      box-shadow:none !important;
+    }
+    .pill input[type="checkbox"],.pill input[type="radio"]{
+      width:14px !important;
+      height:14px !important;
+      accent-color:var(--ui-primary) !important;
+    }
+
+    .tiny{
+      color:var(--ui-muted) !important;
+      font-size:11.5px !important;
+      font-weight:600 !important;
+    }
+    .muted{color:var(--ui-muted) !important}
+
+    .grid{
+      grid-template-columns:repeat(auto-fit,minmax(210px,1fr)) !important;
+      gap:10px !important;
+    }
+    .zone{
+      background:var(--ui-surface-2) !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:var(--ui-radius-sm) !important;
+      padding:11px !important;
+      box-shadow:none !important;
+    }
+    .zone h4{
+      color:var(--ui-text) !important;
+      font-size:13px !important;
+      font-weight:700 !important;
+      padding-bottom:7px !important;
+      margin:0 0 8px !important;
+      border-bottom:1px solid var(--ui-line) !important;
+    }
+    .zone li{
+      margin:4px 0 !important;
+      font-size:12.5px !important;
+      line-height:1.35 !important;
+    }
+
+    .tag{
+      background:var(--ui-accent-soft) !important;
+      color:var(--ui-primary) !important;
+      border:1px solid color-mix(in srgb,var(--ui-accent) 55%,var(--ui-line)) !important;
+      border-radius:999px !important;
+      padding:2px 7px !important;
+      font-size:10.5px !important;
+      font-weight:700 !important;
+    }
+
+    .listBox,.history .item,.cloudFilters,.pdfHeaderPreviewBox{
+      background:var(--ui-surface-2) !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:var(--ui-radius-sm) !important;
+      box-shadow:none !important;
+    }
+    .listBox{padding:10px !important}
+    .listBox h4{
+      color:var(--ui-text) !important;
+      font-size:12.5px !important;
+      font-weight:700 !important;
+      margin:0 0 8px !important;
+    }
+    .itemRow{
+      border-bottom:1px solid var(--ui-line) !important;
+      padding:5px 3px !important;
+      font-size:12px !important;
+    }
+    .history{gap:7px !important}
+    .history .item{
+      padding:9px 10px !important;
+      line-height:1.35 !important;
+      font-size:12px !important;
+      transition:none !important;
+    }
+    .history .item:hover{
+      transform:none !important;
+      border-color:var(--ui-line-strong) !important;
+      box-shadow:none !important;
+    }
+    .cloudFilters{
+      grid-template-columns:repeat(auto-fit,minmax(145px,1fr)) !important;
+      gap:8px !important;
+      padding:10px !important;
+      margin:8px 0 10px !important;
+    }
+    .cloudFilters label{margin-bottom:4px !important}
+
+    .pdfHeaderPreviewImg{
+      border:1px solid var(--ui-line) !important;
+      border-radius:6px !important;
+      box-shadow:none !important;
+    }
+
+    #cloudFilterStatus:not(:empty),#status:not(:empty),#csvInfo:not(:empty),#capInfo:not(:empty){
+      background:var(--ui-accent-soft) !important;
+      border:1px solid var(--ui-line) !important;
+      color:var(--ui-text) !important;
+      border-radius:6px !important;
+      padding:5px 8px !important;
+      margin-top:6px !important;
+      font-size:11.5px !important;
+    }
+
+    /* Login: misma estructura y lógica, sólo estética */
+    #authSection{
+      width:min(420px,calc(100% - 28px)) !important;
+      margin:42px auto !important;
+    }
+    #authSection .authBrand{
+      margin-bottom:12px !important;
+    }
+    #authSection .authBrand .logo{
+      height:44px !important;
+      filter:none !important;
+    }
+    #authSection .card{
+      background:var(--ui-surface) !important;
+      border:1px solid var(--ui-line) !important;
+      border-radius:var(--ui-radius) !important;
+      padding:16px !important;
+      box-shadow:var(--ui-shadow) !important;
+    }
+    .authTabs{
+      border-bottom:1px solid var(--ui-line) !important;
+      gap:0 !important;
+      margin-bottom:14px !important;
+    }
+    .authTab{
+      min-height:38px !important;
+      padding:0 8px !important;
+      border-radius:0 !important;
+      color:var(--ui-muted) !important;
+      font-size:12.5px !important;
+      font-weight:650 !important;
+      background:transparent !important;
+      border-bottom:2px solid transparent !important;
+    }
+    .authTab.active{
+      color:var(--ui-text) !important;
+      background:transparent !important;
+      border-bottom-color:var(--ui-primary) !important;
+    }
+
+    #appSection > .container > .tiny:last-child{
+      color:var(--ui-muted) !important;
+      font-size:10.5px !important;
+      text-align:center !important;
+      padding:2px 0 8px !important;
+    }
+
+    @media (max-width:980px){
+      .row{grid-template-columns:1fr !important}
+      header{align-items:flex-start !important;flex-direction:column !important}
+      .userBox{justify-content:flex-start !important}
+    }
+    @media (max-width:640px){
+      .container{padding:12px 10px 22px !important}
+      header{padding:12px !important}
+      .card{padding:12px !important}
+      .cloudFilters{grid-template-columns:1fr !important}
+      .cloudFilters .filterWide{grid-column:span 1 !important}
+      .controls{gap:6px !important}
+      .btn,button.btn,label.btn,a.btn{font-size:12px !important;padding:0 9px !important}
+      #appSection > .authBrand .logo{height:44px !important}
+    }
+  </style>
+
+
+  <style id="ui-normalizacion-final-10pt">
+    :root{
+      --ui-final-font:10pt;
+      --ui-final-control-h:32px;
+      --ui-final-radius:7px;
+      --ui-final-button-min:112px;
+    }
+
+    /* Una sola familia y un solo tamaño para toda la interfaz. */
+    #authSection,
+    #appSection,
+    #authSection *,
+    #appSection *{
+      font-family:Arial, Helvetica, sans-serif !important;
+      font-size:var(--ui-final-font) !important;
+    }
+
+    #authSection ::placeholder,
+    #appSection ::placeholder{
+      font-family:Arial, Helvetica, sans-serif !important;
+      font-size:var(--ui-final-font) !important;
+    }
+
+    /* No crear jerarquías por tamaño: títulos y textos auxiliares también a 10 pt. */
+    #authSection h1,
+    #appSection h1,
+    #authSection h2,
+    #appSection h2,
+    #authSection h3,
+    #appSection h3,
+    #authSection h4,
+    #appSection h4,
+    #authSection .tiny,
+    #appSection .tiny,
+    #authSection .badge,
+    #appSection .badge,
+    #authSection .tag,
+    #appSection .tag{
+      font-size:var(--ui-final-font) !important;
+    }
+
+    /* Botones: misma geometría. El color sigue dependiendo de su función. */
+    .btn,
+    button.btn,
+    label.btn,
+    a.btn,
+    .btn.tiny,
+    button.btn.tiny,
+    label.btn.tiny,
+    a.btn.tiny{
+      min-height:var(--ui-final-control-h) !important;
+      height:var(--ui-final-control-h) !important;
+      min-width:var(--ui-final-button-min) !important;
+      padding:0 11px !important;
+      border-radius:var(--ui-final-radius) !important;
+      font-size:var(--ui-final-font) !important;
+      line-height:1 !important;
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      gap:0 !important;
+      white-space:nowrap !important;
+      box-sizing:border-box !important;
+      vertical-align:middle !important;
+      box-shadow:none !important;
+      transform:none !important;
+    }
+
+    .btn:hover,
+    button.btn:hover,
+    label.btn:hover,
+    a.btn:hover{
+      box-shadow:none !important;
+      transform:none !important;
+    }
+
+    /* Los importadores tienen el mismo ancho entre sí. */
+    label.btn[for="csvFile"],
+    label.btn[for="csvDisciplines"],
+    label.btn[for="csvCategories"],
+    label.btn[for="csvModalities"]{
+      width:188px !important;
+      min-width:188px !important;
+    }
+
+    /* Cabecera compacta y pareja. */
+    .userBox .btn{
+      min-width:96px !important;
+    }
+
+    /* Inputs y selects acompañan la misma escala. */
+    input[type=text],
+    input[type=number],
+    input[type=email],
+    input[type=password],
+    select{
+      min-height:var(--ui-final-control-h) !important;
+      height:var(--ui-final-control-h) !important;
+      border-radius:var(--ui-final-radius) !important;
+      font-size:var(--ui-final-font) !important;
+    }
+
+    textarea{
+      font-size:var(--ui-final-font) !important;
+      line-height:1.35 !important;
+      border-radius:var(--ui-final-radius) !important;
+    }
+
+    /* Radios y checks no son botones: compactos y homogéneos. */
+    .pill{
+      min-height:28px !important;
+      height:28px !important;
+      padding:0 9px !important;
+      font-size:var(--ui-final-font) !important;
+      line-height:1 !important;
+    }
+
+    .badge{
+      min-height:28px !important;
+      height:28px !important;
+      padding:0 9px !important;
+    }
+
+    /* Mantener ocultos los elementos que la aplicación marca como hidden. */
+    .btn.hidden,
+    button.btn.hidden,
+    label.btn.hidden,
+    a.btn.hidden{
+      display:none !important;
+    }
+
+    @media (max-width:640px){
+      #authSection,
+      #appSection,
+      #authSection *,
+      #appSection *,
+      .btn,
+      button.btn,
+      label.btn,
+      a.btn{
+        font-size:var(--ui-final-font) !important;
+      }
+      label.btn[for="csvFile"],
+      label.btn[for="csvDisciplines"],
+      label.btn[for="csvCategories"],
+      label.btn[for="csvModalities"]{
+        width:auto !important;
+        min-width:var(--ui-final-button-min) !important;
+      }
+    }
+  </style>
+
 </head>
 <body>
 
@@ -980,7 +1556,7 @@
         </div>
         <div class="userBox">
   <span class="pill" id="userInfo" title="Usuario"></span>
-  <button id="themeToggle" class="btn ghost">🌙 Tema</button>
+  <button id="themeToggle" class="btn ghost">Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
   <span class="badge">v4.7 </span>
 </div>
@@ -1001,7 +1577,7 @@ Boca Juniors, CABA
 Newell's, Santa Fe
 ..."></textarea>
               <div class="controls" style="margin-top:8px">
-                <label for="csvFile" class="btn ghost">📄 Importar CSV de equipos</label>
+                <label for="csvFile" class="btn ghost">Importar CSV de equipos</label>
                 <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
                 <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
                 <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
@@ -1017,7 +1593,7 @@ Newell's, Santa Fe
   <label class="pill">
     <input type="checkbox" id="selectAllActive"> Seleccionar todos
   </label>
-  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados ➜</button>
+  <button class="btn warn tiny" id="btnMoveToInactive" type="button">Descartar seleccionados</button>
 </div>
                   <div id="activeList"></div>
                 </div>
@@ -1028,7 +1604,7 @@ Newell's, Santa Fe
                    <label class="pill">
   <input type="checkbox" id="selectAllInactive"> Seleccionar todos
 </label>
-                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">⬅ Restaurar seleccionados</button>
+                    <button class="btn primary tiny" id="btnRestoreSelected" type="button">Restaurar seleccionados</button>
                   </div>
                   <div id="inactiveList" class="hidden"></div>
                 </div>
@@ -1045,8 +1621,8 @@ Newell's, Santa Fe
   <div style="min-width:190px">
     <label>Encabezado para PDF</label>
     <div class="controls" style="gap:8px;flex-wrap:nowrap">
-      <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;flex:1">🖼️ Subir JPG/PNG</label>
-      <button class="btn primary" id="btnGeneratePdfHeader" type="button" style="flex:1">✨ Generar</button>
+      <label for="pdfHeaderFile" class="btn ghost" style="display:inline-flex;align-items:center;justify-content:center;flex:1">Subir JPG/PNG</label>
+      <button class="btn primary" id="btnGeneratePdfHeader" type="button" style="flex:1">Generar</button>
     </div>
     <input id="pdfHeaderFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" class="hidden" />
   </div>
@@ -1080,7 +1656,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar disciplinas + Selector de disciplinas -->
 <div class="controls">
-  <label for="csvDisciplines" class="btn ghost">📄 Importar CSV de disciplinas</label>
+  <label for="csvDisciplines" class="btn ghost">Importar CSV de disciplinas</label>
   <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Disciplina</label>
@@ -1099,7 +1675,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar categorías + Selector de categorías -->
 <div class="controls">
-  <label for="csvCategories" class="btn ghost">📄 Importar CSV de categorías</label>
+  <label for="csvCategories" class="btn ghost">Importar CSV de categorías</label>
   <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Categoría</label>
@@ -1119,7 +1695,7 @@ Newell's, Santa Fe
 
 <!-- Fila: Importar modalidades + Selector de modalidades -->
 <div class="controls">
-  <label for="csvModalities" class="btn ghost">📄 Importar CSV de modalidades</label>
+  <label for="csvModalities" class="btn ghost">Importar CSV de modalidades</label>
   <input id="csvModalities" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Modalidad</label>
@@ -1157,9 +1733,9 @@ Newell's, Santa Fe
 
               <div class="controls" style="margin-top:10px">
                 <button class="btn primary" id="btnDrawGroups" type="button">Sortear</button>
-				<button class="btn hidden" id="btnExportCSV" type="button">⬇️ Exportar CSV</button>
-				  <button class="btn hidden" id="btnCopy" type="button">📋 Copiar</button>
-                <button class="btn hidden" id="btnShare" type="button">🔗 Compartir</button>
+				<button class="btn hidden" id="btnExportCSV" type="button">Exportar CSV</button>
+				  <button class="btn hidden" id="btnCopy" type="button">Copiar</button>
+                <button class="btn hidden" id="btnShare" type="button">Compartir</button>
               </div>
               <div id="status" class="tiny" style="margin-top:8px"></div>
             </div>
@@ -1225,7 +1801,7 @@ Newell's, Santa Fe
     <label class="pill">
       <input type="checkbox" id="selectAllCloudBtn"> Seleccionar todos visibles
     </label>
-    <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">⬇️ Descargar ZIP de PDFs</button>
+    <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">Descargar ZIP de PDFs</button>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
 <div id="cloudHistoryList" class="history"></div>
@@ -3304,7 +3880,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     </div>
     <div class="container result-stage" id="resultContainer">
       ${pagedZonesHTML}
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
+      <button class="btn primary" onclick="exportPDF()">Exportar PDF directo</button>
     </div>
     <script>
       setTimeout(function(){
@@ -4018,7 +4594,7 @@ function openSimpleResultInNewTab(list) {
       <h1>🎲 Orden de Paso</h1>
       <div class="chips">${chipsHTML}</div>
       <div>${listHTML}</div>
-      <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+      <button class="btn primary" onclick="exportPDF()">Exportar PDF sin cortes</button>
     </div>
     <script>
       setTimeout(function(){
@@ -4722,7 +5298,7 @@ shareBtn.addEventListener('click', () => {
                 <h1>🎲 Resultado del Sorteo Simple (Guardado)</h1>
                 <div class="chips">${chipsHTML}</div>
                 <div>${listHTML}</div>
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF sin cortes</button>
+                <button class="btn primary" onclick="exportPDF()">Exportar PDF sin cortes</button>
               </div>
               <script>
                 function exportPDF(){
@@ -5044,7 +5620,7 @@ shareBtn.addEventListener('click', () => {
                       </head><body>
               <div class="container">
                 ${pagedZonesHTML}
-                <button class="btn primary" onclick="exportPDF()">🖨️ Exportar PDF directo</button>
+                <button class="btn primary" onclick="exportPDF()">Exportar PDF directo</button>
               </div>
               <script>
                 function exportPDF(){
@@ -5569,7 +6145,7 @@ async function downloadSelectedCloudPDFsZip(buttonEl) {
   } finally {
     if (buttonEl) {
       buttonEl.disabled = false;
-      buttonEl.textContent = originalText || '⬇️ Descargar ZIP de PDFs';
+      buttonEl.textContent = originalText || 'Descargar ZIP de PDFs';
     }
   }
 }
@@ -6616,7 +7192,7 @@ updateThemeButton();
 
 function updateThemeButton() {
   const current = document.documentElement.getAttribute('data-theme');
-  themeToggle.textContent = current === 'light' ? '🌙 Tema Oscuro' : '☀️ Tema Claro';
+  themeToggle.textContent = current === 'light' ? 'Tema oscuro' : 'Tema claro';
   
   // Cambiar logos
   const logos = document.querySelectorAll('.logo');
