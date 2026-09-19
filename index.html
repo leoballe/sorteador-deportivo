@@ -914,39 +914,6 @@
       border-color:#24485c;
       color:#eaf8fb;
     }
-
-
-    /* ================================================================
-       PRUEBA DE NORMALIZACION TIPOGRAFICA
-       - Una sola familia tipografica
-       - Un unico tamano para toda la interfaz
-       - No modifica font-weight: conserva negritas existentes
-       - No afecta estilos de PDFs / ventanas generadas por JavaScript
-       ================================================================ */
-    #authSection,
-    #appSection,
-    #authSection *,
-    #appSection * {
-      font-family: Arial, Helvetica, sans-serif !important;
-      font-size: 14px !important;
-    }
-
-    #authSection input,
-    #authSection textarea,
-    #authSection select,
-    #authSection button,
-    #appSection input,
-    #appSection textarea,
-    #appSection select,
-    #appSection button {
-      font: inherit;
-    }
-
-    #authSection ::placeholder,
-    #appSection ::placeholder {
-      font-family: Arial, Helvetica, sans-serif !important;
-      font-size: 14px !important;
-    }
 </style>
 
 
@@ -1372,34 +1339,30 @@
   </style>
 
 
-  <style id="ui-final-normalization-10pt">
+  <style id="ui-normalizacion-final-10pt">
     :root{
-      --final-font-size:10pt;
-      --final-control-height:32px;
-      --final-radius:6px;
-      --final-button-min-width:108px;
-      --final-pad-x:11px;
+      --ui-final-font:10pt;
+      --ui-final-control-h:32px;
+      --ui-final-radius:7px;
+      --ui-final-button-min:112px;
     }
 
-    /* Regla crítica de visibilidad. Firebase quita/agrega esta clase. */
-    .hidden{display:none !important;}
-
-    /* Una sola escala tipográfica para toda la interfaz visible. */
+    /* Una sola familia y un solo tamaño para toda la interfaz. */
     #authSection,
     #appSection,
     #authSection *,
     #appSection *{
       font-family:Arial, Helvetica, sans-serif !important;
-      font-size:var(--final-font-size) !important;
+      font-size:var(--ui-final-font) !important;
     }
 
     #authSection ::placeholder,
     #appSection ::placeholder{
       font-family:Arial, Helvetica, sans-serif !important;
-      font-size:var(--final-font-size) !important;
+      font-size:var(--ui-final-font) !important;
     }
 
-    /* Mantener jerarquía sólo por peso, no por tamaño. */
+    /* No crear jerarquías por tamaño: títulos y textos auxiliares también a 10 pt. */
     #authSection h1,
     #appSection h1,
     #authSection h2,
@@ -1414,10 +1377,10 @@
     #appSection .badge,
     #authSection .tag,
     #appSection .tag{
-      font-size:var(--final-font-size) !important;
+      font-size:var(--ui-final-font) !important;
     }
 
-    /* Botones: misma geometría, sin depender de tiny/primary/ghost/warn. */
+    /* Botones: misma geometría. El color sigue dependiendo de su función. */
     .btn,
     button.btn,
     label.btn,
@@ -1426,12 +1389,12 @@
     button.btn.tiny,
     label.btn.tiny,
     a.btn.tiny{
-      min-height:var(--final-control-height) !important;
-      height:var(--final-control-height) !important;
-      min-width:var(--final-button-min-width) !important;
-      padding:0 var(--final-pad-x) !important;
-      border-radius:var(--final-radius) !important;
-      font-size:var(--final-font-size) !important;
+      min-height:var(--ui-final-control-h) !important;
+      height:var(--ui-final-control-h) !important;
+      min-width:var(--ui-final-button-min) !important;
+      padding:0 11px !important;
+      border-radius:var(--ui-final-radius) !important;
+      font-size:var(--ui-final-font) !important;
       line-height:1 !important;
       display:inline-flex !important;
       align-items:center !important;
@@ -1444,49 +1407,52 @@
       transform:none !important;
     }
 
-    .btn.hidden,
-    button.btn.hidden,
-    label.btn.hidden,
-    a.btn.hidden{display:none !important;}
-
     .btn:hover,
     button.btn:hover,
     label.btn:hover,
     a.btn:hover{
-      transform:none !important;
       box-shadow:none !important;
+      transform:none !important;
     }
 
-    /* Cabecera: misma lógica de botón, ancho algo menor para no desperdiciar espacio. */
+    /* Los importadores tienen el mismo ancho entre sí. */
+    label.btn[for="csvFile"],
+    label.btn[for="csvDisciplines"],
+    label.btn[for="csvCategories"],
+    label.btn[for="csvModalities"]{
+      width:188px !important;
+      min-width:188px !important;
+    }
+
+    /* Cabecera compacta y pareja. */
     .userBox .btn{
-      min-width:92px !important;
+      min-width:96px !important;
     }
 
-    /* Inputs y selects en la misma escala vertical. */
+    /* Inputs y selects acompañan la misma escala. */
     input[type=text],
     input[type=number],
     input[type=email],
     input[type=password],
     select{
-      min-height:var(--final-control-height) !important;
-      height:var(--final-control-height) !important;
-      font-size:var(--final-font-size) !important;
-      border-radius:var(--final-radius) !important;
+      min-height:var(--ui-final-control-h) !important;
+      height:var(--ui-final-control-h) !important;
+      border-radius:var(--ui-final-radius) !important;
+      font-size:var(--ui-final-font) !important;
     }
 
     textarea{
-      font-size:var(--final-font-size) !important;
+      font-size:var(--ui-final-font) !important;
       line-height:1.35 !important;
-      border-radius:var(--final-radius) !important;
+      border-radius:var(--ui-final-radius) !important;
     }
 
-    /* Radios/checkboxes tipo píldora: escala pareja pero compacta. */
+    /* Radios y checks no son botones: compactos y homogéneos. */
     .pill{
       min-height:28px !important;
       height:28px !important;
       padding:0 9px !important;
-      border-radius:999px !important;
-      font-size:var(--final-font-size) !important;
+      font-size:var(--ui-final-font) !important;
       line-height:1 !important;
     }
 
@@ -1494,10 +1460,16 @@
       min-height:28px !important;
       height:28px !important;
       padding:0 9px !important;
-      border-radius:999px !important;
     }
 
-    /* Evitar que el responsive vuelva a cambiar tamaños tipográficos. */
+    /* Mantener ocultos los elementos que la aplicación marca como hidden. */
+    .btn.hidden,
+    button.btn.hidden,
+    label.btn.hidden,
+    a.btn.hidden{
+      display:none !important;
+    }
+
     @media (max-width:640px){
       #authSection,
       #appSection,
@@ -1507,13 +1479,14 @@
       button.btn,
       label.btn,
       a.btn{
-        font-size:var(--final-font-size) !important;
+        font-size:var(--ui-final-font) !important;
       }
-      .btn,
-      button.btn,
-      label.btn,
-      a.btn{
-        min-width:auto !important;
+      label.btn[for="csvFile"],
+      label.btn[for="csvDisciplines"],
+      label.btn[for="csvCategories"],
+      label.btn[for="csvModalities"]{
+        width:auto !important;
+        min-width:var(--ui-final-button-min) !important;
       }
     }
   </style>
@@ -1570,7 +1543,7 @@
       </section>
 
   <!-- ============ Aplicación (se muestra tras login) ============ -->
-  <section id="appSection" class="hidden"> <!--borrar style="display: block !important;"-->
+  <section id="appSection" > <!--borrar style="display: block !important;"-->
      <div class="authBrand" style="display:flex;align-items:left;justify-content:center;gap:10px;margin-bottom:14px">
   <img src="logo-dark.png" alt="Logo" class="logo" style="height: 100px; width: auto; padding-top: 40px;">
   <h1 style="position: absolute; left: -10000px; top: 50px; width: 1px; height: 1px; overflow: hidden;">🎲 Sorteador Deportivo</h1>
@@ -6172,7 +6145,7 @@ async function downloadSelectedCloudPDFsZip(buttonEl) {
   } finally {
     if (buttonEl) {
       buttonEl.disabled = false;
-      buttonEl.textContent = originalText || '⬇️ Descargar ZIP de PDFs';
+      buttonEl.textContent = originalText || 'Descargar ZIP de PDFs';
     }
   }
 }
