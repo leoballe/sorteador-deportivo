@@ -1485,6 +1485,45 @@
     }
   </style>
 
+
+  <style id="zone-capacity-config-v48">
+    .zoneCapacityGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
+      gap:8px;
+      margin-top:6px;
+    }
+    .zoneCapacityItem{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 9px;
+      border:1px solid var(--ui-line, #dfe4ea);
+      border-radius:8px;
+      background:var(--ui-surface-2, #f8fafc);
+    }
+    .zoneCapacityItem label{
+      margin:0 !important;
+      min-width:54px;
+      color:var(--ui-text, #182230) !important;
+      font-weight:700 !important;
+    }
+    .zoneCapacityItem select{
+      flex:1;
+      min-width:64px;
+    }
+    .zoneCapacitySummary{
+      margin-top:7px;
+    }
+    .zoneCapacitySummary.capacityError{
+      color:#b42318 !important;
+      font-weight:700 !important;
+    }
+    [data-theme="dark"] .zoneCapacityItem{
+      background:var(--ui-surface-2, #1c222b);
+      border-color:var(--ui-line, #2d3540);
+    }
+  </style>
 </head>
 <body>
 
@@ -1552,7 +1591,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.7 </span>
+  <span class="badge">v4.8 </span>
 </div>
         
       </header>
@@ -1573,7 +1612,6 @@ Newell's, Santa Fe
               <div class="controls" style="margin-top:8px">
                 <label for="csvFile" class="btn ghost">Importar CSV de equipos</label>
                 <input id="csvFile" type="file" accept=".csv,text/csv" class="hidden" />
-                <button class="btn ghost" id="btnExample" type="button">Cargar ejemplo</button>
                 <button class="btn ghost" id="btnClear" type="button">Limpiar</button>
                 <button class="btn" id="btnBuildList" type="button">Mostrar checks</button>
               </div>
@@ -1630,28 +1668,26 @@ Newell's, Santa Fe
   <button class="btn tiny warn" id="btnRemovePdfHeader" type="button">Eliminar</button>
 </div>
 <div class="controls" id="formatRow">
-  <label class="pill"><input type="radio" name="format" value="8x3" checked> 8x3</label>
-  <label class="pill"><input type="radio" name="format" value="4x6"> 4x6</label>
-  <label class="pill"><input type="radio" name="format" value="custom"> Definir Zonas</label>
+  <label class="pill"><input type="radio" name="format" value="custom" checked> Zonas</label>
   <label class="pill"><input type="radio" name="format" value="simple"> Orden de paso</label>
 </div>
-        <!-- Selector de zonas (solo se muestra con Personalizado) -->
-<!-- Selector de zonas (solo se muestra con Personalizado) -->
-<div class="controls">
-  <div style="min-width:160px;flex:1" class="hidden" id="customZonesContainer">
-    <label>Nº de zonas / grupos</label>
-    <input type="number" id="zones" min="1" value="8" />
-  </div>
-  <div style="min-width:160px;flex:1" class="hidden" id="customTeamsPerZoneContainer">
-    <label>Equipos por zona</label>
-    <input type="number" id="teamsPerZone" min="2" value="4" />
+
+<div class="controls" id="customZonesContainer" style="margin-top:8px">
+  <div style="min-width:180px;max-width:260px;flex:1">
+    <label>Cantidad de zonas</label>
+    <input type="number" id="zones" min="1" max="32" value="4" />
   </div>
 </div>
 
-<!-- Fila: Importar disciplinas + Selector de disciplinas -->
+<div id="zoneCapacitiesPanel" style="margin-top:10px">
+  <label>Equipos por zona</label>
+  <div class="tiny" style="margin:0 0 7px 0">Definí cuántos equipos tendrá cada zona. La suma debe coincidir con la cantidad de equipos activos.</div>
+  <div id="zoneCapacitySelectors" class="zoneCapacityGrid"></div>
+  <div id="zoneCapacitySummary" class="tiny zoneCapacitySummary"></div>
+</div>
+
+<!-- Selector de disciplinas -->
 <div class="controls">
-  <label for="csvDisciplines" class="btn ghost">Importar CSV de disciplinas</label>
-  <input id="csvDisciplines" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Disciplina</label>
     <select id="disciplineSelect">
@@ -1667,10 +1703,8 @@ Newell's, Santa Fe
   <button class="btn tiny" id="btnAddDiscipline">Agregar disciplina</button>
 </div>
 
-<!-- Fila: Importar categorías + Selector de categorías -->
+<!-- Selector de categorías -->
 <div class="controls">
-  <label for="csvCategories" class="btn ghost">Importar CSV de categorías</label>
-  <input id="csvCategories" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Categoría</label>
     <select id="categorySelect">
@@ -1687,10 +1721,8 @@ Newell's, Santa Fe
 </div>
 
 
-<!-- Fila: Importar modalidades + Selector de modalidades -->
+<!-- Selector de modalidades -->
 <div class="controls">
-  <label for="csvModalities" class="btn ghost">Importar CSV de modalidades</label>
-  <input id="csvModalities" type="file" accept=".csv,text/csv" class="hidden" />
   <div style="min-width:220px;flex:1">
     <label>Modalidad</label>
     <select id="modalitySelect">
@@ -2247,8 +2279,8 @@ function getSystemParamCurrent() {
   if (fmt === 'simple') return 'orden_paso';
   if (fmt === 'custom') {
     const z = currentZones();
-    const tpz = parseInt(document.getElementById('teamsPerZone')?.value || '', 10);
-    return tpz ? `custom_${z}x${tpz}` : `custom_${z}`;
+    const caps = getZoneCapacities();
+    return caps.length === z ? `zonas_${z}_${caps.join('-')}` : `zonas_${z}`;
   }
   return fmt || 'sorteo';
 }
@@ -2701,6 +2733,7 @@ document.getElementById('btnShare').addEventListener('click', async () => {
 let activeTeams = [], inactiveTeams = [];
 let disciplines = [], categories = [], modalities = [];
 let lastResult = null;
+let zoneCapacityUserEdited = false;
 let cloudUnsub = null;
 /* ====================== Cargar lista de provincias por defecto ====================== */
 async function loadDefaultProvinces() {
@@ -2752,6 +2785,10 @@ async function loadDefaultProvinces() {
     }
 
     textarea.value = provinces.join("\n");
+    if (typeof getFormat === 'function' && getFormat() === 'custom' && !zoneCapacityUserEdited) {
+      rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+      updateCapInfo();
+    }
     toast(`Cargadas ${provinces.length} provincias desde 24provincias.csv`);
   } catch (err) {
     console.warn("No se pudo cargar provincias:", err);
@@ -2821,6 +2858,9 @@ function buildListsFromTextarea() {
 
   document.getElementById('checkLists').classList.remove('hidden');
   renderLists();
+  if (getFormat() === 'custom' && !zoneCapacityUserEdited) {
+    rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+  }
   updateCapInfo();
   toast(`Lista cargada: ${activeTeams.length} equipos únicos`);
 }
@@ -2839,7 +2879,7 @@ function moveSelectedToInactive() {
   updateCapInfo();
 }
 
-function restoreSelectedFromInactive() {
+function rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh() {
   const idxs = getChecked('.chkInactive');
   const moved = idxs.map(i => inactiveTeams[i]);
   idxs.forEach(i => inactiveTeams.splice(i, 1));
@@ -3047,16 +3087,21 @@ function drawGroups(teams, z, headsAsFirst, seed, format) {
 
 let capsBase;
 if (format === 'custom') {
-  const teamsPerZone = parseInt(document.getElementById('teamsPerZone').value) || 4;
-  capsBase = capacitiesWithTeamsPerZone(n, z, teamsPerZone);
-} else if (format === '4x6' && z === 4 && n <= 24) {
-  capsBase = capacitiesFourBySix(n);
-} else if (format === '8x3' && z === 8 && n <= 24) {
-  capsBase = capacitiesEightByThree(n);
+  capsBase = getZoneCapacities();
+  if (capsBase.length !== z) {
+    return {error: 'Revisá la configuración de equipos por zona.'};
+  }
+  if (capsBase.some(cap => !Number.isInteger(cap) || cap < 1)) {
+    return {error: 'Cada zona debe tener al menos 1 equipo.'};
+  }
+  const totalCapacity = capsBase.reduce((sum, cap) => sum + cap, 0);
+  if (totalCapacity !== n) {
+    return {error: `La suma de equipos por zona es ${totalCapacity}, pero hay ${n} equipos activos. Ajustá los selectores antes de sortear.`};
+  }
 } else {
   capsBase = capacities(n, z);
 }
-  const actualZones = (format === 'custom') ? capsBase.length : z;
+  const actualZones = z;
   const groups = Array.from({length: actualZones}, () => []);
 
   const fixedHeads = teams.filter(t => Number.isInteger(t.seedZone) && t.seedZone > 0);
@@ -4849,7 +4894,7 @@ function updateSelectOptionsFromMap(select, valuesMap, defaultText) {
   }
 }
 
-function refreshCloudFilterOptions() {
+function rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh() {
   const items = Array.from(document.querySelectorAll('#cloudHistoryList .item'));
   const maps = {
     cloudFilterEvent: new Map(),
@@ -4981,7 +5026,7 @@ function subscribeCloudHistory() {
       
       if (snap.empty) {
         listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>';
-        refreshCloudFilterOptions();
+        rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh();
         applyCloudFilters();
         return;
       }
@@ -5809,7 +5854,7 @@ shareBtn.addEventListener('click', () => {
         item.appendChild(btns);
         listEl.appendChild(item);
       });
-      refreshCloudFilterOptions();
+      rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh();
       applyCloudFilters();
     }, err => {
       console.error('Error leyendo historial cloud:', err);
@@ -6151,33 +6196,92 @@ function getFormat() {
 }
 
 function currentZones() {
-  const fmt = getFormat();
-  if (fmt === '8x3') return 8;
-  if (fmt === '4x6') return 4;
-  return parseInt(document.getElementById('zones').value) || 1;
+  return Math.max(1, parseInt(document.getElementById('zones')?.value || '1', 10) || 1);
+}
+
+function getZoneCapacities() {
+  return Array.from(document.querySelectorAll('#zoneCapacitySelectors select[data-zone-capacity]'))
+    .map(sel => parseInt(sel.value, 10))
+    .filter(n => Number.isInteger(n));
+}
+
+function suggestedZoneCapacities(teamCount, zoneCount) {
+  const z = Math.max(1, parseInt(zoneCount, 10) || 1);
+  const n = Math.max(0, parseInt(teamCount, 10) || 0);
+  if (!n) return Array(z).fill(1);
+  if (n < z) return Array.from({length:z}, (_, i) => i < n ? 1 : 1);
+  return capacities(n, z);
+}
+
+function rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(preserveExisting = true) {
+  const wrap = document.getElementById('zoneCapacitySelectors');
+  if (!wrap) return;
+  const z = currentZones();
+  const existing = preserveExisting ? getZoneCapacities() : [];
+  const teamCount = getActiveTeamsLive().length;
+  const suggested = suggestedZoneCapacities(teamCount, z);
+
+  wrap.innerHTML = '';
+  for (let i = 0; i < z; i++) {
+    const item = document.createElement('div');
+    item.className = 'zoneCapacityItem';
+
+    const label = document.createElement('label');
+    label.textContent = `Zona ${i + 1}`;
+    label.setAttribute('for', `zoneCapacity_${i + 1}`);
+
+    const select = document.createElement('select');
+    select.id = `zoneCapacity_${i + 1}`;
+    select.dataset.zoneCapacity = String(i + 1);
+    select.setAttribute('aria-label', `Cantidad de equipos de Zona ${i + 1}`);
+
+    const chosen = Number.isInteger(existing[i]) && existing[i] > 0 ? existing[i] : Math.max(1, suggested[i] || 1);
+    const optionMax = Math.max(24, teamCount, chosen);
+    for (let n = 1; n <= optionMax; n++) {
+      const opt = document.createElement('option');
+      opt.value = String(n);
+      opt.textContent = String(n);
+      if (n === chosen) opt.selected = true;
+      select.appendChild(opt);
+    }
+
+    item.appendChild(label);
+    item.appendChild(select);
+    wrap.appendChild(item);
+  }
+  updateZoneCapacitySummary();
+}
+
+function updateZoneCapacitySummary() {
+  const summary = document.getElementById('zoneCapacitySummary');
+  if (!summary) return;
+  const teamCount = getActiveTeamsLive().length;
+  const caps = getZoneCapacities();
+  const total = caps.reduce((sum, n) => sum + n, 0);
+  const ok = total === teamCount && caps.length === currentZones();
+  summary.textContent = `Capacidad definida: ${total} · Equipos activos: ${teamCount}${ok ? ' ✓' : ' · Ajustar antes de sortear'}`;
+  summary.classList.toggle('capacityError', !ok);
 }
 
 function updateCapInfo() {
   const teams = getActiveTeamsLive().length;
   const fmt = getFormat();
   let msg = `Equipos: ${teams}`;
-  
+
   if (fmt === 'simple') {
-    msg += ` · Orden de paso`;
+    msg += ' · Orden de paso';
   } else {
     const z = currentZones();
-    if (fmt === 'custom') {
-      const teamsPerZone = parseInt(document.getElementById('teamsPerZone').value) || 4;
-      const caps = capacitiesWithTeamsPerZone(teams, z, teamsPerZone);
-      const actualZones = caps.length;
-      msg += ` · Zonas: ${actualZones} (de ${z} definidas)`;
-    } else {
-      const avg = (teams / z).toFixed(2);
-      msg += ` · Zonas: ${z} — Promedio: ${avg} por zona`;
-    }
+    const caps = getZoneCapacities();
+    const total = caps.reduce((sum, n) => sum + n, 0);
+    msg += ` · Zonas: ${z}`;
+    if (caps.length === z) msg += ` · Distribución: ${caps.join(' / ')}`;
+    if (total !== teams) msg += ` · Capacidad ${total}/${teams}`;
   }
-  
-  document.getElementById('capInfo').innerHTML = msg;
+
+  const capInfo = document.getElementById('capInfo');
+  if (capInfo) capInfo.innerHTML = msg;
+  updateZoneCapacitySummary();
 }
 
 /* ====================== DOM Ready ====================== */
@@ -6243,40 +6347,64 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 
   // Formato
-document.querySelectorAll('input[name="format"]').forEach(r => {
-  r.addEventListener('change', () => {
-    const elZones = document.getElementById('zones');
-    const customZonesContainer = document.getElementById('customZonesContainer');
-    const customTeamsPerZoneContainer = document.getElementById('customTeamsPerZoneContainer');
-    
-    if (r.value === '8x3') {
-      elZones.value = '8';
-      elZones.disabled = true;
-      customZonesContainer.classList.add('hidden');
-      customTeamsPerZoneContainer.classList.add('hidden');
-    } else if (r.value === '4x6') {
-      elZones.value = '4';
-      elZones.disabled = true;
-      customZonesContainer.classList.add('hidden');
-      customTeamsPerZoneContainer.classList.add('hidden');
-    } else if (r.value === 'simple') {
-      elZones.disabled = true;
-      customZonesContainer.classList.add('hidden');
-      customTeamsPerZoneContainer.classList.add('hidden');
-    } else {
-      elZones.disabled = false;
-      customZonesContainer.classList.remove('hidden');
-      customTeamsPerZoneContainer.classList.remove('hidden');
-    }
-    updateCapInfo();
+  document.querySelectorAll('input[name="format"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const isSimple = getFormat() === 'simple';
+      const zonesContainer = document.getElementById('customZonesContainer');
+      const capacitiesPanel = document.getElementById('zoneCapacitiesPanel');
+      const zonesInput = document.getElementById('zones');
+
+      if (zonesContainer) zonesContainer.classList.toggle('hidden', isSimple);
+      if (capacitiesPanel) capacitiesPanel.classList.toggle('hidden', isSimple);
+      if (zonesInput) zonesInput.disabled = isSimple;
+
+      if (!isSimple) rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(true);
+      updateCapInfo();
+    });
   });
-});
+
+  const zonesInput = document.getElementById('zones');
+  if (zonesInput) {
+    zonesInput.addEventListener('input', () => {
+      zoneCapacityUserEdited = false;
+      rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+      updateCapInfo();
+    });
+    zonesInput.addEventListener('change', () => {
+      zoneCapacityUserEdited = false;
+      rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+      updateCapInfo();
+    });
+  }
+
+  const zoneCapacitySelectors = document.getElementById('zoneCapacitySelectors');
+  if (zoneCapacitySelectors) {
+    zoneCapacitySelectors.addEventListener('change', () => {
+      zoneCapacityUserEdited = true;
+      updateCapInfo();
+    });
+  }
+
+  const teamsInput = document.getElementById('teamsInput');
+  if (teamsInput) {
+    teamsInput.addEventListener('input', () => {
+      if (getFormat() === 'custom' && !zoneCapacityUserEdited) {
+        rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+      } else {
+        updateCapInfo();
+      }
+    });
+  }
+
+  // Estado inicial: Zonas
+  rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
+  updateCapInfo();
 	
   // Panel checks
   document.getElementById('btnBuildList').addEventListener('click', buildListsFromTextarea);
   document.getElementById('toggleShowInactive').addEventListener('change', renderLists);
   document.getElementById('btnMoveToInactive').addEventListener('click', moveSelectedToInactive);
-  document.getElementById('btnRestoreSelected').addEventListener('click', restoreSelectedFromInactive);
+  document.getElementById('btnRestoreSelected').addEventListener('click', rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh);
 document.getElementById('selectAllActive').addEventListener('change', function() {
   const checkboxes = document.querySelectorAll('.chkActive');
   checkboxes.forEach(checkbox => {
@@ -6307,22 +6435,6 @@ document.addEventListener('change', function(e) {
 });
 
   // Utilidad
-  document.getElementById('btnExample').addEventListener('click', () => {
-    const sample = `River Plate, CABA
-Boca Juniors, CABA, *
-Newell's, Santa Fe
-Rosario Central, Santa Fe
-San Lorenzo, CABA
-Racing; Buenos Aires, *
-Independiente, Buenos Aires
-Estudiantes, Buenos Aires
-Talleres, Córdoba
-Belgrano, Córdoba
-Godoy Cruz, Mendoza
-Atl. Tucumán, Tucumán`;
-    document.getElementById('teamsInput').value = sample;
-    updateCapInfo();
-  });
 
   document.getElementById('btnClear').addEventListener('click', () => {
     document.getElementById('teamsInput').value = '';
@@ -6331,6 +6443,8 @@ Atl. Tucumán, Tucumán`;
     document.getElementById('checkLists').classList.add('hidden');
     document.getElementById('resultGroups').innerHTML = '';
     document.getElementById('status').innerHTML = '';
+    zoneCapacityUserEdited = false;
+    if (getFormat() === 'custom') rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh(false);
     updateCapInfo();
     lastResult = null;
 	  // Ocultar botones de exportación
@@ -6451,6 +6565,7 @@ document.getElementById('btnShare').classList.remove('hidden');
       const meta = {
         teamsCount: teams.length,
         zones: z,
+        zoneCapacities: getZoneCapacities(),
         format: fmt,
         eventName: eventName,
         pdfHeaderImage: getCurrentPdfHeaderImage(),
@@ -6515,69 +6630,9 @@ async function fetchTextWithFallback(url) {
   return decodeArrayBufferWithFallback(buf);
 }
 
-  // CSV Disciplinas
-  document.getElementById('csvDisciplines').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const res = importDisciplinesCSV(decodeArrayBufferWithFallback(reader.result) || '');
-        disciplines = res.items;
-        refreshDisciplineSelects();
-        const info = `CSV cargado: ${disciplines.length} disciplinas · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('discCSVInfo').innerHTML = info;
-        toast('CSV de disciplinas cargado');
-      } catch(err) {
-        console.error(err);
-        alert('Error: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
+  // Los CSV de disciplinas/categorías/modalidades se cargan automáticamente desde la carpeta,
+  // pero ya no se ofrecen importadores manuales en la interfaz.
 
-  // CSV Categorías
-  document.getElementById('csvCategories').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function() {
-      try {
-        const res = importCategoriesCSV(decodeArrayBufferWithFallback(reader.result) || '');
-        categories = res.items;
-        refreshCategorySelects();
-        const info = `CSV cargado: ${categories.length} categorías · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
-        document.getElementById('catCSVInfo').innerHTML = info;
-        toast('CSV de categorías cargado');
-      } catch(err) {
-        console.error(err);
-        alert('Error: ' + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
-
-
-// CSV Modalidades
-document.getElementById('csvModalities').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function() {
-    try {
-      const res = importModalitiesCSV(decodeArrayBufferWithFallback(reader.result) || '');
-      modalities = res.items;
-      refreshModalitySelects();
-      const info = `CSV cargado: ${modalities.length} modalidad${modalities.length === 1 ? '' : 'es'} · Delimitador: ${res.delimiter === '\t' ? 'TAB' : res.delimiter}${res.hasHeaders ? ' · Con cabecera' : ''}`;
-      document.getElementById('modCSVInfo').innerHTML = info;
-      toast('CSV de modalidades cargado');
-    } catch(err) {
-      console.error(err);
-      alert('Error: ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-});
     // Demos (solo si existen los botones en el HTML)
   const btnDiscDemo = document.getElementById('btnDiscDemo');
   if (btnDiscDemo) {
@@ -6795,8 +6850,7 @@ document.querySelectorAll('.authTab').forEach(tab => {
     document.getElementById(tab.dataset.tab + 'Form').classList.remove('hidden');
   });
 });
-// Mostrar/ocultar campo de zonas según formato inicial
-document.querySelector('input[name="format"]:checked').dispatchEvent(new Event('change'));
+// La configuración inicial de zonas se realiza dentro de DOMContentLoaded.
   
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
