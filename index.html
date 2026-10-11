@@ -1591,7 +1591,7 @@
   <span class="pill" id="userInfo" title="Usuario"></span>
   <button id="themeToggle" class="btn ghost">Tema</button>
   <button id="logoutBtn" class="btn ghost">Cerrar sesión</button>
-  <span class="badge">v4.8 </span>
+  <span class="badge">v4.9 · Múltiple</span>
 </div>
         
       </header>
@@ -2075,7 +2075,7 @@ function savePdfHeaderImageToStorage() {
   }
 }
 
-function ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6() {
+function restorePdfHeaderImage() {
   try {
     const raw = localStorage.getItem(PDF_HEADER_STORAGE_KEY);
     currentPdfHeaderImage = raw ? JSON.parse(raw) : null;
@@ -2137,7 +2137,7 @@ function parseImageDpiFromBuffer(file, buffer) {
   return null;
 }
 
-function ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6(url) {
+function loadPdfImageDimensions(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
@@ -2180,7 +2180,7 @@ async function handlePdfHeaderFileChange(e) {
   const objectUrl = URL.createObjectURL(file);
   let dims;
   try {
-    dims = await ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6(objectUrl);
+    dims = await loadPdfImageDimensions(objectUrl);
   } catch (err) {
     URL.revokeObjectURL(objectUrl);
     toast('No se pudo validar la imagen');
@@ -3078,7 +3078,7 @@ function capacitiesFourBySix(n) {
   }
   return caps;
 }
-function drawGroups(teams, z, headsAsFirst, seed, format) {
+function drawGroups(teams, z, headsAsFirst, seed, format, explicitCaps = null) {
   const rand = rngFromSeed(seed);
   const n = teams.length;
   
@@ -3087,7 +3087,7 @@ function drawGroups(teams, z, headsAsFirst, seed, format) {
 
 let capsBase;
 if (format === 'custom') {
-  capsBase = getZoneCapacities();
+  capsBase = explicitCaps ? explicitCaps.slice() : getZoneCapacities();
   if (capsBase.length !== z) {
     return {error: 'Revisá la configuración de equipos por zona.'};
   }
@@ -6288,7 +6288,7 @@ function updateCapInfo() {
 document.addEventListener('DOMContentLoaded', function() {
   setupPdfHeaderControls();
   setupCloudFilterControls();
-  ltc1q0gq5ghan358l8y6unf2yz7s42efgnqcut0pvu6();
+  restorePdfHeaderImage();
 
   // Tabs app
   document.querySelectorAll('.tab').forEach(btn => {
@@ -7260,6 +7260,81 @@ function updateThemeButton() {
   localStorage.setItem('theme', newTheme);
   updateThemeButton();
 });	
+</script>
+<script>
+(function(root){
+ 'use strict';
+ const FORMAT='sorteo_multiple_v1';
+ const fields=['Formato','Evento','Disciplina','Categoria','Genero','Peso','CantidadZonas','EquiposPorZona','Zona','Orden','Equipo','Provincia','Cabeza','Semilla'];
+ const key=s=>String(s||'').trim().normalize('NFC').toLocaleUpperCase('es');
+ const quote=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+ function identity(name){const m=String(name).trim().match(/^(\d+(?:[.,]\d+)?)\s*([FM])$/i);return {gender:m?m[2].toUpperCase():'X',weight:m?Number(m[1].replace(',','.')):0}}
+ function encode(batch){const rows=[fields];for(const c of batch.categories){const ident=identity(c.name);c.groups.forEach((g,z)=>g.forEach((t,i)=>rows.push([FORMAT,batch.eventName||'',batch.discipline||'',c.name,c.gender||ident.gender,c.weight??ident.weight,c.groups.length,c.groups.map(a=>a.length).join('|'),z<26?String.fromCharCode(65+z):z+1,i+1,t.name,t.province||'',t.head?(t.seedZone?String(t.seedZone)+'*':'*'):'',batch.seed||''])))}return '\uFEFF'+rows.map(r=>r.map(quote).join(';')).join('\r\n')+'\r\n'}
+ function rows(text){text=String(text).replace(/^\uFEFF/,'');const first=text.split(/\r?\n/)[0],delimiter=first.includes(';')?';':',';let result=[],row=[],cell='',quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else if(quoted)quoted=false;else if(!cell)quoted=true;else throw new Error('Comillas inválidas en el CSV.')}else if(c===delimiter&&!quoted){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))result.push(row);row=[];cell=''}else cell+=c}
+  if(quoted)throw new Error('El CSV tiene una celda sin cerrar.');if(cell||row.length){row.push(cell);if(row.some(x=>x.trim()))result.push(row)}return result;
+ }
+ function decode(text){if(String(text).length>4000000)throw new Error('El CSV supera el tamaño permitido (4 MB).');const data=rows(text);if(data.length<2)throw new Error('El CSV está vacío.');const head=data.shift().map(key);if(new Set(head).size!==head.length)throw new Error('Hay columnas repetidas.');const indexes=fields.map(f=>head.indexOf(key(f)));if(indexes.some(i=>i<0))throw new Error('Usá el CSV general exportado por el Sorteador múltiple.');const cats=new Map();let batch=null;
+  for(const raw of data){if(raw.length!==head.length)throw new Error('Una fila tiene una cantidad de columnas incorrecta.');const v=Object.fromEntries(fields.map((f,i)=>[f,raw[indexes[i]].trim()]));if(v.Formato!==FORMAT)throw new Error('Versión de CSV no compatible.');const meta=[v.Evento,v.Disciplina,v.Semilla];if(batch&&JSON.stringify(meta)!==JSON.stringify([batch.eventName,batch.discipline,batch.seed]))throw new Error('No mezcles sorteos de distintos eventos o disciplinas.');if(!batch)batch={eventName:v.Evento,discipline:v.Disciplina,seed:v.Semilla,categories:[]};const name=v.Categoria;if(!name||name.length>100)throw new Error('Nombre de categoría vacío o demasiado largo.');const nk=key(name),z=Number(v.CantidadZonas),caps=v.EquiposPorZona.split('|').map(Number),gender=v.Genero,weight=Number(v.Peso);if(!Number.isInteger(z)||z<1||z>32||caps.length!==z||caps.some(n=>!Number.isInteger(n)||n<1||n>128)||!['F','M','X'].includes(gender)||!Number.isFinite(weight)||weight<0)throw new Error(name+': parámetros inválidos.');let c=cats.get(nk);if(!c){if(cats.size>=32)throw new Error('Se admiten hasta 32 categorías.');c={name,gender,weight,caps,groups:caps.map(n=>Array(n).fill(null))};cats.set(nk,c);batch.categories.push(c)}else if(name!==c.name||gender!==c.gender||weight!==c.weight||JSON.stringify(caps)!==JSON.stringify(c.caps))throw new Error(name+': definiciones contradictorias.');const zi=/^[A-Z]$/.test(v.Zona)?v.Zona.charCodeAt(0)-65:Number(v.Zona)-1,position=Number(v.Orden);if(!c.groups[zi]||!Number.isInteger(position)||position<1||position>c.caps[zi]||!v.Equipo||v.Equipo.length>200||v.Provincia.length>200)throw new Error(name+': zona, orden o equipo inválido.');if(c.groups[zi][position-1])throw new Error(name+': posición repetida.');c.groups[zi][position-1]={name:v.Equipo,province:v.Provincia,head:!!v.Cabeza,seedZone:/^\d+\*$/.test(v.Cabeza)?Number(v.Cabeza.slice(0,-1)):null};}
+  for(const c of batch.categories){if(c.groups.some(g=>g.some(t=>!t)))throw new Error(c.name+': faltan equipos para completar las zonas.');const names=c.groups.flat().map(t=>key(t.name));if(new Set(names).size!==names.length)throw new Error(c.name+': hay equipos repetidos.')}return batch;
+ }
+ function forCombat(batch,core){const discipline=key(batch.discipline).replace(/[_-]/g,' ');if(!/^(LUCHA|LUCHA LIBRE|LUCHA LIBRE JUVENILES)$/.test(discipline))throw new Error('Este motor aplica reglas de Lucha Libre. La disciplina del CSV es '+(batch.discipline||'vacía')+'.');return batch.categories.map(c=>{const zones=c.groups.map(g=>g.map(t=>t.name)),count=zones.flat().length,caps=zones.map(g=>g.length),standard=core.capacitiesFor(count);if(count<2||count>24||caps.length!==standard.length||Math.max(...caps)>6||Math.min(...caps)<1||Math.max(...caps)-Math.min(...caps)>1)throw new Error(c.name+': el sorteo no es compatible con Lucha (2–24 competidores; hasta 6, una zona; 7–12, dos; 13–24, cuatro; reparto equilibrado). No se modificó el proyecto.');return {code:c.name,gender:c.gender,weight:c.weight,count,zones,zoneLayout:'legacy',provinceByName:Object.fromEntries(c.groups.flat().map(t=>[t.name,t.province||t.name]))}})}
+ const api={FORMAT,fields,key,identity,encode,decode,rows,forCombat};if(typeof module!=='undefined'&&module.exports)module.exports=api;root.MultiDrawCSV=api;
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+(function(){
+ 'use strict';
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ let cards=[],batch=null,storageError='',loadedUser=null,running=false;
+ const panel=document.createElement('div');panel.id='multiplePanel';panel.className='hidden';panel.innerHTML='<label for="multipleCount">Cantidad de categorías a sortear</label><input id="multipleCount" type="number" min="1" max="32" value="2"><p class="tiny">Cada categoría tiene sus propios equipos. Guardá cada definición y después realizá el sorteo completo.</p><div id="multipleCards"></div><p id="multipleReady" aria-live="polite"></p>';
+ document.getElementById('capInfo').before(panel);
+ document.getElementById('formatRow').insertAdjacentHTML('beforeend','<label class="pill"><input type="radio" name="format" value="multiple"> Múltiple</label>');
+ const style=document.createElement('style');style.textContent='.multi-card{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-card h4{margin:0 0 8px}.multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.multi-card textarea{min-height:85px}.multi-checks{max-height:180px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.multi-checks label{font-size:12px;overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}.multi-checks input{width:auto}.multi-status{margin:8px 0;font-size:12px}.multi-result{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-result h3{margin-top:0}.multi-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.multi-zone{border:1px solid #8797ae;border-radius:6px;padding:8px;font-size:12px}.multi-zone ol{padding-left:24px}.multi-general{display:flex;gap:8px;flex-wrap:wrap}.multi-error{color:#c43b34}@media(max-width:520px){.multi-checks{grid-template-columns:1fr}}';document.head.append(style);
+ function blank(){return {name:'',zones:1,caps:[0],text:'',excluded:[],saved:null}}
+ function sk(){return 'sorteador_multiple_v1_'+(auth.currentUser?.uid||'anon')}
+ function store(){try{localStorage.setItem(sk(),JSON.stringify({cards,batch}));storageError=''}catch(e){storageError='No se pudo guardar el borrador en este navegador. Descargá el resultado antes de cerrar.';document.getElementById('multipleReady').textContent=storageError}}
+ function load(){try{const raw=JSON.parse(localStorage.getItem(sk())||'null');cards=Array.isArray(raw?.cards)&&raw.cards.length>0&&raw.cards.length<=32?raw.cards.map(c=>({...blank(),...c})):Array.from({length:2},blank);batch=raw?.batch?.categories?raw.batch:null}catch(e){cards=Array.from({length:2},blank);batch=null}document.getElementById('multipleCount').value=cards.length;renderCards();if(batch&&getFormat()==='multiple')renderResult()}
+ function teams(c){const out=[],seen=new Set();for(const line of c.text.split(/\r?\n/).filter(l=>l.trim())){const parts=parseCSVLine(line,line.includes(';')?';':','),parsed=parseHeadMarker(parts[0]||'',parts[2]||'',line),name=parsed.name.trim();if(!name)continue;const k=MultiDrawCSV.key(name);if(seen.has(k))throw new Error('Equipo repetido: '+name);seen.add(k);out.push({name,province:(parts[1]||'').replace(/\s*(?:\d+)?\*+\s*$/,'').trim(),head:parsed.head,seedZone:parsed.seedZone})}return out}
+ function chosen(c){return teams(c).filter(t=>!c.excluded.includes(MultiDrawCSV.key(t.name)))}
+ function validate(c){if(!c.name.trim())throw new Error('Escribí el nombre de la categoría.');if(c.name.trim().length>100)throw new Error('El nombre de categoría admite hasta 100 caracteres.');if(!Number.isInteger(c.zones)||c.zones<1||c.zones>32||c.caps.length!==c.zones||c.caps.some(n=>!Number.isInteger(n)||n<1||n>128))throw new Error('Elegí equipos por zona (1–128).');const ts=chosen(c);if(c.caps.reduce((a,b)=>a+b,0)!==ts.length)throw new Error('La suma de cupos debe coincidir con los '+ts.length+' equipos seleccionados.');const fixed=new Set();ts.forEach(t=>{if(t.seedZone){if(t.seedZone>c.zones)throw new Error(t.name+': cabeza asignada a una zona inexistente.');if(fixed.has(t.seedZone))throw new Error('Hay dos cabezas fijas para la Zona '+t.seedZone);fixed.add(t.seedZone)}});return {name:c.name.trim(),caps:c.caps.slice(),teams:ts}}
+ function status(i,error){const c=cards[i],el=document.querySelector('[data-multi-status="'+i+'"]');let n=0;try{n=chosen(c).length}catch(e){error=e.message}el.textContent=error||`${n} equipos seleccionados · ${c.caps.reduce((a,b)=>a+b,0)} cupos · ${c.saved?'Definición guardada ✓':'Pendiente de guardar'}`;el.classList.toggle('multi-error',!!error);ready()}
+ function ready(){const saved=cards.filter(c=>c.saved).length,multi=getFormat()==='multiple',duplicates=new Set(cards.map(c=>MultiDrawCSV.key(c.name)).filter(Boolean)).size!==cards.filter(c=>c.name.trim()).length;document.getElementById('multipleReady').textContent=storageError||(duplicates?'Los nombres de las categorías deben ser distintos.':saved+' de '+cards.length+' categorías guardadas. '+(saved===cards.length?'Podés sortear toda la disciplina.':'Guardá las definiciones pendientes.'));if(multi){document.getElementById('btnDrawGroups').disabled=running||duplicates||saved!==cards.length;document.getElementById('btnDrawGroups').textContent='Sortear todas las categorías'}}
+ function checks(i){const host=document.querySelector('[data-multi-checks="'+i+'"]');try{host.innerHTML=teams(cards[i]).map(t=>`<label><input type="checkbox" data-multi-team="${i}" data-name="${escapeHtml(MultiDrawCSV.key(t.name))}" ${cards[i].excluded.includes(MultiDrawCSV.key(t.name))?'':'checked'}>${escapeHtml(t.name)}${t.head?' · '+(t.seedZone||'')+'*':''}</label>`).join('');status(i)}catch(e){host.textContent=e.message;status(i,e.message)}}
+ function capsHTML(c,i){return c.caps.map((v,z)=>`<label>Zona ${z<26?String.fromCharCode(65+z):z+1}<select data-multi-cap="${i}" data-zone="${z}">${Array.from({length:129},(_,n)=>`<option value="${n}" ${n===v?'selected':''}>${n||'Elegir'}</option>`).join('')}</select></label>`).join('')}
+ function renderCards(){document.getElementById('multipleCards').innerHTML=cards.map((c,i)=>`<section class="multi-card"><h4>Categoría ${i+1}</h4><label>Nombre de la categoría<input data-multi-name="${i}" value="${escapeHtml(c.name)}" placeholder="Ej. 51F" maxlength="100"></label><label>Cantidad de zonas<input data-multi-zones="${i}" type="number" min="1" max="32" value="${c.zones}"></label><div class="multi-grid" data-multi-caps="${i}">${capsHTML(c,i)}</div><label>Equipos de esta categoría<textarea data-multi-text="${i}" placeholder="Un equipo por línea. Opcional: Equipo;Provincia;1*">${escapeHtml(c.text)}</textarea></label><div class="controls"><button class="btn ghost" type="button" data-multi-base="${i}">Usar equipos activos de la izquierda</button><label class="btn ghost">Importar CSV de equipos<input class="hidden" type="file" accept=".csv,text/csv" data-multi-file="${i}"></label></div><p class="tiny">Desmarcá los equipos que no participan en esta categoría. El nombre 51F / 51M identifica automáticamente peso y género para Combate.</p><div class="multi-checks" data-multi-checks="${i}"></div><p class="multi-status" data-multi-status="${i}" aria-live="polite"></p><button class="btn primary" type="button" data-multi-save="${i}">Guardar definición</button></section>`).join('');cards.forEach((c,i)=>checks(i));ready()}
+ function mode(){const multiple=getFormat()==='multiple',simple=getFormat()==='simple';panel.classList.toggle('hidden',!multiple);document.getElementById('customZonesContainer').classList.toggle('hidden',multiple||simple);document.getElementById('zoneCapacitiesPanel').classList.toggle('hidden',multiple||simple);document.getElementById('zones').disabled=multiple||simple;for(const id of ['categorySelect','newCategoryInput','btnAddCategory','genderSelect']){const el=document.getElementById(id);el.closest('.controls')?.classList.toggle('hidden',multiple)}document.getElementById('capInfo').classList.toggle('hidden',multiple);const btn=document.getElementById('btnDrawGroups');btn.disabled=false;btn.textContent='Sortear';document.getElementById('btnExportCSV').classList.toggle('hidden',multiple);document.getElementById('btnCopy').classList.toggle('hidden',multiple);document.getElementById('btnShare').classList.toggle('hidden',multiple);if(multiple){ready();if(batch)renderResult();else document.getElementById('resultGroups').innerHTML=''}else{document.getElementById('resultGroups').innerHTML='';if(lastResult&&!lastResult.error)renderGroups(document.getElementById('resultGroups'),lastResult)}}
+ function edit(i){cards[i].saved=null;store();status(i)}
+ panel.addEventListener('input',e=>{const el=e.target,d=el.dataset;let i;if(d.multiName!==undefined){i=+d.multiName;cards[i].name=el.value;edit(i)}if(d.multiText!==undefined){i=+d.multiText;cards[i].text=el.value;cards[i].excluded=[];edit(i);checks(i)}});
+ panel.addEventListener('change',async e=>{const el=e.target,d=el.dataset;let i;try{if(el.id==='multipleCount'){const n=Number(el.value);if(!Number.isInteger(n)||n<1||n>32){el.value=cards.length;throw new Error('Elegí entre 1 y 32 categorías.')}if(n===cards.length)return;if(n<cards.length&&cards.slice(n).some(c=>c.text||c.name||c.saved)&&!confirm('Se eliminarán las definiciones de las últimas '+(cards.length-n)+' categorías. ¿Continuar?')){el.value=cards.length;return}cards=Array.from({length:n},(_,i)=>cards[i]||blank());store();renderCards()}
+ if(d.multiZones!==undefined){i=+d.multiZones;const n=Number(el.value);if(!Number.isInteger(n)||n<1||n>32){el.value=cards[i].zones;throw new Error('Elegí entre 1 y 32 zonas.')}if(n===cards[i].zones)return;cards[i].zones=n;cards[i].caps=Array.from({length:n},(_,z)=>cards[i].caps[z]||0);edit(i);document.querySelector('[data-multi-caps="'+i+'"]').innerHTML=capsHTML(cards[i],i)}
+ if(d.multiCap!==undefined){i=+d.multiCap;cards[i].caps[+d.zone]=Number(el.value);edit(i)}if(d.multiTeam!==undefined){i=+d.multiTeam;cards[i].excluded=cards[i].excluded.filter(n=>n!==d.name);if(!el.checked)cards[i].excluded.push(d.name);edit(i)}if(d.multiFile!==undefined&&el.files[0]){i=+d.multiFile;const file=el.files[0];const buffer=await file.arrayBuffer();let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(buffer)}catch(e){text=new TextDecoder('windows-1252').decode(buffer)}const ts=importTeamsCSV(text).teams;if(!ts.length)throw new Error('CSV vacío o sin equipos.');cards[i].text=ts.map(t=>[t.name,t.province||'',t.head?(t.seedZone||'')+'*':''].map(s=>String(s).includes(';')?'"'+String(s).replace(/"/g,'""')+'"':s).join(';')).join('\n');cards[i].excluded=[];edit(i);renderCards()}}catch(err){toast(err.message)}});
+ panel.addEventListener('click',e=>{const d=e.target.dataset;try{if(d.multiBase!==undefined){const i=+d.multiBase,ts=getActiveTeamsLive();if(cards[i].text&&!confirm('¿Reemplazar la lista de esta categoría por los equipos activos de la izquierda?'))return;cards[i].text=ts.map(t=>[t.name,t.province||'',t.head?(t.seedZone||'')+'*':''].map(s=>'"'+String(s).replace(/"/g,'""')+'"').join(';')).join('\n');cards[i].excluded=[];edit(i);renderCards()}if(d.multiSave!==undefined){const i=+d.multiSave;cards[i].saved=validate(cards[i]);store();status(i);toast('Definición guardada: '+cards[i].name)}}catch(err){if(d.multiSave!==undefined)status(+d.multiSave,err.message);else toast(err.message)}});
+ document.addEventListener('change',e=>{if(e.target.matches('input[name="format"]'))mode()});
+ function categoryHTML(c){return `<section class="multi-result"><h3>${escapeHtml(c.name)} · ${c.groups.flat().length} equipos</h3><div class="multi-zones">${c.groups.map((g,z)=>`<div class="multi-zone"><b>Zona ${z<26?String.fromCharCode(65+z):z+1} · ${g.length}</b><ol>${g.map(t=>`<li>${escapeHtml(t.name)}${t.head?' *':''}${t.province&&MultiDrawCSV.key(t.province)!==MultiDrawCSV.key(t.name)?' <small>('+escapeHtml(t.province)+')</small>':''}</li>`).join('')}</ol></div>`).join('')}</div></section>`}
+ function renderResult(){const host=document.getElementById('resultGroups');host.innerHTML=`<h3>Sorteo múltiple · ${escapeHtml(batch.discipline)}</h3><p>${escapeHtml(batch.eventName)} · ${batch.categories.length} categorías · ${batch.categories.reduce((n,c)=>n+c.groups.flat().length,0)} equipos</p><div class="multi-general"><button class="btn primary" id="multiPDF">PDF general · 2 categorías por página</button><button class="btn" id="multiCSV">CSV general para Combate</button><button class="btn ghost" id="multiOpen">Abrir resultado completo</button></div>${batch.categories.map(categoryHTML).join('')}`;host.querySelector('#multiCSV').onclick=()=>downloadText(MultiDrawCSV.encode(batch),filename('csv'));host.querySelector('#multiPDF').onclick=()=>exportPDF(batch);host.querySelector('#multiOpen').onclick=openResult}
+ function filename(ext){return safeFilePart(batch?.eventName||'sorteo')+'_'+safeFilePart(batch?.discipline||'disciplina')+'_multiple.'+ext}
+ function openResult(){const win=window.open('','_blank');if(!win){toast('El navegador bloqueó la pestaña. El resultado y las descargas están disponibles debajo.');return}win.document.write('<!doctype html><html lang="es"><meta charset="utf-8"><title>Sorteo múltiple</title><style>body{font:14px system-ui;margin:24px;color:#16263b}button{padding:12px;margin:0 8px 10px 0;cursor:pointer}'+style.textContent+'</style><h1>'+escapeHtml(batch.eventName||'Sorteo múltiple')+'</h1><p>'+escapeHtml(batch.discipline)+' · '+batch.categories.length+' categorías</p><button id="pdf">PDF general</button><button id="csv">CSV general</button>'+batch.categories.map(categoryHTML).join('')+'</html>');win.document.close();const snapshot=clone(batch);win.document.getElementById('pdf').onclick=()=>exportPDF(snapshot);win.document.getElementById('csv').onclick=()=>downloadText(MultiDrawCSV.encode(snapshot),safeFilePart(snapshot.eventName||'sorteo')+'_'+safeFilePart(snapshot.discipline||'disciplina')+'_multiple.csv')}
+ async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,...MultiDrawCSV.identity(c.name),groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
+  // Existing cloud history stays compatible: one ordinary draw per category, all from the same batch.
+  const storedBatch=clone(batch),userId=auth.currentUser?.uid;for(const c of result){if(!userId||auth.currentUser?.uid!==userId)break;await saveDrawToCloud({groups:c.groups},{teamsCount:c.groups.flat().length,zones:c.groups.length,zoneCapacities:c.caps,format:'custom',eventName:storedBatch.eventName,pdfHeaderImage:storedBatch.pdfHeaderImage,discipline,disciplineSeed:disc.value,category:c.name,gender:{F:'Femenino',M:'Masculino',X:'No Aplica'}[c.gender],modality:document.getElementById('modalitySelect').value||''});}
+ }
+ document.getElementById('btnDrawGroups').addEventListener('click',e=>{if(getFormat()!=='multiple')return;e.stopImmediatePropagation();e.preventDefault();const btn=e.currentTarget;if(running)return;running=true;btn.disabled=true;run().catch(err=>{document.getElementById('status').textContent=err.message;toast(err.message)}).finally(()=>{running=false;ready()})},true);
+ async function exportPDF(data){try{if(!window.jspdf?.jsPDF)throw new Error('La biblioteca de PDF todavía no está disponible. Esperá o revisá la conexión.');const pdf=buildMultiplePDF(data,window.jspdf.jsPDF);pdf.save(safeFilePart(data.eventName||'sorteo')+'_'+safeFilePart(data.discipline||'disciplina')+'_multiple.pdf')}catch(e){toast('No se pudo generar el PDF: '+e.message)}}
+ auth.onAuthStateChanged(user=>{const id=user?.uid||'anon';if(id!==loadedUser){loadedUser=id;load();mode()}});
+ window.SorteadorMultiple={get:()=>({cards:clone(cards),batch:clone(batch)}),validate,teams,run,buildPDF:buildMultiplePDF};
+ load();mode();
+})();
+
+function buildMultiplePDF(data,JsPDF){
+ const margin=12,width=186,measure=new JsPDF({unit:'mm',format:'a4'}),colsFor=c=>Math.min(c.groups.length>4?4:2,c.groups.length),needs=c=>{const cols=colsFor(c),rows=Math.ceil(c.groups.length/cols),cw=(width-3*(cols-1))/cols;measure.setFontSize(8);return 18+Array.from({length:rows},(_,r)=>Math.max(...c.groups.slice(r*cols,(r+1)*cols).map(g=>12+g.reduce((n,t,i)=>n+measure.splitTextToSize((i+1)+'. '+t.name+(t.head?' *':'')+(t.province&&t.province!==t.name?' ('+t.province+')':''),cw-6).length*3.2+1,0)))).reduce((a,b)=>a+b+3,0)};
+ // Normal combat categories fit A4. Larger lists use a taller sheet without splitting a category.
+ const heights=data.categories.map(needs),half=Math.max(100,...heights),pageHeight=Math.max(297,half*2+80),pdf=new JsPDF({unit:'mm',format:[210,pageHeight],orientation:'portrait'}),pageCount=Math.ceil(data.categories.length/2);
+ const text=(s,x,y,max,font=8)=>{pdf.setFontSize(font);const lines=pdf.splitTextToSize(String(s),max);pdf.text(lines,x,y);return lines.length*font*.39};
+ for(let p=0;p<pageCount;p++){if(p)pdf.addPage([210,pageHeight],'portrait');let top=margin;if(data.pdfHeaderImage?.dataUrl){try{const img=data.pdfHeaderImage,ratio=(img.width||1800)/(img.height||150),h=Math.min(16,width/ratio);pdf.addImage(img.dataUrl,img.dataUrl.startsWith('data:image/png')?'PNG':'JPEG',margin,top,width,h);top+=h+5}catch(e){top+=2}}pdf.setFont('helvetica','bold');top+=4;top+=text(data.eventName||'Sorteo múltiple',margin,top,width,12)+3;pdf.setFont('helvetica','normal');top+=text((data.discipline||'')+' · '+data.createdAt.slice(0,10),margin,top,width,8)+5;const region=(pageHeight-top-14)/2;
+  data.categories.slice(p*2,p*2+2).forEach((c,k)=>{let y=top+k*region;pdf.setFillColor(232,239,247);pdf.rect(margin,y,width,10,'F');pdf.setFont('helvetica','bold');text(c.name+' · '+c.groups.flat().length+' equipos · '+c.groups.length+' zonas',margin+3,y+6,width-6,10);pdf.setFont('helvetica','normal');y+=14;const cols=colsFor(c),gap=3,cw=(width-gap*(cols-1))/cols;for(let start=0;start<c.groups.length;start+=cols){const entries=c.groups.slice(start,start+cols),layouts=entries.map(g=>g.map((t,i)=>{const name=(i+1)+'. '+t.name+(t.head?' *':'')+(t.province&&t.province!==t.name?' ('+t.province+')':'');pdf.setFontSize(8);return pdf.splitTextToSize(name,cw-6)})),height=Math.max(...layouts.map(items=>12+items.reduce((n,l)=>n+l.length*3.2+1,0)));entries.forEach((g,j)=>{const x=margin+j*(cw+gap);pdf.setDrawColor(165,183,202);pdf.rect(x,y,cw,height);pdf.setFont('helvetica','bold');text('Zona '+(start+j<26?String.fromCharCode(65+start+j):start+j+1)+' · '+g.length,x+3,y+5,cw-6,8);pdf.setFont('helvetica','normal');let ly=y+10;layouts[j].forEach(lines=>{pdf.setFontSize(8);pdf.text(lines,x+3,ly);ly+=lines.length*3.2+1})});y+=height+gap}}
+  );pdf.setFontSize(7);pdf.setTextColor(80);pdf.text('Sorteo completo · '+(p+1)+' / '+pageCount,margin,pageHeight-7);pdf.setTextColor(0)}return pdf;
+}
+
 </script>
 </body>
 </html>
