@@ -1562,6 +1562,17 @@
 #multiDrawOverlay[hidden]{display:none!important}
 #multiDrawOverlay .multi-dice{font-size:110px;line-height:1;animation:multi-roll .24s infinite alternate ease-in-out;filter:drop-shadow(0 15px 25px rgba(0,0,0,.4))}
 #multiDrawOverlay strong{font-size:23px}#multiDrawOverlay p{font-size:15px}
+#multiDrawOverlay{background:radial-gradient(ellipse at 50% 30%,#244578 0%,#0b1938 60%,#040a1a 100%);gap:10px;padding:20px;overflow:hidden}
+#multiDrawOverlay .ev3d-scene{width:min(380px,90vw);height:330px;display:grid;place-items:center;perspective:900px;position:relative}
+#multiDrawOverlay .ev3d-shadow{position:absolute;bottom:20px;width:250px;height:35px;background:rgba(0,0,0,.6);filter:blur(18px);border-radius:50%}
+#multiDrawOverlay .ev3d-globe{width:278px;height:278px;position:relative;border-radius:50%;border:7px solid rgba(196,236,255,.72);background:radial-gradient(circle at 28% 23%,rgba(248,255,255,.48),rgba(43,160,222,.14) 33%,rgba(7,36,83,.64) 88%);box-shadow:inset 19px 13px 27px rgba(255,255,255,.22),inset -25px -30px 36px rgba(0,8,29,.73),0 25px 45px rgba(0,0,0,.52),0 0 45px rgba(53,175,241,.34);overflow:hidden;animation:ev3dSpin 2.1s ease-in-out infinite alternate;transform-style:preserve-3d}
+#multiDrawOverlay .ev3d-globe::after{content:'';position:absolute;inset:9px;border-radius:50%;background:radial-gradient(ellipse at 30% 14%,rgba(255,255,255,.73),transparent 42%);pointer-events:none;z-index:5}
+#multiDrawOverlay .ev3d-ball{position:absolute;top:calc(50% - 24px);left:calc(50% - 24px);width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 26% 23%,#fff,var(--c) 31%,var(--c) 61%,#12244d);border:2px solid rgba(255,255,255,.77);box-shadow:inset -7px -10px 10px rgba(0,0,0,.31),0 12px 15px rgba(0,0,0,.32);animation:ev3dOrbit 1.6s ease-in-out infinite alternate;animation-delay:var(--d);transform:rotate(var(--a)) translateX(var(--r))}
+#multiDrawOverlay strong{font-size:22px!important}#multiDrawOverlay p{font-size:14px!important;color:#c4d6ee}#multiDrawOverlay .ev3d-counter{font-size:13px!important;color:#85d9fc}
+@keyframes ev3dSpin{from{transform:rotate(-16deg) rotateY(-16deg) scale(.97)}to{transform:rotate(16deg) rotateY(16deg) scale(1.02)}}
+@keyframes ev3dOrbit{from{transform:rotate(var(--a)) translateX(var(--r)) translateY(-13px) scale(.82)}to{transform:rotate(calc(var(--a) + 117deg)) translateX(var(--r)) translateY(10px) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){#multiDrawOverlay .ev3d-globe,#multiDrawOverlay .ev3d-ball{animation:none!important}}
+
 @keyframes multi-roll{0%{transform:rotate(-30deg) scale(.86)}100%{transform:rotate(35deg) scale(1.13)}}
 @media(max-width:900px){#appSection:has(#multiplePanel:not(.hidden)) .row>.card:first-child{position:static;max-height:none;overflow:visible}#appSection:has(#multiplePanel:not(.hidden)) .row{grid-template-columns:1fr!important}#resultGroups.multi-results-host .multi-zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){#multiplePanel .multi-checks{grid-template-columns:repeat(3,minmax(0,1fr))}#resultGroups.multi-results-host .multi-zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -3934,6 +3945,21 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
       .formation-panel{ min-height:220px; }
       .loader-title{ font-size:34px; }
     }
+
+/* EV360: tómbola con profundidad y efectos de vidrio. Solo presentación. */
+.draw-loader{background:radial-gradient(ellipse at 50% 25%,#263e72 0%,#111f40 55%,#070f22 100%)!important;color:#f3f8ff!important}
+.draw-loader .loader-title,.draw-loader .loader-subtitle{color:#f1f8ff!important;text-shadow:0 4px 23px rgba(32,204,255,.24)}
+.draw-loader .lottery-machine{perspective:950px;filter:drop-shadow(0 35px 32px rgba(0,0,0,.55))}
+.draw-loader .lottery-drum{overflow:hidden;border:8px solid rgba(180,225,255,.74);background:radial-gradient(circle at 28% 20%,rgba(255,255,255,.35),rgba(105,204,249,.1) 31%,rgba(7,43,83,.4) 72%,rgba(4,22,44,.62) 100%);box-shadow:inset -31px -18px 48px rgba(5,13,39,.67),inset 17px 14px 36px rgba(216,248,255,.32),0 0 0 4px rgba(99,184,241,.21),0 25px 55px rgba(0,0,0,.55),0 0 50px rgba(48,169,244,.24);animation:evSphereTilt 2.2s ease-in-out infinite alternate;transform-style:preserve-3d}
+.draw-loader .lottery-drum:before{width:76%;height:76%;top:11%;left:11%;transform:none;border-radius:50%;background:radial-gradient(ellipse at 29% 18%,rgba(255,255,255,.75),rgba(255,255,255,.12) 26%,transparent 57%);box-shadow:none;z-index:8;pointer-events:none}
+.draw-loader .lottery-drum:after{width:82%;height:20%;top:78%;left:9%;transform:none;border-radius:50%;background:radial-gradient(ellipse,rgba(112,211,255,.21),transparent 72%);z-index:8;box-shadow:none;pointer-events:none}
+.draw-loader .lottery-ball{border:2px solid rgba(255,255,255,.85);box-shadow:inset -9px -11px 12px rgba(0,0,0,.31),inset 6px 7px 11px rgba(255,255,255,.72),0 12px 17px rgba(0,0,0,.4);background:radial-gradient(circle at 27% 22%,#fff 0%,var(--ball-bg) 28%,var(--ball-bg) 62%,#172e54 100%);animation:evBallFloat 1.8s ease-in-out infinite alternate;animation-delay:var(--delay);font-size:10px}
+.draw-loader .lottery-stand{border-color:#73aeda;background:linear-gradient(90deg,transparent,rgba(38,144,212,.1),transparent);box-shadow:0 10px 20px rgba(0,0,0,.3)}
+.draw-loader .lottery-handle{background:linear-gradient(180deg,#e9f7ff,#4d91cf,#122d5d);box-shadow:0 4px 16px rgba(48,185,255,.4)}
+@keyframes evSphereTilt{0%{transform:rotate(-13deg) rotateY(-17deg) scale(.97)}100%{transform:rotate(13deg) rotateY(17deg) scale(1.02)}}
+@keyframes evBallFloat{0%{transform:rotate(var(--angle)) translateX(var(--radius)) translateY(-11px) rotate(calc(-1 * var(--angle))) scale(.82)}100%{transform:rotate(calc(var(--angle) + 105deg)) translateX(var(--radius)) translateY(13px) rotate(calc(-1 * var(--angle))) scale(1.09)}}
+@media(prefers-reduced-motion:reduce){.draw-loader .lottery-drum,.draw-loader .lottery-ball{animation:none!important}}
+
     @media print {
       .draw-loader { display: none !important; }
       .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
@@ -4645,6 +4671,21 @@ function openSimpleResultInNewTab(list) {
       .formation-panel{ min-height:220px; }
       .loader-title{ font-size:34px; }
     }
+
+/* EV360: tómbola con profundidad y efectos de vidrio. Solo presentación. */
+.draw-loader{background:radial-gradient(ellipse at 50% 25%,#263e72 0%,#111f40 55%,#070f22 100%)!important;color:#f3f8ff!important}
+.draw-loader .loader-title,.draw-loader .loader-subtitle{color:#f1f8ff!important;text-shadow:0 4px 23px rgba(32,204,255,.24)}
+.draw-loader .lottery-machine{perspective:950px;filter:drop-shadow(0 35px 32px rgba(0,0,0,.55))}
+.draw-loader .lottery-drum{overflow:hidden;border:8px solid rgba(180,225,255,.74);background:radial-gradient(circle at 28% 20%,rgba(255,255,255,.35),rgba(105,204,249,.1) 31%,rgba(7,43,83,.4) 72%,rgba(4,22,44,.62) 100%);box-shadow:inset -31px -18px 48px rgba(5,13,39,.67),inset 17px 14px 36px rgba(216,248,255,.32),0 0 0 4px rgba(99,184,241,.21),0 25px 55px rgba(0,0,0,.55),0 0 50px rgba(48,169,244,.24);animation:evSphereTilt 2.2s ease-in-out infinite alternate;transform-style:preserve-3d}
+.draw-loader .lottery-drum:before{width:76%;height:76%;top:11%;left:11%;transform:none;border-radius:50%;background:radial-gradient(ellipse at 29% 18%,rgba(255,255,255,.75),rgba(255,255,255,.12) 26%,transparent 57%);box-shadow:none;z-index:8;pointer-events:none}
+.draw-loader .lottery-drum:after{width:82%;height:20%;top:78%;left:9%;transform:none;border-radius:50%;background:radial-gradient(ellipse,rgba(112,211,255,.21),transparent 72%);z-index:8;box-shadow:none;pointer-events:none}
+.draw-loader .lottery-ball{border:2px solid rgba(255,255,255,.85);box-shadow:inset -9px -11px 12px rgba(0,0,0,.31),inset 6px 7px 11px rgba(255,255,255,.72),0 12px 17px rgba(0,0,0,.4);background:radial-gradient(circle at 27% 22%,#fff 0%,var(--ball-bg) 28%,var(--ball-bg) 62%,#172e54 100%);animation:evBallFloat 1.8s ease-in-out infinite alternate;animation-delay:var(--delay);font-size:10px}
+.draw-loader .lottery-stand{border-color:#73aeda;background:linear-gradient(90deg,transparent,rgba(38,144,212,.1),transparent);box-shadow:0 10px 20px rgba(0,0,0,.3)}
+.draw-loader .lottery-handle{background:linear-gradient(180deg,#e9f7ff,#4d91cf,#122d5d);box-shadow:0 4px 16px rgba(48,185,255,.4)}
+@keyframes evSphereTilt{0%{transform:rotate(-13deg) rotateY(-17deg) scale(.97)}100%{transform:rotate(13deg) rotateY(17deg) scale(1.02)}}
+@keyframes evBallFloat{0%{transform:rotate(var(--angle)) translateX(var(--radius)) translateY(-11px) rotate(calc(-1 * var(--angle))) scale(.82)}100%{transform:rotate(calc(var(--angle) + 105deg)) translateX(var(--radius)) translateY(13px) rotate(calc(-1 * var(--angle))) scale(1.09)}}
+@media(prefers-reduced-motion:reduce){.draw-loader .lottery-drum,.draw-loader .lottery-ball{animation:none!important}}
+
     @media print {
       .draw-loader { display: none !important; }
       .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
@@ -7331,8 +7372,8 @@ function updateThemeButton() {
  const COMBAT_TEMPLATES={
   'LUCHA LIBRE':{age:'Sub 15',cats:[['55M','M',55,'Más de 45 hasta 55 kg'],['65M','M',65,'Más de 55 hasta 65 kg'],['75M','M',75,'Más de 65 hasta 75 kg'],['85M','M',85,'Más de 75 hasta 85 kg'],['45F','F',45,'Más de 40 hasta 45 kg'],['51F','F',51,'Más de 45 hasta 51 kg'],['58F','F',58,'Más de 51 hasta 58 kg'],['65F','F',65,'Más de 58 hasta 65 kg']]},
   'TAEKWONDO':{age:'Sub 14',cats:[['46M','M',46,'Hasta 46 kg'],['52M','M',52,'Más de 46 hasta 52 kg'],['58M','M',58,'Más de 52 hasta 58 kg'],['64M','M',64,'Más de 58 hasta 64 kg'],['44F','F',44,'Hasta 44 kg'],['50F','F',50,'Más de 44 hasta 50 kg'],['56F','F',56,'Más de 50 hasta 56 kg'],['62F','F',62,'Más de 56 hasta 62 kg']]},
-  'JUDO':{age:'Sub 14',cats:[['50M','M',50,'Menos de 50 kg'],['60M','M',60,'Menos de 60 kg'],['73M','M',73,'Menos de 73 kg'],['73+M','M',73,'Más de 73 kg'],['44F','F',44,'Menos de 44 kg'],['52F','F',52,'Menos de 52 kg'],['63F','F',63,'Menos de 63 kg'],['63+F','F',63,'Más de 63 kg']]},
-  'KARATE':{age:'Sub 15',cats:[['63M','M',63,'Kumite -63 kg','Kumite'],['70M','M',70,'Kumite -70 kg','Kumite'],['70+M','M',70,'Kumite +70 kg','Kumite'],['Kata M','M',0,'Kata masculino (sin peso)','Kata'],['54F','F',54,'Kumite -54 kg','Kumite'],['61F','F',61,'Kumite -61 kg','Kumite'],['61+F','F',61,'Kumite +61 kg','Kumite'],['Kata F','F',0,'Kata femenino (sin peso)','Kata']]}
+  'JUDO':{age:'Sub 14',cats:[['50M','M',50,'Menos de 50 kg'],['60M','M',60,'Menos de 60 kg'],['73M','M',73,'Menos de 73 kg'],['S73M','M',73,'Más de 73 kg'],['44F','F',44,'Menos de 44 kg'],['52F','F',52,'Menos de 52 kg'],['63F','F',63,'Menos de 63 kg'],['S63F','F',63,'Más de 63 kg']]},
+  'KARATE':{age:'Sub 15',cats:[['63M','M',63,'Kumite -63 kg','Kumite'],['70M','M',70,'Kumite -70 kg','Kumite'],['S70M','M',70,'Kumite +70 kg','Kumite'],['Kata M','M',0,'Kata masculino (sin peso)','Kata'],['54F','F',54,'Kumite -54 kg','Kumite'],['61F','F',61,'Kumite -61 kg','Kumite'],['S61F','F',61,'Kumite +61 kg','Kumite'],['Kata F','F',0,'Kata femenino (sin peso)','Kata']]}
 };
 const templateKey=name=>String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[_-]/g,' ').replace(/\s+/g,' ').trim();
 function activeTemplate(){const el=document.getElementById('disciplineSelect'),name=el?.selectedOptions?.[0]?.text||'';const k=templateKey(name);return Object.keys(COMBAT_TEMPLATES).find(t=>k===t||k.startsWith(t+' '))||''}
@@ -7340,7 +7381,13 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
  document.getElementById('capInfo').before(panel);
  document.getElementById('formatRow').insertAdjacentHTML('beforeend','<label class="pill"><input type="radio" name="format" value="multiple"> Múltiple</label>');
  const style=document.createElement('style');style.textContent='.multi-template{border:1px solid var(--ui-line,#dfe4ea);border-radius:10px;padding:12px;margin:0 0 16px;background:var(--ui-surface-2,#f8fafc)}.multi-template-title{font-weight:700;margin-bottom:6px}.multi-template-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:10px 0}.multi-template-choices label{display:flex;gap:6px;align-items:center;font-size:10pt!important;margin:0}.multi-template-choices input{width:auto}.multi-card{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-card h4{margin:0 0 8px}.multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.multi-card textarea{min-height:85px}.multi-checks{max-height:180px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.multi-checks label{font-size:12px;overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}.multi-checks input{width:auto}.multi-status{margin:8px 0;font-size:12px}.multi-result{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-result h3{margin-top:0}.multi-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.multi-zone{border:1px solid #8797ae;border-radius:6px;padding:8px;font-size:12px}.multi-zone ol{padding-left:24px}.multi-general{display:flex;gap:8px;flex-wrap:wrap}.multi-error{color:#c43b34}@media(max-width:520px){.multi-checks{grid-template-columns:1fr}}';document.head.append(style);
- async function animateMultiDraw(count){const overlay=document.createElement('div');overlay.id='multiDrawOverlay';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');overlay.innerHTML='<div class="multi-dice" aria-hidden="true">⚄ ⚅</div><strong>Realizando sorteo múltiple</strong><p>Asignando equipos a '+count+' categorías…</p>';document.body.appendChild(overlay);try{await new Promise(resolve=>setTimeout(resolve,3300))}finally{overlay.remove()}}
+ async function animateMultiDraw(count){
+ const overlay=document.createElement('div');overlay.id='multiDrawOverlay';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
+ const palette=['#facc15','#38bdf8','#4ade80','#fb7185','#a78bfa','#f97316','#2dd4bf','#f472b6','#84cc16','#60a5fa','#e879f9','#fde047'];
+ const balls=Array.from({length:19},(_,i)=>'<span class="ev3d-ball" style="--c:'+palette[i%palette.length]+';--a:'+(i*137.5)+'deg;--r:'+(47+(i%4)*15)+'px;--d:-'+(i%9)*110+'ms"></span>').join('');
+ overlay.innerHTML='<div class="ev3d-scene" aria-hidden="true"><div class="ev3d-shadow"></div><div class="ev3d-globe">'+balls+'</div></div><strong>Realizando sorteo múltiple</strong><p>Preparando '+count+' categorías…</p><div class="ev3d-counter">Los resultados se revelarán al finalizar</div>';
+ document.body.appendChild(overlay);try{await new Promise(resolve=>setTimeout(resolve,3300))}finally{overlay.remove()}
+}
  function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatModality:'',zones:4,caps:[0,0,0,0],manualCaps:false,manualZones:false,text:'',excluded:[],saved:null}}
  function balance(c){let n=0;try{n=chosen(c).length}catch(e){return;}if(!c.manualZones && n<=24)c.zones=n>=13?4:n>=7?2:1;if(c.manualCaps)return;const z=Math.max(1,Math.min(c.zones,n||1));c.caps=Array.from({length:c.zones},(_,i)=>i<z?Math.floor(n/z):0);const priority=c.zones===4?[0,2,1,3]:Array.from({length:z},(_,i)=>i);for(let i=0;i<n%z;i++)c.caps[priority[i]]++}
  function refreshCaps(i){balance(cards[i]);const z=document.querySelector('[data-multi-zones="'+i+'"]');if(z)z.value=cards[i].zones;const w=document.querySelector('[data-multi-caps="'+i+'"]');if(w)w.innerHTML=capsHTML(cards[i],i)}
