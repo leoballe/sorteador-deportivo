@@ -4883,13 +4883,23 @@ async function saveDrawToCloud(result, meta) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       userId: user.uid
     };
+    // Vínculo de sorteos múltiples: mismos registros habituales de Firebase.
+    if(meta.multipleBatchId){
+      payload.multipleBatchId=meta.multipleBatchId;
+      payload.multipleBatchIndex=meta.multipleBatchIndex;
+      payload.multipleBatchTotal=meta.multipleBatchTotal;
+      payload.multipleBatchCreatedAt=meta.multipleBatchCreatedAt;
+      payload.multipleBatchSeed=meta.multipleBatchSeed;
+    }
     
     await db.collection('users').doc(user.uid).collection('draws').add(payload);
     toast('Sorteo guardado en la nube ✓');
+    return true;
     
   } catch(e) {
     console.error('Error guardando en nube:', e);
     toast('No se pudo guardar en la nube');
+    return false;
   }
 }
 async function saveSimpleDrawToCloud(list, meta) {
@@ -7430,13 +7440,32 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
    host.textContent='Cargando sorteos múltiples...';
    multiHistoryUnsub=db.collection('users').doc(user.uid).collection('draws').orderBy('createdAt','desc').onSnapshot(snapshot=>{
      host.replaceChildren();
-     if(snapshot.empty || !snapshot.docs.some(doc=>doc.data().type==='multiple_batch')){host.textContent='Todavía no hay sorteos múltiples completos guardados en este historial. Los anteriores de la Beta 8 pueden requerir recuperación aparte.';return}
+     const groups=new Map();
      snapshot.forEach(doc=>{
-       const d=doc.data();if(d.type!=='multiple_batch')return;const data=d.batch;
-       if(!data||!Array.isArray(data.categories))return;
+       const d=doc.data();
+       if(d.type==='multiple_batch' && d.batch?.categories?.length){
+         groups.set('legacy-'+doc.id,{batch:d.batch,complete:true,date:d.createdAt?.toDate?.()});
+         return;
+       }
+       if(!d.multipleBatchId)return;
+       if(!groups.has(d.multipleBatchId))groups.set(d.multipleBatchId,{records:[],total:Number(d.multipleBatchTotal)||0});
+       const g=groups.get(d.multipleBatchId);
+       if(g.records)g.records.push(d);
+     });
+     let completeCount=0;
+     groups.forEach(group=>{
+       let data=group.batch;
+       if(!data){
+         const rec=group.records.sort((a,b)=>Number(a.multipleBatchIndex)-Number(b.multipleBatchIndex));
+         const indices=new Set(rec.map(d=>Number(d.multipleBatchIndex)));
+         if(!group.total||rec.length!==group.total||indices.size!==group.total||!Array.from({length:group.total},(_,i)=>indices.has(i)).every(Boolean))return;
+         const d=rec[0];
+         data={schema:'sorteo_multiple_v1',eventName:d.eventName||'',discipline:d.discipline||'',seed:d.multipleBatchSeed||'',createdAt:d.multipleBatchCreatedAt||'',categories:rec.map(r=>({name:r.category,gender:({Femenino:'F',Masculino:'M'})[r.gender]||'X',weight:undefined,groups:(r.groups||[]).map(z=>(z.teams||[]).map(t=>({name:t.name,province:t.province||'',head:!!t.head,seedZone:t.seedZone||null}))),caps:(r.groups||[]).map(z=>(z.teams||[]).length)}))};
+       }
+       completeCount++;
        const item=document.createElement('div');item.className='item';
        const label=document.createElement('div');label.style.marginBottom='6px';
-       const when=d.createdAt?.toDate?.()?.toLocaleString('es-AR')||data.createdAt||'';
+       const when=group.date?.toLocaleString('es-AR')||data.createdAt||'';
        label.textContent=(data.eventName||'Evento sin nombre')+' · '+(data.discipline||'Disciplina')+' · '+data.categories.length+' categorías · '+when;
        item.append(label);
        const actions=document.createElement('div');actions.className='controls';
@@ -7446,6 +7475,7 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
        addButton('Descargar PDF general',()=>exportPDF(data));
        item.append(actions);host.append(item);
      });
+     if(!completeCount)host.textContent='Todavía no hay sorteos múltiples completos guardados. Los nuevos sorteos aparecerán aquí cuando se hayan guardado todas sus categorías.';
    },err=>{host.textContent='Error de lectura del historial: '+(err.code||err.message||'desconocido')+'. Los registros individuales permanecen disponibles.';console.error('Historial múltiple:',err)});
  };
  async function saveMultiBatch(data){
@@ -7460,10 +7490,17 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
    });
  }
  async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.length);renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
-  try{await saveMultiBatch(batch);toast('Sorteo múltiple completo guardado en la nube ✓')}
-  catch(e){console.error('No se guardó el sorteo múltiple completo:',e);toast('El sorteo se realizó, pero NO se guardó el conjunto en la nube. Descargá ahora el CSV y el PDF.');}
-  // Existing cloud history stays compatible: one ordinary draw per category, all from the same batch.
-  const storedBatch=clone(batch),userId=auth.currentUser?.uid;for(const c of result){if(!userId||auth.currentUser?.uid!==userId)break;await saveDrawToCloud({groups:c.groups},{teamsCount:c.groups.flat().length,zones:c.groups.length,zoneCapacities:c.caps,format:'custom',eventName:storedBatch.eventName,pdfHeaderImage:storedBatch.pdfHeaderImage,discipline,disciplineSeed:disc.value,category:c.name,gender:{F:'Femenino',M:'Masculino',X:'No Aplica'}[c.gender],modality:document.getElementById('modalitySelect').value||''});}
+  // Los registros individuales contienen el identificador común; evitamos una escritura
+  // adicional con esquema nuevo que las reglas de seguridad podrían rechazar.
+  const storedBatch=clone(batch),userId=auth.currentUser?.uid;
+  if(!userId){toast('No hay sesión para guardar el sorteo en Firebase. Descargá el CSV general.');return;}
+  for(let i=0;i<result.length;i++){
+    const c=result[i];
+    if(auth.currentUser?.uid!==userId)throw new Error('Cambió la sesión durante el guardado.');
+    const saved=await saveDrawToCloud({groups:c.groups},{teamsCount:c.groups.flat().length,zones:c.groups.length,zoneCapacities:c.caps,format:'custom',eventName:storedBatch.eventName,pdfHeaderImage:storedBatch.pdfHeaderImage,discipline,disciplineSeed:disc.value,category:c.name,gender:{F:'Femenino',M:'Masculino',X:'No Aplica'}[c.gender],modality:document.getElementById('modalitySelect').value||'',multipleBatchId:seed,multipleBatchIndex:i,multipleBatchTotal:result.length,multipleBatchCreatedAt:storedBatch.createdAt,multipleBatchSeed:seed});
+    if(!saved)throw new Error('No se pudo guardar la categoría '+c.name+' en Firebase. El sorteo sigue disponible localmente; descargá el CSV general.');
+  }
+
  }
  document.getElementById('btnDrawGroups').addEventListener('click',e=>{if(getFormat()!=='multiple')return;e.stopImmediatePropagation();e.preventDefault();const btn=e.currentTarget;if(running)return;running=true;btn.disabled=true;run().catch(err=>{document.getElementById('status').textContent=err.message;toast(err.message)}).finally(()=>{running=false;ready()})},true);
  async function exportPDF(data){try{if(!window.jspdf?.jsPDF)throw new Error('La biblioteca de PDF todavía no está disponible. Esperá o revisá la conexión.');const pdf=buildMultiplePDF(data,window.jspdf.jsPDF);pdf.save(safeFilePart(data.eventName||'sorteo')+'_'+safeFilePart(data.discipline||'disciplina')+'_multiple.pdf')}catch(e){toast('No se pudo generar el PDF: '+e.message)}}
