@@ -1883,7 +1883,7 @@ Newell's, Santa Fe
     <button class="btn tiny primary" id="downloadSelectedCloudPDFZip" type="button">Descargar ZIP de PDFs</button>
     <button class="btn tiny warn" id="deleteSelectedCloud">Eliminar seleccionados</button>
   </div>
-<div id="cloudHistoryList" class="history"></div>
+<section id="multiCloudArchive" class="card" style="margin:12px 0"><h3>Sorteos múltiples guardados</h3><p class="tiny">Resultados completos recuperables desde Firebase. Los sorteos anteriores a esta versión pueden no tener un registro general.</p><div id="multiCloudArchiveList" class="history"><div class="tiny">Iniciá sesión para consultar el historial múltiple.</div></div></section><div id="cloudHistoryList" class="history"></div>
 </div>
 
         </div>
@@ -5097,9 +5097,11 @@ function subscribeCloudHistory() {
   }
   
   if (!user) {
+    if(window.evLoadMultiHistory) window.evLoadMultiHistory(null);
     listEl.innerHTML = '<div class="tiny">Iniciá sesión para ver tus sorteos guardados.</div>';
     return;
   }
+  if(window.evLoadMultiHistory) window.evLoadMultiHistory(user);
   
   cloudUnsub = db.collection('users').doc(user.uid)
     .collection('draws')
@@ -7418,13 +7420,55 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
  function renderResult(){const host=document.getElementById('resultGroups');host.classList.add('multi-results-host');host.innerHTML=`<h3>Sorteo múltiple · ${escapeHtml(batch.discipline)}</h3><p>${escapeHtml(batch.eventName)} · ${batch.categories.length} categorías · ${batch.categories.reduce((n,c)=>n+c.groups.flat().length,0)} equipos</p><div class="multi-general"><button class="btn primary" id="multiPDF">PDF general · 2 categorías por página</button><button class="btn" id="multiCSV">CSV general para Combate</button><button class="btn ghost" id="multiOpen">Abrir resultado completo</button></div>${batch.categories.map(categoryHTML).join('')}`;host.querySelector('#multiCSV').onclick=()=>downloadText(MultiDrawCSV.encode(batch),filename('csv'));host.querySelector('#multiPDF').onclick=()=>exportPDF(batch);host.querySelector('#multiOpen').onclick=openResult}
  function filename(ext){return safeFilePart(batch?.eventName||'sorteo')+'_'+safeFilePart(batch?.discipline||'disciplina')+'_multiple.'+ext}
  function openResult(){const win=window.open('','_blank');if(!win){toast('El navegador bloqueó la pestaña. El resultado y las descargas están disponibles debajo.');return}win.document.write('<!doctype html><html lang="es"><meta charset="utf-8"><title>Sorteo múltiple</title><style>body{font:14px system-ui;margin:24px;color:#16263b}button{padding:12px;margin:0 8px 10px 0;cursor:pointer}'+style.textContent+'</style><h1>'+escapeHtml(batch.eventName||'Sorteo múltiple')+'</h1><p>'+escapeHtml(batch.discipline)+' · '+batch.categories.length+' categorías</p><button id="pdf">PDF general</button><button id="csv">CSV general</button>'+batch.categories.map(categoryHTML).join('')+'</html>');win.document.close();const snapshot=clone(batch);win.document.getElementById('pdf').onclick=()=>exportPDF(snapshot);win.document.getElementById('csv').onclick=()=>downloadText(MultiDrawCSV.encode(snapshot),safeFilePart(snapshot.eventName||'sorteo')+'_'+safeFilePart(snapshot.discipline||'disciplina')+'_multiple.csv')}
+
+ // Historial completo separado: no altera los registros individuales existentes.
+ let multiHistoryUnsub=null;
+ window.evLoadMultiHistory=function(user){
+   if(multiHistoryUnsub){multiHistoryUnsub();multiHistoryUnsub=null}
+   const host=document.getElementById('multiCloudArchiveList');if(!host)return;
+   if(!user){host.textContent='Iniciá sesión para consultar el historial múltiple.';return}
+   host.textContent='Cargando sorteos múltiples...';
+   multiHistoryUnsub=db.collection('users').doc(user.uid).collection('multipleDraws').orderBy('createdAt','desc').onSnapshot(snapshot=>{
+     host.replaceChildren();
+     if(snapshot.empty){host.textContent='Todavía no hay sorteos múltiples completos guardados con esta versión.';return}
+     snapshot.forEach(doc=>{
+       const d=doc.data(),data=d.batch;
+       if(!data||!Array.isArray(data.categories))return;
+       const item=document.createElement('div');item.className='item';
+       const label=document.createElement('div');label.style.marginBottom='6px';
+       const when=d.createdAt?.toDate?.()?.toLocaleString('es-AR')||data.createdAt||'';
+       label.textContent=(data.eventName||'Evento sin nombre')+' · '+(data.discipline||'Disciplina')+' · '+data.categories.length+' categorías · '+when;
+       item.append(label);
+       const actions=document.createElement('div');actions.className='controls';
+       function addButton(label,fn){const b=document.createElement('button');b.type='button';b.className='btn tiny ghost';b.textContent=label;b.addEventListener('click',fn);actions.append(b)}
+       addButton('Ver resultado',()=>{batch=clone(data);store();const radio=document.querySelector('input[name="format"][value="multiple"]');if(radio){radio.checked=true;mode()}renderResult();document.getElementById('resultGroups')?.scrollIntoView({behavior:'smooth',block:'start'});});
+       addButton('Descargar CSV general',()=>downloadText(MultiDrawCSV.encode(data),safeFilePart(data.eventName||'sorteo')+'_'+safeFilePart(data.discipline||'disciplina')+'_multiple.csv'));
+       addButton('Descargar PDF general',()=>exportPDF(data));
+       item.append(actions);host.append(item);
+     });
+   },err=>{host.textContent='No se pudo cargar el historial múltiple. Revisá los permisos de Firebase.';console.error('Historial múltiple:',err)});
+ };
+ async function saveMultiBatch(data){
+   const user=auth.currentUser;
+   if(!user)throw new Error('No hay una sesión activa para guardar el sorteo múltiple.');
+   // El encabezado puede contener imágenes grandes; se conserva en navegador pero
+   // no se inserta dentro del documento Firestore (límite de 1 MiB).
+   const cloudBatch=clone(data);cloudBatch.pdfHeaderImage=null;
+   await db.collection('users').doc(user.uid).collection('multipleDraws').add({
+     batch:cloudBatch,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+     schema:'sorteo_multiple_v1',userId:user.uid
+   });
+ }
  async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.length);renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
+  try{await saveMultiBatch(batch);toast('Sorteo múltiple completo guardado en la nube ✓')}
+  catch(e){console.error('No se guardó el sorteo múltiple completo:',e);toast('El sorteo se realizó, pero NO se guardó el conjunto en la nube. Descargá ahora el CSV y el PDF.');}
   // Existing cloud history stays compatible: one ordinary draw per category, all from the same batch.
   const storedBatch=clone(batch),userId=auth.currentUser?.uid;for(const c of result){if(!userId||auth.currentUser?.uid!==userId)break;await saveDrawToCloud({groups:c.groups},{teamsCount:c.groups.flat().length,zones:c.groups.length,zoneCapacities:c.caps,format:'custom',eventName:storedBatch.eventName,pdfHeaderImage:storedBatch.pdfHeaderImage,discipline,disciplineSeed:disc.value,category:c.name,gender:{F:'Femenino',M:'Masculino',X:'No Aplica'}[c.gender],modality:document.getElementById('modalitySelect').value||''});}
  }
  document.getElementById('btnDrawGroups').addEventListener('click',e=>{if(getFormat()!=='multiple')return;e.stopImmediatePropagation();e.preventDefault();const btn=e.currentTarget;if(running)return;running=true;btn.disabled=true;run().catch(err=>{document.getElementById('status').textContent=err.message;toast(err.message)}).finally(()=>{running=false;ready()})},true);
  async function exportPDF(data){try{if(!window.jspdf?.jsPDF)throw new Error('La biblioteca de PDF todavía no está disponible. Esperá o revisá la conexión.');const pdf=buildMultiplePDF(data,window.jspdf.jsPDF);pdf.save(safeFilePart(data.eventName||'sorteo')+'_'+safeFilePart(data.discipline||'disciplina')+'_multiple.pdf')}catch(e){toast('No se pudo generar el PDF: '+e.message)}}
  auth.onAuthStateChanged(user=>{const id=user?.uid||'anon';if(id!==loadedUser){loadedUser=id;load();mode()}});
+ if(auth.currentUser)window.evLoadMultiHistory(auth.currentUser);
  window.SorteadorMultiple={get:()=>({cards:clone(cards),batch:clone(batch)}),validate,teams,run,buildPDF:buildMultiplePDF};
  load();mode();
 })();
