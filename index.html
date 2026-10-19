@@ -4977,7 +4977,7 @@ function updateSelectOptionsFromMap(select, valuesMap, defaultText) {
   }
 }
 
-function rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh() {
+function refreshCloudHistoryFilterOptions() {
   const items = Array.from(document.querySelectorAll('#cloudHistoryList .item'));
   const maps = {
     cloudFilterEvent: new Map(),
@@ -5111,7 +5111,7 @@ function subscribeCloudHistory() {
       
       if (snap.empty) {
         listEl.innerHTML = '<div class="tiny">No hay sorteos guardados aún.</div>';
-        rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh();
+        refreshCloudHistoryFilterOptions();
         applyCloudFilters();
         return;
       }
@@ -5939,7 +5939,7 @@ shareBtn.addEventListener('click', () => {
         item.appendChild(btns);
         listEl.appendChild(item);
       });
-      rfcCCMt9jxJsDqTBXGeaCrr616tdvW3emh();
+      refreshCloudHistoryFilterOptions();
       applyCloudFilters();
     }, err => {
       console.error('Error leyendo historial cloud:', err);
@@ -7428,11 +7428,11 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
    const host=document.getElementById('multiCloudArchiveList');if(!host)return;
    if(!user){host.textContent='Iniciá sesión para consultar el historial múltiple.';return}
    host.textContent='Cargando sorteos múltiples...';
-   multiHistoryUnsub=db.collection('users').doc(user.uid).collection('multipleDraws').orderBy('createdAt','desc').onSnapshot(snapshot=>{
+   multiHistoryUnsub=db.collection('users').doc(user.uid).collection('draws').orderBy('createdAt','desc').onSnapshot(snapshot=>{
      host.replaceChildren();
-     if(snapshot.empty){host.textContent='Todavía no hay sorteos múltiples completos guardados con esta versión.';return}
+     if(snapshot.empty || !snapshot.docs.some(doc=>doc.data().type==='multiple_batch')){host.textContent='Todavía no hay sorteos múltiples completos guardados en este historial. Los anteriores de la Beta 8 pueden requerir recuperación aparte.';return}
      snapshot.forEach(doc=>{
-       const d=doc.data(),data=d.batch;
+       const d=doc.data();if(d.type!=='multiple_batch')return;const data=d.batch;
        if(!data||!Array.isArray(data.categories))return;
        const item=document.createElement('div');item.className='item';
        const label=document.createElement('div');label.style.marginBottom='6px';
@@ -7446,7 +7446,7 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
        addButton('Descargar PDF general',()=>exportPDF(data));
        item.append(actions);host.append(item);
      });
-   },err=>{host.textContent='No se pudo cargar el historial múltiple. Revisá los permisos de Firebase.';console.error('Historial múltiple:',err)});
+   },err=>{host.textContent='Error de lectura del historial: '+(err.code||err.message||'desconocido')+'. Los registros individuales permanecen disponibles.';console.error('Historial múltiple:',err)});
  };
  async function saveMultiBatch(data){
    const user=auth.currentUser;
@@ -7454,8 +7454,8 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
    // El encabezado puede contener imágenes grandes; se conserva en navegador pero
    // no se inserta dentro del documento Firestore (límite de 1 MiB).
    const cloudBatch=clone(data);cloudBatch.pdfHeaderImage=null;
-   await db.collection('users').doc(user.uid).collection('multipleDraws').add({
-     batch:cloudBatch,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+   await db.collection('users').doc(user.uid).collection('draws').add({
+     type:'multiple_batch',batch:cloudBatch,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
      schema:'sorteo_multiple_v1',userId:user.uid
    });
  }
