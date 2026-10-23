@@ -6589,7 +6589,7 @@ document.getElementById('btnShare').classList.add('hidden');
 
 
   window.evShowUnifiedDrawAnimation = async function(opts = {}) {
-    const esc = (window.escapeHtml || function(s){ return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',''':'&#39;'}[ch])); });
+    const esc = (window.escapeHtml || function(s){ return String(s ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch])); });
     const labels = Array.isArray(opts.labels) ? opts.labels.filter(Boolean).map(v => String(v)) : [];
     const duration = Math.max(2800, Number(opts.duration) || 3800);
     const title = opts.title || 'Agitando el sorteo';
