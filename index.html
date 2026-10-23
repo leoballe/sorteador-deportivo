@@ -6587,6 +6587,51 @@ document.getElementById('btnCopy').classList.add('hidden');
 document.getElementById('btnShare').classList.add('hidden');
   });
 
+
+  window.evShowUnifiedDrawAnimation = async function(opts = {}) {
+    const esc = (window.escapeHtml || function(s){ return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',''':'&#39;'}[ch])); });
+    const labels = Array.isArray(opts.labels) ? opts.labels.filter(Boolean).map(v => String(v)) : [];
+    const duration = Math.max(2800, Number(opts.duration) || 3800);
+    const title = opts.title || 'Agitando el sorteo';
+    const subtitle = opts.subtitle || 'Preparando un resultado con animación 3D';
+    const counterText = opts.counterText || (labels.length ? (labels.length + ' elementos') : 'Sorteo en preparación');
+    const prev = document.getElementById('multiDrawOverlay');
+    if (prev) prev.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'multiDrawOverlay';
+    overlay.setAttribute('role','status');
+    overlay.setAttribute('aria-live','polite');
+    const sparkPalette=['#38bdf8','#facc15','#f472b6','#34d399','#a78bfa','#fb7185'];
+    const sparks=Array.from({length:24},(_,i)=>'<span class="multi-spark" style="--c:'+sparkPalette[i%sparkPalette.length]+';--x:'+(Math.round(Math.cos(i*0.9)*140))+'px;--y:'+(Math.round(Math.sin(i*1.1)*120))+'px;--d:-'+(i*0.12).toFixed(2)+'s;left:'+(50+Math.cos(i*0.7)*18)+'%;top:'+(50+Math.sin(i*0.8)*18)+'%"></span>').join('');
+    const die=(cls,pips)=>'<div class="multi-die '+cls+'">'+['front','back','right','left','top','bottom'].map(face=>'<span class="face '+face+'">'+pips+'</span>').join('')+'</div>';
+    const pips123='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span>';
+    const pips5='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span><span class="pip p4"></span><span class="pip p5"></span>';
+    const pips6='<span class="pip p2"></span><span class="pip p4"></span><span class="pip p5"></span><span class="pip p3"></span><span class="pip p6"></span><span class="pip p7"></span>';
+    overlay.innerHTML='<div class="multi-show">'
+      +'<div class="multi-visual" aria-hidden="true">'
+      +'<div class="multi-floor"></div><div class="multi-ring ring-a"></div><div class="multi-ring ring-b"></div><div class="multi-ring ring-c"></div><div class="multi-particles">'+sparks+'</div>'
+      +'<div class="multi-dice-wrap">'+die('die-a',pips5)+die('die-b',pips123)+die('die-c',pips6)+'</div>'
+      +'</div>'
+      +'<div class="multi-copy">'
+      +'<span class="multi-chip">Sorteador EV360 · animación profesional 3D</span>'
+      +'<strong>'+esc(title)+'</strong>'
+      +'<p>'+esc(subtitle)+'</p>'
+      +'<div class="multi-live-name" id="multiLiveName">'+esc(labels[0] ? labels[0] : counterText)+'</div>'
+      +'<div class="multi-progress"><span>'+esc(counterText)+'</span><div class="multi-progressbar"><span></span></div></div>'
+      +'<div class="multi-hint">Los resultados se mostrarán automáticamente al finalizar la animación.</div>'
+      +'</div></div>';
+    document.body.appendChild(overlay);
+    const live=overlay.querySelector('#multiLiveName');
+    let index=0;
+    const timer=labels.length>1?setInterval(()=>{ index=(index+1)%labels.length; if(live) live.textContent=labels[index]; },220):null;
+    try {
+      await new Promise(resolve => setTimeout(resolve, duration));
+    } finally {
+      if (timer) clearInterval(timer);
+      overlay.remove();
+    }
+  };
+
   // Sorteos
   document.getElementById('btnDrawGroups').addEventListener('click', async () => {
   const teams = getActiveTeamsLive();
@@ -6605,6 +6650,13 @@ document.getElementById('btnShare').classList.add('hidden');
     const rand = rngFromSeed(runSeed);
     const teamNames = teams.map(t => t.name);
     const list = shuffle(teamNames, rand);
+    await window.evShowUnifiedDrawAnimation({
+      labels: list,
+      title: 'Agitando el orden de paso',
+      subtitle: 'Sorteo simple · dados 3D, color y movimiento',
+      counterText: list.length + ' equipos',
+      duration: 3800
+    });
     
     // Mostrar resultado
     document.getElementById('resultGroups').innerHTML = list.map((n, i) => 
@@ -6677,6 +6729,15 @@ await saveSimpleDrawToCloud(list, meta);
     // Sorteo normal por zonas
     const z = currentZones();
     const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
+    if (!result.error) {
+      await window.evShowUnifiedDrawAnimation({
+        labels: result.groups.flat().map(t => t && t.name ? t.name : String(t || '')).filter(Boolean),
+        title: 'Armando las zonas del torneo',
+        subtitle: 'Sorteo por zonas · misma animación 3D para todo el sistema',
+        counterText: teams.length + ' equipos · ' + z + ' zonas',
+        duration: 3800
+      });
+    }
     renderGroups(document.getElementById('resultGroups'), result);
     // Mostrar botones de exportación
 document.getElementById('btnExportCSV').classList.remove('hidden');
@@ -7433,36 +7494,14 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
  document.getElementById('formatRow').insertAdjacentHTML('beforeend','<label class="pill"><input type="radio" name="format" value="multiple"> Múltiple</label>');
  const style=document.createElement('style');style.textContent='.multi-template{border:1px solid var(--ui-line,#dfe4ea);border-radius:10px;padding:12px;margin:0 0 16px;background:var(--ui-surface-2,#f8fafc)}.multi-template-title{font-weight:700;margin-bottom:6px}.multi-template-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:10px 0}.multi-template-choices label{display:flex;gap:6px;align-items:center;font-size:10pt!important;margin:0}.multi-template-choices input{width:auto}.multi-card{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-card h4{margin:0 0 8px}.multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.multi-card textarea{min-height:85px}.multi-team-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px}.multi-team-actions .btn{min-width:112px}.multi-checks{max-height:180px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.multi-checks label{font-size:12px;overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}.multi-checks input{width:auto}.multi-status{margin:8px 0;font-size:12px}.multi-result{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-result h3{margin-top:0}.multi-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.multi-zone{border:1px solid #8797ae;border-radius:6px;padding:8px;font-size:12px}.multi-zone ol{padding-left:24px}.multi-general{display:flex;gap:8px;flex-wrap:wrap}.multi-error{color:#c43b34}@media(max-width:520px){.multi-checks{grid-template-columns:1fr}}';document.head.append(style);
  async function animateMultiDraw(items){
- const labels=Array.isArray(items)?items.filter(Boolean):[];
- const count=labels.length||Number(items)||0;
- const overlay=document.createElement('div');
- overlay.id='multiDrawOverlay';
- overlay.setAttribute('role','status');
- overlay.setAttribute('aria-live','polite');
- const sparkPalette=['#38bdf8','#facc15','#f472b6','#34d399','#a78bfa','#fb7185'];
- const sparks=Array.from({length:24},(_,i)=>'<span class="multi-spark" style="--c:'+sparkPalette[i%sparkPalette.length]+';--x:'+(Math.round(Math.cos(i*0.9)*140))+'px;--y:'+(Math.round(Math.sin(i*1.1)*120))+'px;--d:-'+(i*0.12).toFixed(2)+'s;left:'+(50+Math.cos(i*0.7)*18)+'%;top:'+(50+Math.sin(i*0.8)*18)+'%"></span>').join('');
- const die=(cls,pips)=>'<div class="multi-die '+cls+'">'+['front','back','right','left','top','bottom'].map(face=>'<span class="face '+face+'">'+pips+'</span>').join('')+'</div>';
- const pips123='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span>';
- const pips5='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span><span class="pip p4"></span><span class="pip p5"></span>';
- const pips6='<span class="pip p2"></span><span class="pip p4"></span><span class="pip p5"></span><span class="pip p3"></span><span class="pip p6"></span><span class="pip p7"></span>';
- overlay.innerHTML='<div class="multi-show">'
-   +'<div class="multi-visual" aria-hidden="true">'
-   +'<div class="multi-floor"></div><div class="multi-ring ring-a"></div><div class="multi-ring ring-b"></div><div class="multi-ring ring-c"></div><div class="multi-particles">'+sparks+'</div>'
-   +'<div class="multi-dice-wrap">'+die('die-a',pips5)+die('die-b',pips123)+die('die-c',pips6)+'</div>'
-   +'</div>'
-   +'<div class="multi-copy">'
-   +'<span class="multi-chip">Sorteador EV360 · animación unificada</span>'
-   +'<strong>Mezclando categorías y agitando los dados</strong>'
-   +'<p>Estamos realizando el sorteo múltiple con la misma estética visual del resto del sorteador, ahora con más color, profundidad y movimiento.</p>'
-   +'<div class="multi-live-name" id="multiLiveName">'+(labels[0] ? escapeHtml(labels[0]) : (count ? ('Preparando '+count+' categorías…') : 'Preparando sorteo…'))+'</div>'
-   +'<div class="multi-progress"><span>'+(count?count+' categorías':'Sorteo múltiple')+'</span><div class="multi-progressbar"><span></span></div></div>'
-   +'<div class="multi-hint">Los resultados se revelarán automáticamente al finalizar la animación.</div>'
-   +'</div></div>';
- document.body.appendChild(overlay);
- const live=overlay.querySelector('#multiLiveName');
- let index=0;
- const timer=labels.length>1?setInterval(()=>{index=(index+1)%labels.length; if(live) live.textContent=labels[index];},240):null;
- try{await new Promise(resolve=>setTimeout(resolve,3800));}finally{if(timer)clearInterval(timer); overlay.remove();}
+ const labels = Array.isArray(items) ? items.filter(Boolean) : [];
+ return window.evShowUnifiedDrawAnimation({
+   labels,
+   title: 'Mezclando categorías y armando el sorteo completo',
+   subtitle: 'Sorteo múltiple · misma animación 3D, más color y presencia visual',
+   counterText: (labels.length || Number(items) || 0) + ' categorías',
+   duration: 3800
+ });
 }
 function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatModality:'',zones:4,caps:[0,0,0,0],manualCaps:false,manualZones:false,text:'',excluded:[],saved:null}}
  function balance(c){let n=0;try{n=chosen(c).length}catch(e){return;}if(!c.manualZones && n<=24)c.zones=n>=13?4:n>=7?2:1;if(c.manualCaps)return;const z=Math.max(1,Math.min(c.zones,n||1));c.caps=Array.from({length:c.zones},(_,i)=>i<z?Math.floor(n/z):0);const priority=c.zones===4?[0,2,1,3]:Array.from({length:z},(_,i)=>i);for(let i=0;i<n%z;i++)c.caps[priority[i]]++}
