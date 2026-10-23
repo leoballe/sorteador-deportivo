@@ -1558,59 +1558,20 @@
 #resultGroups.multi-results-host .multi-zone ol{padding-left:21px;margin:5px 0}
 #resultGroups.multi-results-host .multi-zone li{font-size:11px!important;margin:2px 0}
 #resultGroups.multi-results-host h3{margin:4px 0}
-#multiDrawOverlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(47,96,203,.95) 0%,rgba(17,35,78,.97) 32%,rgba(7,13,32,.99) 72%,#040812 100%)}
+#multiDrawOverlay{position:fixed;inset:0;background:rgba(7,17,40,.94);z-index:999999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;gap:22px;text-align:center}
 #multiDrawOverlay[hidden]{display:none!important}
-#multiDrawOverlay::before,#multiDrawOverlay::after{content:'';position:absolute;border-radius:50%;pointer-events:none;filter:blur(10px);opacity:.7}
-#multiDrawOverlay::before{width:48vw;height:48vw;min-width:300px;min-height:300px;left:-10vw;top:-16vw;background:radial-gradient(circle,rgba(56,189,248,.22),transparent 62%)}
-#multiDrawOverlay::after{width:44vw;height:44vw;min-width:260px;min-height:260px;right:-10vw;bottom:-12vw;background:radial-gradient(circle,rgba(244,114,182,.18),transparent 64%)}
-#multiDrawOverlay .multi-show{position:relative;z-index:2;width:min(880px,100%);display:grid;grid-template-columns:minmax(300px,420px) minmax(280px,1fr);gap:28px;align-items:center}
-#multiDrawOverlay .multi-visual{position:relative;min-height:360px;display:grid;place-items:center;perspective:1200px}
-#multiDrawOverlay .multi-floor{position:absolute;bottom:32px;width:280px;height:34px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.6),rgba(0,0,0,.08) 72%,transparent 76%);filter:blur(10px)}
-#multiDrawOverlay .multi-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 28px rgba(64,192,255,.25), inset 0 0 26px rgba(255,255,255,.08)}
-#multiDrawOverlay .multi-ring.ring-a{width:320px;height:320px;animation:multiPulse 2.1s ease-in-out infinite}
-#multiDrawOverlay .multi-ring.ring-b{width:250px;height:250px;transform:rotateX(72deg);border-color:rgba(253,224,71,.28);animation:multiSpinHalo 2.4s linear infinite}
-#multiDrawOverlay .multi-ring.ring-c{width:290px;height:290px;transform:rotateY(70deg);border-color:rgba(244,114,182,.25);animation:multiSpinHalo 3.1s linear infinite reverse}
-#multiDrawOverlay .multi-particles{position:absolute;inset:0}
-#multiDrawOverlay .multi-spark{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle,#fff 0%,var(--c) 45%,transparent 72%);box-shadow:0 0 14px var(--c);animation:multiSpark 1.8s linear infinite;animation-delay:var(--d)}
-#multiDrawOverlay .multi-dice-wrap{position:relative;width:250px;height:250px;transform-style:preserve-3d;animation:multiGroupFloat 2.6s ease-in-out infinite}
-#multiDrawOverlay .multi-die{position:absolute;width:90px;height:90px;transform-style:preserve-3d;filter:drop-shadow(0 18px 28px rgba(0,0,0,.42));animation:multiDieRoll 1.4s cubic-bezier(.4,.05,.2,1) infinite}
-#multiDrawOverlay .multi-die.die-a{left:18px;top:78px;animation-delay:-.1s}
-#multiDrawOverlay .multi-die.die-b{left:105px;top:38px;animation-delay:-.48s}
-#multiDrawOverlay .multi-die.die-c{left:118px;top:138px;animation-delay:-.82s}
-#multiDrawOverlay .face{position:absolute;inset:0;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(214,235,255,.92));border:2px solid rgba(255,255,255,.52);box-shadow:inset 10px 10px 24px rgba(255,255,255,.5),inset -12px -12px 26px rgba(31,69,132,.18),0 0 18px rgba(69,196,255,.24)}
-#multiDrawOverlay .face::before{content:'';position:absolute;inset:8px;border-radius:16px;background:linear-gradient(145deg,var(--tone1),var(--tone2));opacity:.95}
-#multiDrawOverlay .die-a .face::before{--tone1:#2dd4bf;--tone2:#2563eb}
-#multiDrawOverlay .die-b .face::before{--tone1:#f472b6;--tone2:#8b5cf6}
-#multiDrawOverlay .die-c .face::before{--tone1:#facc15;--tone2:#f97316}
-#multiDrawOverlay .front{transform:translateZ(45px)}
-#multiDrawOverlay .back{transform:rotateY(180deg) translateZ(45px)}
-#multiDrawOverlay .right{transform:rotateY(90deg) translateZ(45px)}
-#multiDrawOverlay .left{transform:rotateY(-90deg) translateZ(45px)}
-#multiDrawOverlay .top{transform:rotateX(90deg) translateZ(45px)}
-#multiDrawOverlay .bottom{transform:rotateX(-90deg) translateZ(45px)}
-#multiDrawOverlay .pip{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.72)}
-#multiDrawOverlay .p1{left:calc(50% - 7px);top:calc(50% - 7px)}
-#multiDrawOverlay .p2{left:18px;top:18px}#multiDrawOverlay .p3{right:18px;bottom:18px}
-#multiDrawOverlay .p4{right:18px;top:18px}#multiDrawOverlay .p5{left:18px;bottom:18px}
-#multiDrawOverlay .p6{left:18px;top:calc(50% - 7px)}#multiDrawOverlay .p7{right:18px;top:calc(50% - 7px)}
-#multiDrawOverlay .multi-copy{position:relative;z-index:2;display:flex;flex-direction:column;gap:12px}
-#multiDrawOverlay .multi-chip{display:inline-flex;align-self:flex-start;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 24px rgba(0,0,0,.18);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#bfeaff}
-#multiDrawOverlay strong{display:block;font-size:30px!important;line-height:1.04;letter-spacing:-.02em;text-shadow:0 6px 24px rgba(0,0,0,.35)}
-#multiDrawOverlay p{margin:0;font-size:15px!important;color:#d9e8ff;line-height:1.45}
-#multiDrawOverlay .multi-live-name{min-height:26px;font-size:19px!important;font-weight:800;color:#fff3a3;text-shadow:0 0 18px rgba(253,224,71,.35)}
-#multiDrawOverlay .multi-progress{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#95d7ff;font-size:13px!important}
-#multiDrawOverlay .multi-progressbar{position:relative;height:10px;flex:1;min-width:220px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18)}
-#multiDrawOverlay .multi-progressbar span{position:absolute;inset:0 auto 0 0;width:0;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#34d399,#facc15,#f472b6);background-size:220% 100%;animation:multiBar 1.1s linear infinite, multiLoad 3.8s linear forwards;box-shadow:0 0 20px rgba(56,189,248,.55)}
-#multiDrawOverlay .multi-hint{font-size:13px!important;color:#bcd0ee;opacity:.95}
-@keyframes multiDieRoll{0%{transform:translateZ(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg)}25%{transform:translate3d(-4px,-9px,20px) rotateX(180deg) rotateY(140deg) rotateZ(40deg)}50%{transform:translate3d(6px,4px,48px) rotateX(300deg) rotateY(260deg) rotateZ(120deg)}75%{transform:translate3d(-3px,-6px,24px) rotateX(430deg) rotateY(390deg) rotateZ(210deg)}100%{transform:translateZ(0) rotateX(540deg) rotateY(540deg) rotateZ(360deg)}}
-@keyframes multiGroupFloat{0%,100%{transform:translateY(0) rotateX(-12deg) rotateY(-12deg)}50%{transform:translateY(-8px) rotateX(8deg) rotateY(12deg)}}
-@keyframes multiSpinHalo{from{transform:rotateX(72deg) rotateZ(0deg)}to{transform:rotateX(72deg) rotateZ(360deg)}}
-@keyframes multiPulse{0%,100%{transform:scale(.96);opacity:.68}50%{transform:scale(1.04);opacity:1}}
-@keyframes multiSpark{0%{transform:translate3d(0,0,0) scale(.3);opacity:0}20%{opacity:1}100%{transform:translate3d(var(--x),var(--y),0) scale(1.15);opacity:0}}
-@keyframes multiBar{from{background-position:0% 0}to{background-position:220% 0}}
-@keyframes multiLoad{from{width:0}to{width:100%}}
-@media(prefers-reduced-motion:reduce){#multiDrawOverlay .multi-die,#multiDrawOverlay .multi-ring,#multiDrawOverlay .multi-spark,#multiDrawOverlay .multi-dice-wrap,#multiDrawOverlay .multi-progressbar span{animation:none!important}#multiDrawOverlay .multi-progressbar span{width:100%!important}}
-@media(max-width:760px){#multiDrawOverlay .multi-show{grid-template-columns:1fr;gap:16px;text-align:center}#multiDrawOverlay .multi-copy{align-items:center}#multiDrawOverlay .multi-chip{align-self:center}#multiDrawOverlay .multi-visual{min-height:280px}#multiDrawOverlay strong{font-size:24px!important}#multiDrawOverlay .multi-live-name{font-size:17px!important}#multiDrawOverlay .multi-progress{justify-content:center}#multiDrawOverlay .multi-progressbar{min-width:180px}}
+#multiDrawOverlay .multi-dice{font-size:110px;line-height:1;animation:multi-roll .24s infinite alternate ease-in-out;filter:drop-shadow(0 15px 25px rgba(0,0,0,.4))}
+#multiDrawOverlay strong{font-size:23px}#multiDrawOverlay p{font-size:15px}
+#multiDrawOverlay{background:radial-gradient(ellipse at 50% 30%,#244578 0%,#0b1938 60%,#040a1a 100%);gap:10px;padding:20px;overflow:hidden}
+#multiDrawOverlay .ev3d-scene{width:min(380px,90vw);height:330px;display:grid;place-items:center;perspective:900px;position:relative}
+#multiDrawOverlay .ev3d-shadow{position:absolute;bottom:20px;width:250px;height:35px;background:rgba(0,0,0,.6);filter:blur(18px);border-radius:50%}
+#multiDrawOverlay .ev3d-globe{width:278px;height:278px;position:relative;border-radius:50%;border:7px solid rgba(196,236,255,.72);background:radial-gradient(circle at 28% 23%,rgba(248,255,255,.48),rgba(43,160,222,.14) 33%,rgba(7,36,83,.64) 88%);box-shadow:inset 19px 13px 27px rgba(255,255,255,.22),inset -25px -30px 36px rgba(0,8,29,.73),0 25px 45px rgba(0,0,0,.52),0 0 45px rgba(53,175,241,.34);overflow:hidden;animation:ev3dSpin 2.1s ease-in-out infinite alternate;transform-style:preserve-3d}
+#multiDrawOverlay .ev3d-globe::after{content:'';position:absolute;inset:9px;border-radius:50%;background:radial-gradient(ellipse at 30% 14%,rgba(255,255,255,.73),transparent 42%);pointer-events:none;z-index:5}
+#multiDrawOverlay .ev3d-ball{position:absolute;top:calc(50% - 24px);left:calc(50% - 24px);width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 26% 23%,#fff,var(--c) 31%,var(--c) 61%,#12244d);border:2px solid rgba(255,255,255,.77);box-shadow:inset -7px -10px 10px rgba(0,0,0,.31),0 12px 15px rgba(0,0,0,.32);animation:ev3dOrbit 1.6s ease-in-out infinite alternate;animation-delay:var(--d);transform:rotate(var(--a)) translateX(var(--r))}
+#multiDrawOverlay strong{font-size:22px!important}#multiDrawOverlay p{font-size:14px!important;color:#c4d6ee}#multiDrawOverlay .ev3d-counter{font-size:13px!important;color:#85d9fc}
+@keyframes ev3dSpin{from{transform:rotate(-16deg) rotateY(-16deg) scale(.97)}to{transform:rotate(16deg) rotateY(16deg) scale(1.02)}}
+@keyframes ev3dOrbit{from{transform:rotate(var(--a)) translateX(var(--r)) translateY(-13px) scale(.82)}to{transform:rotate(calc(var(--a) + 117deg)) translateX(var(--r)) translateY(10px) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){#multiDrawOverlay .ev3d-globe,#multiDrawOverlay .ev3d-ball{animation:none!important}}
 
 @keyframes multi-roll{0%{transform:rotate(-30deg) scale(.86)}100%{transform:rotate(35deg) scale(1.13)}}
 @media(max-width:900px){#appSection:has(#multiplePanel:not(.hidden)) .row>.card:first-child{position:static;max-height:none;overflow:visible}#appSection:has(#multiplePanel:not(.hidden)) .row{grid-template-columns:1fr!important}#resultGroups.multi-results-host .multi-zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -6587,51 +6548,6 @@ document.getElementById('btnCopy').classList.add('hidden');
 document.getElementById('btnShare').classList.add('hidden');
   });
 
-
-  window.evShowUnifiedDrawAnimation = async function(opts = {}) {
-    const esc = (window.escapeHtml || function(s){ return String(s ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch])); });
-    const labels = Array.isArray(opts.labels) ? opts.labels.filter(Boolean).map(v => String(v)) : [];
-    const duration = Math.max(2800, Number(opts.duration) || 3800);
-    const title = opts.title || 'Agitando el sorteo';
-    const subtitle = opts.subtitle || 'Preparando un resultado con animación 3D';
-    const counterText = opts.counterText || (labels.length ? (labels.length + ' elementos') : 'Sorteo en preparación');
-    const prev = document.getElementById('multiDrawOverlay');
-    if (prev) prev.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'multiDrawOverlay';
-    overlay.setAttribute('role','status');
-    overlay.setAttribute('aria-live','polite');
-    const sparkPalette=['#38bdf8','#facc15','#f472b6','#34d399','#a78bfa','#fb7185'];
-    const sparks=Array.from({length:24},(_,i)=>'<span class="multi-spark" style="--c:'+sparkPalette[i%sparkPalette.length]+';--x:'+(Math.round(Math.cos(i*0.9)*140))+'px;--y:'+(Math.round(Math.sin(i*1.1)*120))+'px;--d:-'+(i*0.12).toFixed(2)+'s;left:'+(50+Math.cos(i*0.7)*18)+'%;top:'+(50+Math.sin(i*0.8)*18)+'%"></span>').join('');
-    const die=(cls,pips)=>'<div class="multi-die '+cls+'">'+['front','back','right','left','top','bottom'].map(face=>'<span class="face '+face+'">'+pips+'</span>').join('')+'</div>';
-    const pips123='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span>';
-    const pips5='<span class="pip p1"></span><span class="pip p2"></span><span class="pip p3"></span><span class="pip p4"></span><span class="pip p5"></span>';
-    const pips6='<span class="pip p2"></span><span class="pip p4"></span><span class="pip p5"></span><span class="pip p3"></span><span class="pip p6"></span><span class="pip p7"></span>';
-    overlay.innerHTML='<div class="multi-show">'
-      +'<div class="multi-visual" aria-hidden="true">'
-      +'<div class="multi-floor"></div><div class="multi-ring ring-a"></div><div class="multi-ring ring-b"></div><div class="multi-ring ring-c"></div><div class="multi-particles">'+sparks+'</div>'
-      +'<div class="multi-dice-wrap">'+die('die-a',pips5)+die('die-b',pips123)+die('die-c',pips6)+'</div>'
-      +'</div>'
-      +'<div class="multi-copy">'
-      +'<span class="multi-chip">Sorteador EV360 · animación profesional 3D</span>'
-      +'<strong>'+esc(title)+'</strong>'
-      +'<p>'+esc(subtitle)+'</p>'
-      +'<div class="multi-live-name" id="multiLiveName">'+esc(labels[0] ? labels[0] : counterText)+'</div>'
-      +'<div class="multi-progress"><span>'+esc(counterText)+'</span><div class="multi-progressbar"><span></span></div></div>'
-      +'<div class="multi-hint">Los resultados se mostrarán automáticamente al finalizar la animación.</div>'
-      +'</div></div>';
-    document.body.appendChild(overlay);
-    const live=overlay.querySelector('#multiLiveName');
-    let index=0;
-    const timer=labels.length>1?setInterval(()=>{ index=(index+1)%labels.length; if(live) live.textContent=labels[index]; },220):null;
-    try {
-      await new Promise(resolve => setTimeout(resolve, duration));
-    } finally {
-      if (timer) clearInterval(timer);
-      overlay.remove();
-    }
-  };
-
   // Sorteos
   document.getElementById('btnDrawGroups').addEventListener('click', async () => {
   const teams = getActiveTeamsLive();
@@ -6650,13 +6566,6 @@ document.getElementById('btnShare').classList.add('hidden');
     const rand = rngFromSeed(runSeed);
     const teamNames = teams.map(t => t.name);
     const list = shuffle(teamNames, rand);
-    await window.evShowUnifiedDrawAnimation({
-      labels: list,
-      title: 'Agitando el orden de paso',
-      subtitle: 'Sorteo simple · dados 3D, color y movimiento',
-      counterText: list.length + ' equipos',
-      duration: 3800
-    });
     
     // Mostrar resultado
     document.getElementById('resultGroups').innerHTML = list.map((n, i) => 
@@ -6729,15 +6638,6 @@ await saveSimpleDrawToCloud(list, meta);
     // Sorteo normal por zonas
     const z = currentZones();
     const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
-    if (!result.error) {
-      await window.evShowUnifiedDrawAnimation({
-        labels: result.groups.flat().map(t => t && t.name ? t.name : String(t || '')).filter(Boolean),
-        title: 'Armando las zonas del torneo',
-        subtitle: 'Sorteo por zonas · misma animación 3D para todo el sistema',
-        counterText: teams.length + ' equipos · ' + z + ' zonas',
-        duration: 3800
-      });
-    }
     renderGroups(document.getElementById('resultGroups'), result);
     // Mostrar botones de exportación
 document.getElementById('btnExportCSV').classList.remove('hidden');
@@ -7493,17 +7393,14 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
  document.getElementById('capInfo').before(panel);
  document.getElementById('formatRow').insertAdjacentHTML('beforeend','<label class="pill"><input type="radio" name="format" value="multiple"> Múltiple</label>');
  const style=document.createElement('style');style.textContent='.multi-template{border:1px solid var(--ui-line,#dfe4ea);border-radius:10px;padding:12px;margin:0 0 16px;background:var(--ui-surface-2,#f8fafc)}.multi-template-title{font-weight:700;margin-bottom:6px}.multi-template-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:10px 0}.multi-template-choices label{display:flex;gap:6px;align-items:center;font-size:10pt!important;margin:0}.multi-template-choices input{width:auto}.multi-card{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-card h4{margin:0 0 8px}.multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.multi-card textarea{min-height:85px}.multi-team-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px}.multi-team-actions .btn{min-width:112px}.multi-checks{max-height:180px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.multi-checks label{font-size:12px;overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}.multi-checks input{width:auto}.multi-status{margin:8px 0;font-size:12px}.multi-result{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-result h3{margin-top:0}.multi-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.multi-zone{border:1px solid #8797ae;border-radius:6px;padding:8px;font-size:12px}.multi-zone ol{padding-left:24px}.multi-general{display:flex;gap:8px;flex-wrap:wrap}.multi-error{color:#c43b34}@media(max-width:520px){.multi-checks{grid-template-columns:1fr}}';document.head.append(style);
- async function animateMultiDraw(items){
- const labels = Array.isArray(items) ? items.filter(Boolean) : [];
- return window.evShowUnifiedDrawAnimation({
-   labels,
-   title: 'Mezclando categorías y armando el sorteo completo',
-   subtitle: 'Sorteo múltiple · misma animación 3D, más color y presencia visual',
-   counterText: (labels.length || Number(items) || 0) + ' categorías',
-   duration: 3800
- });
+ async function animateMultiDraw(count){
+ const overlay=document.createElement('div');overlay.id='multiDrawOverlay';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
+ const palette=['#facc15','#38bdf8','#4ade80','#fb7185','#a78bfa','#f97316','#2dd4bf','#f472b6','#84cc16','#60a5fa','#e879f9','#fde047'];
+ const balls=Array.from({length:19},(_,i)=>'<span class="ev3d-ball" style="--c:'+palette[i%palette.length]+';--a:'+(i*137.5)+'deg;--r:'+(47+(i%4)*15)+'px;--d:-'+(i%9)*110+'ms"></span>').join('');
+ overlay.innerHTML='<div class="ev3d-scene" aria-hidden="true"><div class="ev3d-shadow"></div><div class="ev3d-globe">'+balls+'</div></div><strong>Realizando sorteo múltiple</strong><p>Preparando '+count+' categorías…</p><div class="ev3d-counter">Los resultados se revelarán al finalizar</div>';
+ document.body.appendChild(overlay);try{await new Promise(resolve=>setTimeout(resolve,3300))}finally{overlay.remove()}
 }
-function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatModality:'',zones:4,caps:[0,0,0,0],manualCaps:false,manualZones:false,text:'',excluded:[],saved:null}}
+ function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatModality:'',zones:4,caps:[0,0,0,0],manualCaps:false,manualZones:false,text:'',excluded:[],saved:null}}
  function balance(c){let n=0;try{n=chosen(c).length}catch(e){return;}if(!c.manualZones && n<=24)c.zones=n>=13?4:n>=7?2:1;if(c.manualCaps)return;const z=Math.max(1,Math.min(c.zones,n||1));c.caps=Array.from({length:c.zones},(_,i)=>i<z?Math.floor(n/z):0);const priority=c.zones===4?[0,2,1,3]:Array.from({length:z},(_,i)=>i);for(let i=0;i<n%z;i++)c.caps[priority[i]]++}
  function refreshCaps(i){balance(cards[i]);const z=document.querySelector('[data-multi-zones="'+i+'"]');if(z)z.value=cards[i].zones;const w=document.querySelector('[data-multi-caps="'+i+'"]');if(w)w.innerHTML=capsHTML(cards[i],i)}
  function sk(){return 'sorteador_multiple_v1_'+(auth.currentUser?.uid||'anon')}
@@ -7592,7 +7489,7 @@ function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatMo
      schema:'sorteo_multiple_v1',userId:user.uid
    });
  }
- async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.map(c=>c.name));renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
+ async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.length);renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
   // Los registros individuales contienen el identificador común; evitamos una escritura
   // adicional con esquema nuevo que las reglas de seguridad podrían rechazar.
   const storedBatch=clone(batch),userId=auth.currentUser?.uid;
