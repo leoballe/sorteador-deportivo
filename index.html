@@ -1577,6 +1577,63 @@
 @media(max-width:900px){#appSection:has(#multiplePanel:not(.hidden)) .row>.card:first-child{position:static;max-height:none;overflow:visible}#appSection:has(#multiplePanel:not(.hidden)) .row{grid-template-columns:1fr!important}#resultGroups.multi-results-host .multi-zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){#multiplePanel .multi-checks{grid-template-columns:repeat(3,minmax(0,1fr))}#resultGroups.multi-results-host .multi-zones{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+<style id="ev-unified-animation-style">
+#evShowOverlay{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#192f6d 0%,#0b1638 48%,#040817 100%);color:#fff;font-family:Arial,Helvetica,sans-serif;isolation:isolate}
+#evShowOverlay *{box-sizing:border-box}
+#evShowOverlay:before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 0deg,transparent 0deg,rgba(40,190,255,.12) 28deg,transparent 57deg,rgba(247,72,180,.13) 90deg,transparent 125deg,rgba(254,222,71,.1) 175deg,transparent 230deg,rgba(42,232,182,.1) 280deg,transparent 330deg);filter:blur(25px);animation:evBackSpin 9s linear infinite}
+#evShowOverlay .ev-stage{position:relative;width:min(940px,96vw);min-height:min(600px,91vh);display:grid;grid-template-rows:auto 1fr auto;place-items:center;padding:28px 15px 32px}
+#evShowOverlay .ev-top{position:relative;z-index:5;text-align:center}
+#evShowOverlay .ev-kicker{display:inline-block;font-size:12px!important;letter-spacing:.25em;color:#94e5f2;font-weight:700;text-transform:uppercase;margin-bottom:8px}
+#evShowOverlay .ev-head{margin:0;font-size:clamp(24px,3.5vw,38px)!important;line-height:1.12;color:#fff!important;letter-spacing:.025em;font-weight:900;text-shadow:0 7px 22px rgba(0,0,0,.5)}
+#evShowOverlay .ev-meta{font-size:15px!important;color:#cbdafc;margin:10px 0 0}
+#evShowOverlay .ev-arena{position:relative;width:min(660px,93vw);height:340px;perspective:1000px;display:grid;place-items:center;transform-style:preserve-3d}
+#evShowOverlay .ev-aura{position:absolute;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle,rgba(67,190,255,.24) 0%,rgba(67,190,255,.07) 43%,transparent 70%);filter:blur(9px);animation:evAura 1.3s ease-in-out infinite alternate}
+#evShowOverlay .ev-orbit{position:absolute;width:400px;height:190px;border-radius:50%;border:2px solid rgba(145,225,255,.4);box-shadow:0 0 18px rgba(50,180,255,.24),inset 0 0 12px rgba(255,255,255,.1);transform:rotate(-24deg) rotateX(65deg);animation:evOrbit 2.1s linear infinite}
+#evShowOverlay .ev-orbit.two{width:370px;height:210px;transform:rotate(47deg) rotateX(67deg);border-color:rgba(255,196,58,.39);animation-duration:2.6s;animation-direction:reverse}
+#evShowOverlay .ev-orbit.three{width:290px;height:180px;transform:rotate(-69deg) rotateX(65deg);border-color:rgba(250,117,196,.35);animation-duration:3.2s}
+#evShowOverlay .ev-shade{position:absolute;bottom:26px;width:310px;height:45px;border-radius:50%;background:#000;filter:blur(26px);opacity:.56}
+#evShowOverlay .ev-cube{--unit:92px;position:absolute;width:var(--unit);height:var(--unit);transform-style:preserve-3d;filter:drop-shadow(0 16px 18px rgba(0,0,0,.46));animation:evCubeFlight 1.2s linear infinite}
+#evShowOverlay .ev-cube.c1{left:calc(50% - 144px);top:111px;--base:#06c9f6;--shadow:#0d5bd7;--tone:#a9f8ff;animation-delay:-.19s}
+#evShowOverlay .ev-cube.c2{left:calc(50% - 26px);top:75px;--base:#f75bb1;--shadow:#7a36d9;--tone:#ffc1e9;animation-delay:-.62s}
+#evShowOverlay .ev-cube.c3{left:calc(50% + 76px);top:129px;--base:#ffcf48;--shadow:#ee6b2b;--tone:#fff0a1;animation-delay:-.94s}
+#evShowOverlay .ev-face{position:absolute;inset:0;border:2px solid rgba(255,255,255,.57);border-radius:17px;background:linear-gradient(145deg,var(--tone),var(--base) 53%,var(--shadow));box-shadow:inset 5px 6px 16px rgba(255,255,255,.3),inset -7px -9px 17px rgba(2,9,40,.25),0 0 15px rgba(255,255,255,.14);display:grid;place-items:center;backface-visibility:visible}
+#evShowOverlay .ev-face.f{transform:translateZ(46px)}#evShowOverlay .ev-face.b{transform:rotateY(180deg) translateZ(46px)}#evShowOverlay .ev-face.r{transform:rotateY(90deg) translateZ(46px)}#evShowOverlay .ev-face.l{transform:rotateY(-90deg) translateZ(46px)}#evShowOverlay .ev-face.t{transform:rotateX(90deg) translateZ(46px)}#evShowOverlay .ev-face.d{transform:rotateX(-90deg) translateZ(46px)}
+#evShowOverlay .ev-pips{width:64px;height:64px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px}
+#evShowOverlay .ev-pip{width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.25),0 0 10px rgba(255,255,255,.6);align-self:center;justify-self:center}
+#evShowOverlay .ev-spark{position:absolute;left:var(--x);top:var(--y);height:var(--s);width:var(--s);border-radius:50%;background:var(--c);box-shadow:0 0 12px var(--c),0 0 24px var(--c);opacity:0;animation:evSparkFlight var(--dur) ease-out infinite;animation-delay:var(--delay)}
+#evShowOverlay .ev-footer{width:min(590px,93vw);text-align:center;position:relative;z-index:5}
+#evShowOverlay .ev-current{color:#fdeb92;font-size:21px!important;font-weight:900;min-height:28px;text-shadow:0 0 19px rgba(255,194,59,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#evShowOverlay .ev-bar{height:9px;margin:14px auto 10px;border-radius:20px;background:rgba(255,255,255,.15);overflow:hidden;border:1px solid rgba(255,255,255,.23)}
+#evShowOverlay .ev-bar >span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#10dffa,#ad6dff,#ff67c5,#f7db4a);box-shadow:0 0 18px #58dcff;animation:evBarFill 3.7s linear forwards}
+#evShowOverlay .ev-footnote{color:#bfcbec;font-size:12px!important;letter-spacing:.07em}
+@keyframes evCubeFlight{0%{transform:translate3d(0,4px,0) rotateX(0) rotateY(0) rotateZ(0)}25%{transform:translate3d(-7px,-13px,33px) rotateX(157deg) rotateY(133deg) rotateZ(65deg)}50%{transform:translate3d(13px,8px,65px) rotateX(300deg) rotateY(270deg) rotateZ(115deg)}75%{transform:translate3d(-7px,-12px,31px) rotateX(467deg) rotateY(420deg) rotateZ(237deg)}100%{transform:translate3d(0,4px,0) rotateX(720deg) rotateY(720deg) rotateZ(360deg)}}
+@keyframes evSparkFlight{0%{opacity:0;transform:translateY(20px) scale(.1)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
+@keyframes evOrbit{from{rotate:0deg}to{rotate:360deg}}@keyframes evAura{to{transform:scale(1.18);opacity:.75}}@keyframes evBackSpin{to{transform:rotate(360deg)}}@keyframes evBarFill{to{width:100%}}
+@media(max-width:620px){#evShowOverlay .ev-arena{transform:scale(.75);margin:-40px 0}#evShowOverlay .ev-stage{padding:20px 5px}#evShowOverlay .ev-current{font-size:16px!important}}
+@media(prefers-reduced-motion:reduce){#evShowOverlay .ev-cube,#evShowOverlay .ev-spark,#evShowOverlay .ev-orbit,#evShowOverlay:before,#evShowOverlay .ev-aura{animation:none!important}}
+</style>
+<script id="ev-unified-animation-runtime">
+window.evDrawShow = async function(mode, names){
+  const labels=Array.isArray(names)?names.map(x=>String(x||'')).filter(Boolean):[];
+  const existing=document.getElementById('evShowOverlay');if(existing)existing.remove();
+  const root=document.createElement('section');root.id='evShowOverlay';root.setAttribute('role','status');root.setAttribute('aria-live','polite');
+  const titles={simple:'ORDEN DE PASO',multiple:'SORTEO MÚLTIPLE',zones:'SORTEO POR ZONAS'};
+  function die(cls){const faces=['f','b','r','l','t','d'];return '<div class="ev-cube '+cls+'">'+faces.map((f,i)=>{
+    const places=[[5],[1,9],[1,5,9],[1,3,7,9],[1,3,5,7,9],[1,3,4,6,7,9]][i];
+    return '<div class="ev-face '+f+'"><div class="ev-pips">'+places.map(v=>'<i class="ev-pip" style="grid-column:'+(((v-1)%3)+1)+';grid-row:'+Math.floor((v-1)/3+1)+'"></i>').join('')+'</div></div>';
+  }).join('')+'</div>'}
+  const palette=['#45dffd','#f6d44a','#fa6dac','#c88aff','#3be9ba'];
+  const sparks=Array.from({length:42},(_,i)=>{
+    const a=i*2.39996, dist=85+(i%5)*19;
+    return '<i class="ev-spark" style="--x:'+(50+Math.cos(a)*23).toFixed(1)+'%;--y:'+(50+Math.sin(a)*25).toFixed(1)+'%;--dx:'+(Math.cos(a)*dist).toFixed(0)+'px;--dy:'+(Math.sin(a)*dist).toFixed(0)+'px;--dur:'+(1.2+(i%5)*.24).toFixed(2)+'s;--delay:-'+(i*.12).toFixed(2)+'s;--c:'+palette[i%palette.length]+';--s:'+(4+i%4*2)+'px"></i>'
+  }).join('');
+  root.innerHTML='<div class="ev-stage"><div class="ev-top"><div class="ev-kicker">SORTEADOR DEPORTIVO EV360</div><h2 class="ev-head">'+(titles[mode]||'SORTEO DEPORTIVO')+'</h2><p class="ev-meta">Agitando los dados · mezclando colores · definiendo posiciones</p></div><div class="ev-arena"><div class="ev-aura"></div><div class="ev-orbit"></div><div class="ev-orbit two"></div><div class="ev-orbit three"></div><div class="ev-shade"></div>'+sparks+die('c1')+die('c2')+die('c3')+'</div><div class="ev-footer"><div class="ev-current" id="evStageLabel"></div><div class="ev-bar"><span></span></div><div class="ev-footnote">RESULTADOS OCULTOS HASTA FINALIZAR EL SORTEO</div></div></div>';
+  document.body.appendChild(root);
+  let i=0;const label=root.querySelector('#evStageLabel');label.textContent=labels.length?labels[0]:'Preparando resultados';
+  const timer=labels.length>1?setInterval(()=>{i=(i+1)%labels.length;label.textContent=labels[i]},190):null;
+  try{await new Promise(resolve=>setTimeout(resolve,3700))}finally{if(timer)clearInterval(timer);root.remove()}
+};
+</script>
 </head>
 <body>
 
@@ -3960,6 +4017,8 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 @keyframes evBallFloat{0%{transform:rotate(var(--angle)) translateX(var(--radius)) translateY(-11px) rotate(calc(-1 * var(--angle))) scale(.82)}100%{transform:rotate(calc(var(--angle) + 105deg)) translateX(var(--radius)) translateY(13px) rotate(calc(-1 * var(--angle))) scale(1.09)}}
 @media(prefers-reduced-motion:reduce){.draw-loader .lottery-drum,.draw-loader .lottery-ball{animation:none!important}}
 
+    .draw-loader {display:none!important;}
+    .result-stage {opacity:1!important;filter:none!important;transform:none!important;}
     @media print {
       .draw-loader { display: none !important; }
       .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
@@ -4001,7 +4060,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
           loader.classList.add('loader-out');
           setTimeout(function(){ loader.style.display = 'none'; }, 650);
         }
-      }, 3000);
+      }, 0);
 
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
@@ -4686,6 +4745,8 @@ function openSimpleResultInNewTab(list) {
 @keyframes evBallFloat{0%{transform:rotate(var(--angle)) translateX(var(--radius)) translateY(-11px) rotate(calc(-1 * var(--angle))) scale(.82)}100%{transform:rotate(calc(var(--angle) + 105deg)) translateX(var(--radius)) translateY(13px) rotate(calc(-1 * var(--angle))) scale(1.09)}}
 @media(prefers-reduced-motion:reduce){.draw-loader .lottery-drum,.draw-loader .lottery-ball{animation:none!important}}
 
+    .draw-loader {display:none!important;}
+    .result-stage {opacity:1!important;filter:none!important;transform:none!important;}
     @media print {
       .draw-loader { display: none !important; }
       .result-stage { opacity: 1 !important; filter: none !important; transform: none !important; }
@@ -4730,7 +4791,7 @@ function openSimpleResultInNewTab(list) {
           loader.classList.add('loader-out');
           setTimeout(function(){ loader.style.display = 'none'; }, 650);
         }
-      }, 3000);
+      }, 0);
 
       function exportPDF(){
         if(!window.jspdf){alert('Librería PDF no cargada');return}
@@ -6566,6 +6627,7 @@ document.getElementById('btnShare').classList.add('hidden');
     const rand = rngFromSeed(runSeed);
     const teamNames = teams.map(t => t.name);
     const list = shuffle(teamNames, rand);
+    await window.evDrawShow('simple',['Mezclando equipos','Definiendo orden','Preparando resultado']);
     
     // Mostrar resultado
     document.getElementById('resultGroups').innerHTML = list.map((n, i) => 
@@ -6638,6 +6700,7 @@ await saveSimpleDrawToCloud(list, meta);
     // Sorteo normal por zonas
     const z = currentZones();
     const result = drawGroups(teams, z, headsAsFirst, runSeed, fmt);
+    if (!result.error) await window.evDrawShow('zones',['Mezclando equipos','Armando zonas','Preparando resultado']);
     renderGroups(document.getElementById('resultGroups'), result);
     // Mostrar botones de exportación
 document.getElementById('btnExportCSV').classList.remove('hidden');
@@ -7393,13 +7456,7 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
  document.getElementById('capInfo').before(panel);
  document.getElementById('formatRow').insertAdjacentHTML('beforeend','<label class="pill"><input type="radio" name="format" value="multiple"> Múltiple</label>');
  const style=document.createElement('style');style.textContent='.multi-template{border:1px solid var(--ui-line,#dfe4ea);border-radius:10px;padding:12px;margin:0 0 16px;background:var(--ui-surface-2,#f8fafc)}.multi-template-title{font-weight:700;margin-bottom:6px}.multi-template-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:10px 0}.multi-template-choices label{display:flex;gap:6px;align-items:center;font-size:10pt!important;margin:0}.multi-template-choices input{width:auto}.multi-card{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-card h4{margin:0 0 8px}.multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.multi-card textarea{min-height:85px}.multi-team-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px}.multi-team-actions .btn{min-width:112px}.multi-checks{max-height:180px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.multi-checks label{font-size:12px;overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}.multi-checks input{width:auto}.multi-status{margin:8px 0;font-size:12px}.multi-result{border:1px solid #8797ae;border-radius:10px;padding:12px;margin:12px 0}.multi-result h3{margin-top:0}.multi-zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.multi-zone{border:1px solid #8797ae;border-radius:6px;padding:8px;font-size:12px}.multi-zone ol{padding-left:24px}.multi-general{display:flex;gap:8px;flex-wrap:wrap}.multi-error{color:#c43b34}@media(max-width:520px){.multi-checks{grid-template-columns:1fr}}';document.head.append(style);
- async function animateMultiDraw(count){
- const overlay=document.createElement('div');overlay.id='multiDrawOverlay';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
- const palette=['#facc15','#38bdf8','#4ade80','#fb7185','#a78bfa','#f97316','#2dd4bf','#f472b6','#84cc16','#60a5fa','#e879f9','#fde047'];
- const balls=Array.from({length:19},(_,i)=>'<span class="ev3d-ball" style="--c:'+palette[i%palette.length]+';--a:'+(i*137.5)+'deg;--r:'+(47+(i%4)*15)+'px;--d:-'+(i%9)*110+'ms"></span>').join('');
- overlay.innerHTML='<div class="ev3d-scene" aria-hidden="true"><div class="ev3d-shadow"></div><div class="ev3d-globe">'+balls+'</div></div><strong>Realizando sorteo múltiple</strong><p>Preparando '+count+' categorías…</p><div class="ev3d-counter">Los resultados se revelarán al finalizar</div>';
- document.body.appendChild(overlay);try{await new Promise(resolve=>setTimeout(resolve,3300))}finally{overlay.remove()}
-}
+ async function animateMultiDraw(items){return window.evDrawShow('multiple',Array.isArray(items)?items:Array.from({length:items},(_,i)=>'Categoría '+(i+1)))}
  function blank(){return {name:'',gender:null,weight:null,weightLabel:'',combatModality:'',zones:4,caps:[0,0,0,0],manualCaps:false,manualZones:false,text:'',excluded:[],saved:null}}
  function balance(c){let n=0;try{n=chosen(c).length}catch(e){return;}if(!c.manualZones && n<=24)c.zones=n>=13?4:n>=7?2:1;if(c.manualCaps)return;const z=Math.max(1,Math.min(c.zones,n||1));c.caps=Array.from({length:c.zones},(_,i)=>i<z?Math.floor(n/z):0);const priority=c.zones===4?[0,2,1,3]:Array.from({length:z},(_,i)=>i);for(let i=0;i<n%z;i++)c.caps[priority[i]]++}
  function refreshCaps(i){balance(cards[i]);const z=document.querySelector('[data-multi-zones="'+i+'"]');if(z)z.value=cards[i].zones;const w=document.querySelector('[data-multi-caps="'+i+'"]');if(w)w.innerHTML=capsHTML(cards[i],i)}
@@ -7489,7 +7546,7 @@ const panel=document.createElement('div');panel.id='multiplePanel';panel.classNa
      schema:'sorteo_multiple_v1',userId:user.uid
    });
  }
- async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.length);renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
+ async function run(){const definitions=cards.map((c,i)=>{if(!c.saved)throw new Error('Guardá la definición de la categoría '+(i+1));const current=validate(c);if(JSON.stringify(current)!==JSON.stringify(c.saved))throw new Error('Guardá nuevamente '+c.name);return clone(current)});if(new Set(definitions.map(c=>MultiDrawCSV.key(c.name))).size!==definitions.length)throw new Error('Los nombres de las categorías deben ser distintos.');const seed=(document.getElementById('disciplineSelect').value||'sorteo')+'-'+Date.now()+'-'+Math.random().toString(36).slice(2);const result=definitions.map((c,i)=>{const r=drawGroups(c.teams,c.caps.length,true,seed+'-'+i+'-'+c.name,'custom',c.caps);if(r.error)throw new Error(c.name+': '+r.error);return {name:c.name,gender:c.gender,weight:c.weight,groups:r.groups,caps:r.caps}});const disc=document.getElementById('disciplineSelect'),discipline=disc.value?disc.selectedOptions[0].text:'';if(!discipline)throw new Error('Seleccioná la disciplina antes de sortear.');batch={schema:'sorteo_multiple_v1',eventName:getEventName(),discipline,seed,createdAt:new Date().toISOString(),pdfHeaderImage:getCurrentPdfHeaderImage(),categories:result};store();await animateMultiDraw(result.map(c=>c.name));renderResult();document.getElementById('status').textContent='Sorteo completo: '+result.length+' categorías. Descargá el PDF general y el CSV para Combate.';openResult();
   // Los registros individuales contienen el identificador común; evitamos una escritura
   // adicional con esquema nuevo que las reglas de seguridad podrían rechazar.
   const storedBatch=clone(batch),userId=auth.currentUser?.uid;
